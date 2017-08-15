@@ -12,8 +12,6 @@ public:
     Q_INVOKABLE void on();
     Q_INVOKABLE void off();
 private:
-    QVector<TSSocket*> _command_sockets;
-    QVector<TSSocket*> _data_sockets;
     QUdpSocket *_sender, *_receiver;
 
     int src_port {1024};
@@ -22,7 +20,7 @@ private:
 signals:
 
 public slots:
-    void readyRead();
+    void processDatagram();
 };
 
 #endif // INTERCOM_H

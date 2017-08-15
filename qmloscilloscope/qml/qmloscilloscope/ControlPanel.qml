@@ -44,7 +44,7 @@ ColumnLayout {
     signal openGlChanged(bool enabled)
     signal sendOn()
     signal sendOff()
-    height: 415
+    height: 500
     property alias button: button
     property alias button1: button1
     property alias text1: text1
@@ -52,6 +52,7 @@ ColumnLayout {
     property alias signalSourceButton: signalSourceButton
     property alias sampleCountButton: sampleCountButton
     property alias multiButton: multiButton
+    width: 125
 
     Text {
         id: text1
@@ -119,7 +120,7 @@ ColumnLayout {
         id: button
         width: 40
         height: 40
-        text: qsTr("test A")
+        text: qsTr("Start")
         padding: 0
         rotation: 0
         enabled: true
@@ -136,7 +137,7 @@ ColumnLayout {
         id: button1
         width: 86
         height: 40
-        text: qsTr("test B")
+        text: qsTr("Stop")
         font.pointSize: 8
         checkable: false
         onClicked: sendOff();

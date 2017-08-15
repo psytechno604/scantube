@@ -22,7 +22,7 @@ QT_WARNING_PUSH
 QT_WARNING_DISABLE_DEPRECATED
 struct qt_meta_stringdata_intercom_t {
     QByteArrayData data[5];
-    char stringdata0[27];
+    char stringdata0[33];
 };
 #define QT_MOC_LITERAL(idx, ofs, len) \
     Q_STATIC_BYTE_ARRAY_DATA_HEADER_INITIALIZER_WITH_OFFSET(len, \
@@ -32,13 +32,13 @@ struct qt_meta_stringdata_intercom_t {
 static const qt_meta_stringdata_intercom_t qt_meta_stringdata_intercom = {
     {
 QT_MOC_LITERAL(0, 0, 8), // "intercom"
-QT_MOC_LITERAL(1, 9, 9), // "readyRead"
-QT_MOC_LITERAL(2, 19, 0), // ""
-QT_MOC_LITERAL(3, 20, 2), // "on"
-QT_MOC_LITERAL(4, 23, 3) // "off"
+QT_MOC_LITERAL(1, 9, 15), // "processDatagram"
+QT_MOC_LITERAL(2, 25, 0), // ""
+QT_MOC_LITERAL(3, 26, 2), // "on"
+QT_MOC_LITERAL(4, 29, 3) // "off"
 
     },
-    "intercom\0readyRead\0\0on\0off"
+    "intercom\0processDatagram\0\0on\0off"
 };
 #undef QT_MOC_LITERAL
 
@@ -78,7 +78,7 @@ void intercom::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, vo
         intercom *_t = static_cast<intercom *>(_o);
         Q_UNUSED(_t)
         switch (_id) {
-        case 0: _t->readyRead(); break;
+        case 0: _t->processDatagram(); break;
         case 1: _t->on(); break;
         case 2: _t->off(); break;
         default: ;
