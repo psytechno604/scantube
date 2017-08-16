@@ -32,55 +32,64 @@ import QtQuick 2.0
 //![1]
 Item {
     id: main
-    width: 600
-    height: 400
+    width: 800
+    height: 600
     property alias controlPanel: controlPanel
 
-    ControlPanel {
-        id: controlPanel
-        width: 93
-        spacing: 10.2
-        anchors.bottomMargin: 0
-        anchors.top: parent.top
-        anchors.topMargin: 20
-        anchors.bottom: parent.bottom
-        anchors.left: parent.left
-        anchors.leftMargin: 8
-        //![1]
 
-        onSignalSourceChanged: {
-            if (source == "sin")
-                dataSource.generateData(0, signalCount, sampleCount);
-            else
-                dataSource.generateData(1, signalCount, sampleCount);
-            scopeView.axisX().max = sampleCount;
-        }
-        onSeriesTypeChanged: scopeView.changeSeriesType(type);
-        onRefreshRateChanged: scopeView.changeRefreshRate(rate);
-        onAntialiasingEnabled: scopeView.antialiasing = enabled;
-        onOpenGlChanged: {
-            scopeView.openGL = enabled;
-        }
-        onSendOn: _intercom.on();
-        onSendOff: _intercom.off();
-    }
+    //![2]
 
-//![2]
-    ScopeView {
-        id: scopeView
-        anchors.top: parent.top
-        anchors.bottom: parent.bottom
-        anchors.right: parent.right
-        anchors.left: controlPanel.right
+    Grid {
+        id: grid
+        width: main.width
         height: main.height
 
-        onOpenGLSupportedChanged: {
-            if (!openGLSupported) {
-                controlPanel.openGLButton.enabled = false
-                controlPanel.openGLButton.currentSelection = 0
+        ControlPanel {
+            id: controlPanel
+            width: 129
+            spacing: 10.2
+            anchors.bottomMargin: 0
+            anchors.top: parent.top
+            anchors.topMargin: 20
+            anchors.bottom: parent.bottom
+            anchors.left: parent.left
+            anchors.leftMargin: 8
+            //![1]
+
+            onSignalSourceChanged: {
+                if (source == "sin")
+                    dataSource.generateData(0, signalCount, sampleCount);
+                else
+                    dataSource.generateData(1, signalCount, sampleCount);
+                scopeView.axisX().max = sampleCount;
+            }
+            onSeriesTypeChanged: scopeView.changeSeriesType(type);
+            onRefreshRateChanged: scopeView.changeRefreshRate(rate);
+            onAntialiasingEnabled: scopeView.antialiasing = enabled;
+            onOpenGlChanged: {
+                scopeView.openGL = enabled;
+            }
+            onSendOn: _intercom.on();
+            onSendOff: _intercom.off();
+            onSelectMyIP: _intercom.setMyIP(ip);
+        }
+
+        ScopeView {
+            id: scopeView
+            width: 683
+            anchors.top: parent.top
+            anchors.bottom: parent.bottom
+            anchors.right: parent.right
+            anchors.left: controlPanel.right
+            height: main.height
+
+            onOpenGLSupportedChanged: {
+                if (!openGLSupported) {
+                    controlPanel.openGLButton.enabled = false
+                    controlPanel.openGLButton.currentSelection = 0
+                }
             }
         }
     }
-//![2]
-
+    //![2]
 }

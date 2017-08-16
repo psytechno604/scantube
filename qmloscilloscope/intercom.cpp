@@ -5,30 +5,14 @@
 
 intercom::intercom(QObject *parent) : QObject(parent)
 {
-    /*for(auto i=4; i<5; i++) {
-        TSSocket *_command_socket = new TSSocket(i, address_provider::get_address(i), dst_port);
-        _command_sockets.push_back(_command_socket);
-        TSSocket *_data_socket = new TSSocket(i, address_provider::get_address(i), listen_port);
-        _data_sockets.push_back(_data_socket);
-    }*/
-
-    _sender = new QUdpSocket(this);
-
-
-    //auto __sender_bind_result =_sender->bind(QHostAddress("192.168.0.67"), src_port); //it works
-    auto __sender_bind_result =_sender->bind(QHostAddress::AnyIPv4, src_port);
-    //auto __sender_bind_result =_sender->bind(address_provider::get_address(4), src_port, QUdpSocket::ShareAddress);
-
-    //_receiver = new QUdpSocket(this);
-    //auto __receiver_bind_result =_receiver->bind(2048);
-    auto __connect_result = connect(_sender, SIGNAL(readyRead()), this, SLOT(processDatagram()));
-    //QCoreApplication::sendPostedEvents();
-
-    qDebug() << "intercom::intercom, __sender_bind_result=" << __sender_bind_result << ", __connect_result=" << __connect_result;
 }
 
 void intercom::on()
 {
+    if (!_sender) {
+        return;
+    }
+
     _sender->writeDatagram(QByteArray::fromHex("490008"), address_provider::get_address(4), dst_port);
     QThread::msleep(100);
     _sender->writeDatagram(QByteArray::fromHex("4431"), address_provider::get_address(4), dst_port);
@@ -39,6 +23,10 @@ void intercom::on()
 }
 void intercom::off()
 {
+    if (!_sender) {
+        return;
+    }
+
     _sender->writeDatagram(QByteArray::fromHex("4430"), address_provider::get_address(0), dst_port);
     QThread::msleep(100);
     _sender->writeDatagram(QByteArray::fromHex("4430"), address_provider::get_address(4), dst_port);
@@ -52,7 +40,30 @@ void intercom::off()
     //00057efe7f0c7f287f227f0d7f1a7f067f1a7f057f017f0e7f217f117f107f207f107f057f077efd7f147f1e7f0a7f207f037f1b7f117f1a7f127f0d7f157f257f027f057f097f167f137f127f247f027f157f027f0a7f137f037f1e7efb7f1c7f327f167f187f227f167f1a7f037f157f137f197f0e7f267f1b7efb7f1f7f277f0f7f107f117f137f1f7f1f7f297f187f117f167f0c7f207f1d7f197f097f067f147f267f287f077f0a7efe7f1f7f257f117f017f057f077f2c7f0a7f267f137f137f167f077f047f187f187f1d7f1c7f247f0d7f117f107f197f0e7f1b7f107f227f237f0f7f127f117f0f7f1d7f177f0a7f1c7f227f097f107f1d7f037f137f117f147f117f1e7f0d7ef47f147f1e7f117f187f087f077f167f1d7f257f277f107f1a7f257f117f0f7efb7f167f0f7f0f7f0f7f017f0a7f137f197f127f087f167eff7f1c7ef97f1c7efc7f127f147f237f267f1b7f267f137f257f097f077f1e7f0e7f0a7f137ef77f107f167f097f167f117f117f147f1b7f1a7f267f0f7f087f1f7efd7f297f1d7f1e7f217f127f137f297f027f017f2e7f0f7f1f7f117f017f117f0a7f197ef27f157f077f007f0c7f167f147f097f137f1c7efc7f2c7f0b7f1c7f027f0e7f0a7f217f0f7f037f1a7f1a7f197f1b7efa7f067f067f077f1f7f117f177f197f1f7f107f137f107f0d7f0e7f167f157f0a7f1d7f1d7f2e7f097f147f1e7f107f127f127f1e7f0d7f047f057f017f0d7f0f7f087f0b7f127f1c7f147f0e7f1b7f0d7f1a7f1e7f0e7f0b7f1a7f097f267f0e7f257f137f187f1f7f207f167f0b7f277f027f147f077f1e7f0c7f0c7f127f097f0d7f287f107f067f127f047f217f1f7f1a7f1e7f1f7f127f207f207f127efd7f1a7f327f137f1c7f207f207f2e7f207f127ef77f1d7f1a7f1c7f177f1e7f1a7f157f207f157f117f247f0b7f147f157efa7f0c7f217f0e7f127eff7f157f177f2f7f257f157f0c7f107f187f197f1b7ef97f147f0d7f1a7f327f0d7f197f0b7f1c7f197f137f147f177f157f0a7f0e7f157f0e7f1d7eff7f267f287f0f7f1a7f127f147f237f057f147f207f1c7f177f067f0f7f287efe7f0a7f0e7f157f137f1a7f257f197f2e7f187f147f1c7f017f0f7efc7f197f1d7f117f0b7f137f117f137f107f177f047f017f0f7f1c7f0a7f057f107f217f207f1b7f1c7f157f287f067f1e7f387f217f197f267f0f7f137f117f157f057f1c7f1b7f187f287f167efc7f117f137f0f7f217f177f1f7f257f097f147f117f117f0f7f127f0c7f007f1e7f057f297f1a7f157f217f0c7f277f207f257f117f0e7f1b7f167f1d7f0d7f207f077f1b7f087f0a7f247f217f277f107f147f147f037f227f1a7f067f0a7f0a7f307f227f1d7f197f147f1a7f067f257f167f287f1b7f267f237f077f207f1c7f0b7f207f267f117f1d7f1b7f277f1d7f237f2b7f0f7f2b7f1f7f217f0c7f287f0c7f197f127f217f087f097f227f337f137efe7f257f177efb7f1c7f0b7f0b7f1a7f1e7f1e7f317f1e7f1a7f187f177f207f1f7f157f1f7f207f1c7f367f1b7f337f0c7f1b7f377f097f267f057f1b7f1c7f117f267f127f1d7f1b7f267f1f7f257f2a7f1e7f187f137f207f387f187f2a7f1e7f147f1c7f217f1f7f107f287f177f177f167f347f127f247f0c7f287f177f217f1e7f227f257f1e7f227f0e7f227f177f2d7f257f397f167f147f2a7f277f217f317f197f1f7f0f7f2a7f1a7f287f2f7f1e7f287f1e7f3e7f237f177f237f1b7f2e7f1b7f1d7f217f347f2a7f277f0a7f257f2c7f367f267f2f7f197f217f337f287f1b7f147f267f2d7f187f1d7f217f187f297f1c7f287f297f237f187f1f7f397f217f247f187f2c7f227f1e7f177f277f257f207f157f1b7f1b7f1d7f177f197f1d7f2c7f147f257f0b7f2b7f127f2f7f237f1c7f267f297f257f1f7f077f277f177f277f207f0f7f1c7f1f7f257f217f1a7f397f1d7f2d7f1c7f1a7f217f2c7f107f157f247f307f177f167f0b7f207f2e7f157f187f207f0b7f317f1b
 }
 
+void intercom::setMyIP(QString ip)
+{
+    myIP = new QHostAddress(ip);
+    reCreateSender();
+}
+
+void intercom::reCreateSender()
+{
+    if (!myIP) {
+        qDebug() << "myIP not set";
+        return;
+    }
+    if (_sender) {
+        delete _sender;
+    }
+    _sender = new QUdpSocket(this);
+    _sender->bind(*myIP, src_port);
+    connect(_sender, SIGNAL(readyRead()), this, SLOT(processDatagram()));
+}
+
 void intercom::processDatagram() {
+    if (!_sender) {
+        return;
+    }
     qDebug() << "intercom::processDatagram";
     //return;
     QByteArray buffer;

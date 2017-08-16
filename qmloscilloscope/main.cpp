@@ -33,15 +33,21 @@
 #include <QtQml/QQmlEngine>
 #include <QtCore/QDir>
 #include <QNetworkInterface>
+#include <QComboBox>
 #include "datasource.h"
 #include "tssocket.h"
 #include "address_provider.h"
 #include "intercom.h"
+#include "ipslistmodel.h"
+
+#include <QtQml>
 
 int main(int argc, char *argv[])
 {
     // Qt Charts uses Qt Graphics View Framework for drawing, therefore QApplication must be used.
     QApplication app(argc, argv);
+
+    qmlRegisterType<IPsListModel>("IPsListModel", 1, 0, "IPsListModel");
 
     QQuickView viewer;
 
@@ -64,15 +70,25 @@ int main(int argc, char *argv[])
     intercom _intercom;
     viewer.rootContext()->setContextProperty("_intercom", &_intercom);
 
+    IPsListModel myIPsListModel;
+
+    foreach (const QHostAddress &address, QNetworkInterface::allAddresses()) {
+        if (address.protocol() == QAbstractSocket::IPv4Protocol && address != QHostAddress(QHostAddress::LocalHost) && !address.isLoopback()){
+            qDebug() << address.toString();
+            myIPsListModel.add(address.toString());
+        }
+    }
+    viewer.rootContext()->setContextProperty("myIPsListModel", &myIPsListModel);
+
+
     viewer.setSource(QUrl("qrc:/qml/qmloscilloscope/main.qml"));
     viewer.setResizeMode(QQuickView::SizeRootObjectToView);
     viewer.setColor(QColor("#404040"));
     viewer.show();
 
-    foreach (const QHostAddress &address, QNetworkInterface::allAddresses()) {
-        if (address.protocol() == QAbstractSocket::IPv4Protocol && address != QHostAddress(QHostAddress::LocalHost) && !address.isLoopback())
-             qDebug() << address.toString();
-    }
+
+
+
 
     auto ret = app.exec();
     _intercom.off();

@@ -30,6 +30,7 @@
 import QtQuick 2.1
 import QtQuick.Layouts 1.0
 import QtQuick.Controls 2.2
+import IPsListModel 1.0
 
 ColumnLayout {
     property alias openGLButton: openGLButton
@@ -44,7 +45,9 @@ ColumnLayout {
     signal openGlChanged(bool enabled)
     signal sendOn()
     signal sendOff()
+    signal selectMyIP(string ip)
     height: 500
+    property alias comboBox: comboBox
     property alias button: button
     property alias button1: button1
     property alias text1: text1
@@ -116,6 +119,13 @@ ColumnLayout {
         onSelectionChanged: antialiasingEnabled(currentSelection == 1);
     }
 
+    ComboBox {
+        id: comboBox
+        model: myIPsListModel
+        textRole: "text"
+        onActivated: selectMyIP(currentText);
+    }
+
     Button {
         id: button
         width: 40
@@ -133,6 +143,7 @@ ColumnLayout {
         onClicked: sendOn();
     }
 
+
     Button {
         id: button1
         width: 86
@@ -142,4 +153,5 @@ ColumnLayout {
         checkable: false
         onClicked: sendOff();
     }
+
 }
