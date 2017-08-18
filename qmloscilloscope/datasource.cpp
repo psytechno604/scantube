@@ -49,19 +49,16 @@ DataSource::DataSource(QQuickView *appViewer, QObject *parent) :
     qRegisterMetaType<QAbstractSeries*>();
     qRegisterMetaType<QAbstractAxis*>();
 
-    generateData(0, 5, 1024);
+    //generateData(0, 5, 1024);
 }
 
 void DataSource::update(QAbstractSeries *series)
 {
     mtx.lock_shared();
-    if (series) {
+    if (series && m_data.count()>0) {
         QXYSeries *xySeries = static_cast<QXYSeries *>(series);
-        m_index++;
-        if (m_index > m_data.count() - 1)
-            m_index = 0;
 
-        QVector<QPointF> points = m_data.at(m_index);
+        QVector<QPointF> points = m_data.at(0);
         // Use replace instead of clear + append, it's optimized for performance
         xySeries->replace(points);
     }
@@ -102,5 +99,30 @@ void DataSource::generateData(int type, int rowCount, int colCount)
         }
         m_data.append(points);
     }
+    mtx.unlock();
+}
+
+void DataSource::generateData(QByteArray *buffer, int row)
+{
+    mtx.lock();
+
+    auto N = (*buffer).length();
+
+    QVector<QPointF> points;
+    points.reserve(N / 2 - 1);
+
+    m_data.clear();
+
+    for(auto i=2; i<N-1; i+=2) {
+        unsigned short p = ((*buffer)[i+1] << 8) | (*buffer)[i];
+        auto x = i/2;
+        points.append(QPointF(x, p));
+    }
+
+    if (row < m_data.length())
+        m_data[row] = points;
+    else
+        m_data.append(points);
+
     mtx.unlock();
 }

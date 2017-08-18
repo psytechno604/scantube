@@ -39,6 +39,7 @@ QT_END_NAMESPACE
 
 QT_CHARTS_USE_NAMESPACE
 
+#include <QByteArray>
 #include "shared_mutex.h"
 
 class DataSource : public QObject
@@ -51,11 +52,12 @@ Q_SIGNALS:
 
 public slots:
     void generateData(int type, int rowCount, int colCount);
+    void generateData(QByteArray *buffer, int row);
     void update(QAbstractSeries *series);
 
 private:
     QQuickView *m_appViewer;
-    QList<QVector<QPointF> > m_data;
+    QList<QVector<QPointF> > m_data;    
     int m_index;
     shared_mutex mtx;
 };

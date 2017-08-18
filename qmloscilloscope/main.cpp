@@ -34,6 +34,7 @@
 #include <QtCore/QDir>
 #include <QNetworkInterface>
 #include <QComboBox>
+#include <QObject>
 #include "datasource.h"
 #include "tssocket.h"
 #include "address_provider.h"
@@ -44,6 +45,7 @@
 
 int main(int argc, char *argv[])
 {
+    qDebug() << QThread::currentThreadId();
     // Qt Charts uses Qt Graphics View Framework for drawing, therefore QApplication must be used.
     QApplication app(argc, argv);
 
@@ -67,8 +69,17 @@ int main(int argc, char *argv[])
     DataSource dataSource(&viewer);
     viewer.rootContext()->setContextProperty("dataSource", &dataSource);
 
-    intercom _intercom;
-    viewer.rootContext()->setContextProperty("_intercom", &_intercom);
+    //QThread* thread = new QThread();
+    //thread->start();
+
+    intercom *_intercom = new intercom();
+
+    _intercom->setDataSource(&dataSource);
+    //_intercom->moveToThread(thread);
+    //QObject::connect(thread, SIGNAL(started()), &_intercom, SLOT(run()));
+
+
+    viewer.rootContext()->setContextProperty("_intercom", _intercom);
 
     IPsListModel myIPsListModel;
 
@@ -91,7 +102,7 @@ int main(int argc, char *argv[])
 
 
     auto ret = app.exec();
-    _intercom.off();
+    _intercom->off();
     return ret;
 }
 //WOI1013046429B7AEA7211

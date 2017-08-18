@@ -52,14 +52,14 @@ ChartView {
 
     ValueAxis {
         id: axisY1
-        min: -1
-        max: 4
+        min: 0
+        max: 65535
     }
 
     ValueAxis {
         id: axisY2
-        min: -10
-        max: 5
+        min: 0
+        max: 65535
     }
 
     ValueAxis {
