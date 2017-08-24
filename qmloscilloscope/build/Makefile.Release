@@ -299,6 +299,7 @@ release\moc_datasource.cpp: C:\Qt\5.9.1\msvc2015_64\include\QtCore\QObject \
 		C:\Qt\5.9.1\msvc2015_64\include\QtCore\qlocale.h \
 		C:\Qt\5.9.1\msvc2015_64\include\QtCore\qset.h \
 		C:\Qt\5.9.1\msvc2015_64\include\QtCore\qcontiguouscache.h \
+		C:\Qt\5.9.1\msvc2015_64\include\QtCore\QByteArray \
 		..\shared_mutex.h \
 		..\datasource.h \
 		release\moc_predefs.h \
@@ -445,6 +446,43 @@ release\moc_intercom.cpp: C:\Qt\5.9.1\msvc2015_64\include\QtCore\QObject \
 		C:\Qt\5.9.1\msvc2015_64\include\QtCore\qsharedpointer.h \
 		C:\Qt\5.9.1\msvc2015_64\include\QtCore\qsharedpointer_impl.h \
 		C:\Qt\5.9.1\msvc2015_64\include\QtNetwork\qhostaddress.h \
+		..\datasource.h \
+		C:\Qt\5.9.1\msvc2015_64\include\QtCharts\QAbstractSeries \
+		C:\Qt\5.9.1\msvc2015_64\include\QtCharts\qabstractseries.h \
+		C:\Qt\5.9.1\msvc2015_64\include\QtCharts\QChartGlobal \
+		C:\Qt\5.9.1\msvc2015_64\include\QtCharts\qchartglobal.h \
+		C:\Qt\5.9.1\msvc2015_64\include\QtCore\QtGlobal \
+		C:\Qt\5.9.1\msvc2015_64\include\QtCharts\QAbstractAxis \
+		C:\Qt\5.9.1\msvc2015_64\include\QtCharts\qabstractaxis.h \
+		C:\Qt\5.9.1\msvc2015_64\include\QtGui\QPen \
+		C:\Qt\5.9.1\msvc2015_64\include\QtGui\qpen.h \
+		C:\Qt\5.9.1\msvc2015_64\include\QtGui\qtguiglobal.h \
+		C:\Qt\5.9.1\msvc2015_64\include\QtGui\qtgui-config.h \
+		C:\Qt\5.9.1\msvc2015_64\include\QtGui\qcolor.h \
+		C:\Qt\5.9.1\msvc2015_64\include\QtGui\qrgb.h \
+		C:\Qt\5.9.1\msvc2015_64\include\QtGui\qrgba64.h \
+		C:\Qt\5.9.1\msvc2015_64\include\QtGui\qbrush.h \
+		C:\Qt\5.9.1\msvc2015_64\include\QtGui\qmatrix.h \
+		C:\Qt\5.9.1\msvc2015_64\include\QtGui\qpolygon.h \
+		C:\Qt\5.9.1\msvc2015_64\include\QtCore\qrect.h \
+		C:\Qt\5.9.1\msvc2015_64\include\QtCore\qmargins.h \
+		C:\Qt\5.9.1\msvc2015_64\include\QtCore\qsize.h \
+		C:\Qt\5.9.1\msvc2015_64\include\QtGui\qregion.h \
+		C:\Qt\5.9.1\msvc2015_64\include\QtGui\qwindowdefs.h \
+		C:\Qt\5.9.1\msvc2015_64\include\QtGui\qwindowdefs_win.h \
+		C:\Qt\5.9.1\msvc2015_64\include\QtCore\qdatastream.h \
+		C:\Qt\5.9.1\msvc2015_64\include\QtCore\qline.h \
+		C:\Qt\5.9.1\msvc2015_64\include\QtGui\qtransform.h \
+		C:\Qt\5.9.1\msvc2015_64\include\QtGui\qpainterpath.h \
+		C:\Qt\5.9.1\msvc2015_64\include\QtGui\qimage.h \
+		C:\Qt\5.9.1\msvc2015_64\include\QtGui\qpaintdevice.h \
+		C:\Qt\5.9.1\msvc2015_64\include\QtGui\qpixelformat.h \
+		C:\Qt\5.9.1\msvc2015_64\include\QtGui\qpixmap.h \
+		C:\Qt\5.9.1\msvc2015_64\include\QtGui\QFont \
+		C:\Qt\5.9.1\msvc2015_64\include\QtGui\qfont.h \
+		C:\Qt\5.9.1\msvc2015_64\include\QtCore\QVariant \
+		C:\Qt\5.9.1\msvc2015_64\include\QtCore\QByteArray \
+		..\shared_mutex.h \
 		..\intercom.h \
 		release\moc_predefs.h \
 		C:\Qt\5.9.1\msvc2015_64\bin\moc.exe
@@ -725,6 +763,7 @@ release\main.obj: ..\main.cpp C:\Qt\5.9.1\msvc2015_64\include\QtWidgets\QApplica
 		C:\Qt\5.9.1\msvc2015_64\include\QtGui\qpen.h \
 		C:\Qt\5.9.1\msvc2015_64\include\QtGui\QFont \
 		C:\Qt\5.9.1\msvc2015_64\include\QtCore\QVariant \
+		C:\Qt\5.9.1\msvc2015_64\include\QtCore\QByteArray \
 		../shared_mutex.h \
 		..\tssocket.h \
 		C:\Qt\5.9.1\msvc2015_64\include\QtNetwork\QUdpSocket \
@@ -853,7 +892,6 @@ release\main.obj: ..\main.cpp C:\Qt\5.9.1\msvc2015_64\include\QtWidgets\QApplica
 		C:\Qt\5.9.1\msvc2015_64\include\QtNetwork\qhostinfo.h \
 		C:\Qt\5.9.1\msvc2015_64\include\QtNetwork\qhstspolicy.h \
 		C:\Qt\5.9.1\msvc2015_64\include\QtNetwork\qhttpmultipart.h \
-		C:\Qt\5.9.1\msvc2015_64\include\QtCore\QByteArray \
 		C:\Qt\5.9.1\msvc2015_64\include\QtCore\QIODevice \
 		C:\Qt\5.9.1\msvc2015_64\include\QtNetwork\QNetworkRequest \
 		C:\Qt\5.9.1\msvc2015_64\include\QtNetwork\qlocalserver.h \
@@ -1005,6 +1043,7 @@ release\datasource.obj: ..\datasource.cpp ../datasource.h \
 		C:\Qt\5.9.1\msvc2015_64\include\QtCore\qlocale.h \
 		C:\Qt\5.9.1\msvc2015_64\include\QtCore\qset.h \
 		C:\Qt\5.9.1\msvc2015_64\include\QtCore\qcontiguouscache.h \
+		C:\Qt\5.9.1\msvc2015_64\include\QtCore\QByteArray \
 		../shared_mutex.h \
 		C:\Qt\5.9.1\msvc2015_64\include\QtCharts\QXYSeries \
 		C:\Qt\5.9.1\msvc2015_64\include\QtCharts\qxyseries.h \
@@ -1215,6 +1254,43 @@ release\intercom.obj: ..\intercom.cpp ../intercom.h \
 		C:\Qt\5.9.1\msvc2015_64\include\QtCore\qsharedpointer.h \
 		C:\Qt\5.9.1\msvc2015_64\include\QtCore\qsharedpointer_impl.h \
 		C:\Qt\5.9.1\msvc2015_64\include\QtNetwork\qhostaddress.h \
+		../datasource.h \
+		C:\Qt\5.9.1\msvc2015_64\include\QtCharts\QAbstractSeries \
+		C:\Qt\5.9.1\msvc2015_64\include\QtCharts\qabstractseries.h \
+		C:\Qt\5.9.1\msvc2015_64\include\QtCharts\QChartGlobal \
+		C:\Qt\5.9.1\msvc2015_64\include\QtCharts\qchartglobal.h \
+		C:\Qt\5.9.1\msvc2015_64\include\QtCore\QtGlobal \
+		C:\Qt\5.9.1\msvc2015_64\include\QtCharts\QAbstractAxis \
+		C:\Qt\5.9.1\msvc2015_64\include\QtCharts\qabstractaxis.h \
+		C:\Qt\5.9.1\msvc2015_64\include\QtGui\QPen \
+		C:\Qt\5.9.1\msvc2015_64\include\QtGui\qpen.h \
+		C:\Qt\5.9.1\msvc2015_64\include\QtGui\qtguiglobal.h \
+		C:\Qt\5.9.1\msvc2015_64\include\QtGui\qtgui-config.h \
+		C:\Qt\5.9.1\msvc2015_64\include\QtGui\qcolor.h \
+		C:\Qt\5.9.1\msvc2015_64\include\QtGui\qrgb.h \
+		C:\Qt\5.9.1\msvc2015_64\include\QtGui\qrgba64.h \
+		C:\Qt\5.9.1\msvc2015_64\include\QtGui\qbrush.h \
+		C:\Qt\5.9.1\msvc2015_64\include\QtGui\qmatrix.h \
+		C:\Qt\5.9.1\msvc2015_64\include\QtGui\qpolygon.h \
+		C:\Qt\5.9.1\msvc2015_64\include\QtCore\qrect.h \
+		C:\Qt\5.9.1\msvc2015_64\include\QtCore\qmargins.h \
+		C:\Qt\5.9.1\msvc2015_64\include\QtCore\qsize.h \
+		C:\Qt\5.9.1\msvc2015_64\include\QtGui\qregion.h \
+		C:\Qt\5.9.1\msvc2015_64\include\QtGui\qwindowdefs.h \
+		C:\Qt\5.9.1\msvc2015_64\include\QtGui\qwindowdefs_win.h \
+		C:\Qt\5.9.1\msvc2015_64\include\QtCore\qdatastream.h \
+		C:\Qt\5.9.1\msvc2015_64\include\QtCore\qline.h \
+		C:\Qt\5.9.1\msvc2015_64\include\QtGui\qtransform.h \
+		C:\Qt\5.9.1\msvc2015_64\include\QtGui\qpainterpath.h \
+		C:\Qt\5.9.1\msvc2015_64\include\QtGui\qimage.h \
+		C:\Qt\5.9.1\msvc2015_64\include\QtGui\qpaintdevice.h \
+		C:\Qt\5.9.1\msvc2015_64\include\QtGui\qpixelformat.h \
+		C:\Qt\5.9.1\msvc2015_64\include\QtGui\qpixmap.h \
+		C:\Qt\5.9.1\msvc2015_64\include\QtGui\QFont \
+		C:\Qt\5.9.1\msvc2015_64\include\QtGui\qfont.h \
+		C:\Qt\5.9.1\msvc2015_64\include\QtCore\QVariant \
+		C:\Qt\5.9.1\msvc2015_64\include\QtCore\QByteArray \
+		../shared_mutex.h \
 		../address_provider.h \
 		C:\Qt\5.9.1\msvc2015_64\include\QtCore\QThread \
 		C:\Qt\5.9.1\msvc2015_64\include\QtCore\qthread.h \

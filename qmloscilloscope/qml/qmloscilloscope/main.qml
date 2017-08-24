@@ -32,8 +32,8 @@ import QtQuick 2.0
 //![1]
 Item {
     id: main
-    width: 800
-    height: 600
+    width: 1024
+    height: 768
     property alias controlPanel: controlPanel
 
 
@@ -41,19 +41,19 @@ Item {
 
     Grid {
         id: grid
-        width: main.width
-        height: main.height
+        anchors.fill: parent
+        rows: 2
+        columns: 2
 
         ControlPanel {
             id: controlPanel
-            width: 129
             spacing: 10.2
-            anchors.bottomMargin: 0
+            /*anchors.bottomMargin: 0
             anchors.top: parent.top
             anchors.topMargin: 20
             anchors.bottom: parent.bottom
             anchors.left: parent.left
-            anchors.leftMargin: 8
+            anchors.leftMargin: 8*/
             //![1]
 
             onSignalSourceChanged: {
@@ -72,16 +72,18 @@ Item {
             onSendOn: _intercom.on();
             onSendOff: _intercom.off();
             onSelectMyIP: _intercom.setMyIP(ip);
+            onSelectAccumulation: _intercom.setAccumulation(acc);
+            onSelectSpeed: _intercom.setSpeed(spd);
         }
 
         ScopeView {
             id: scopeView
-            width: 683
-            anchors.top: parent.top
+            width: 872
+            height: 767
+            /*anchors.top: parent.top
             anchors.bottom: parent.bottom
             anchors.right: parent.right
-            anchors.left: controlPanel.right
-            height: main.height
+            anchors.left: controlPanel.right*/
 
             onOpenGLSupportedChanged: {
                 if (!openGLSupported) {

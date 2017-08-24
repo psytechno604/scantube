@@ -32,6 +32,7 @@
 
 #include <QtCore/QObject>
 #include <QtCharts/QAbstractSeries>
+#include <QFile>
 
 QT_BEGIN_NAMESPACE
 class QQuickView;
@@ -41,25 +42,26 @@ QT_CHARTS_USE_NAMESPACE
 
 #include <QByteArray>
 #include "shared_mutex.h"
+#include <QFile>
 
 class DataSource : public QObject
 {
     Q_OBJECT
 public:
     explicit DataSource(QQuickView *appViewer, QObject *parent = 0);
-
+    ~DataSource();
 Q_SIGNALS:
 
 public slots:
-    void generateData(int type, int rowCount, int colCount);
     void generateData(QByteArray *buffer, int row);
     void update(QAbstractSeries *series);
 
 private:
-    QQuickView *m_appViewer;
+    QQuickView *m_appViewer {nullptr};
     QList<QVector<QPointF> > m_data;    
     int m_index;
     shared_mutex mtx;
+    QFile *datafile {nullptr};
 };
 
 #endif // DATASOURCE_H

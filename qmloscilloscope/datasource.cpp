@@ -49,7 +49,19 @@ DataSource::DataSource(QQuickView *appViewer, QObject *parent) :
     qRegisterMetaType<QAbstractSeries*>();
     qRegisterMetaType<QAbstractAxis*>();
 
+    datafile = new QFile("scantube.dat");
+
+    if (!datafile->open(QFile::WriteOnly)){
+        qDebug() << "file cannot be opened";
+    }
     //generateData(0, 5, 1024);
+}
+
+DataSource::~DataSource()
+{
+    if (datafile) {
+        datafile->close();
+    }
 }
 
 void DataSource::update(QAbstractSeries *series)
@@ -65,64 +77,35 @@ void DataSource::update(QAbstractSeries *series)
     mtx.unlock_shared();
 }
 
-void DataSource::generateData(int type, int rowCount, int colCount)
-{
-    mtx.lock();
-    // Remove previous data
-    foreach (QVector<QPointF> row, m_data)
-        row.clear();
-    m_data.clear();
-
-    // Append the new data depending on the type
-    for (int i(0); i < rowCount; i++) {
-        QVector<QPointF> points;
-        points.reserve(colCount);
-        for (int j(0); j < colCount; j++) {
-            qreal x(0);
-            qreal y(0);
-            switch (type) {
-            case 0:
-                // data with sin + random component
-                y = qSin(3.14159265358979 / 50 * j) + 0.5 + (qreal) rand() / (qreal) RAND_MAX;
-                x = j;
-                break;
-            case 1:
-                // linear data
-                x = j;
-                y = (qreal) i / 10;
-                break;
-            default:
-                // unknown, do nothing
-                break;
-            }
-            points.append(QPointF(x, y));
-        }
-        m_data.append(points);
-    }
-    mtx.unlock();
-}
-
 void DataSource::generateData(QByteArray *buffer, int row)
 {
+
+
     mtx.lock();
 
-    auto N = (*buffer).length();
+    unsigned short i = (((*buffer)[0] << 8) + (*buffer)[1] ) % 2;
 
-    QVector<QPointF> points;
-    points.reserve(N / 2 - 1);
+    if (i) {
+        datafile->write(buffer->toHex());
+        datafile->write(QByteArray("\n"));
 
-    m_data.clear();
+        auto N = (*buffer).length();
 
-    for(auto i=2; i<N-1; i+=2) {
-        unsigned short p = ((*buffer)[i+1] << 8) | (*buffer)[i];
-        auto x = i/2;
-        points.append(QPointF(x, p));
+        QVector<QPointF> points;
+        points.reserve(N / 2 - 1);
+
+        m_data.clear();
+
+        for(auto i=2; i<N-1; i+=2) {
+            unsigned short p = ((*buffer)[i] << 8) + (*buffer)[i+1];
+            auto x = i/2;
+            points.append(QPointF(x, p));
+        }
+
+        if (row < m_data.length())
+            m_data[row] = points;
+        else
+            m_data.append(points);
     }
-
-    if (row < m_data.length())
-        m_data[row] = points;
-    else
-        m_data.append(points);
-
     mtx.unlock();
 }

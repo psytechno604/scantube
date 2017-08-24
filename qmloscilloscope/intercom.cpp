@@ -2,6 +2,7 @@
 #include "address_provider.h"
 #include <QThread>
 #include <QCoreApplication>
+#include <QString>
 
 intercom::intercom(QObject *parent) : QObject(parent)
 {
@@ -49,6 +50,38 @@ void intercom::setMyIP(QString ip)
     reCreateSender();
 }
 
+void intercom::setAccumulation(QString acc)
+{
+    if (!_sender) {
+        return;
+    }
+    QString command = "";
+    if (acc=="1") command = "570100";
+    if (acc=="2") command = "570101";
+    if (acc=="4") command = "570102";
+    if (acc=="8") command = "570103";
+    if (acc=="16") command = "570104";
+    if (acc=="32") command = "570105";
+    if (acc=="64") command = "570106";
+    if (acc=="128") command = "570107";
+    if (acc=="256") command = "570108";
+    if (acc=="512") command = "570109";
+    if (acc=="1024") command = "57010A";
+
+    if (command != "")
+        _sender->writeDatagram(QByteArray::fromHex(command.toUtf8()), address_provider::get_address(1), dst_port);
+}
+
+void intercom::setSpeed(QString spd)
+{
+    if (!_sender) {
+        return;
+    }
+    QString accHexValue = "570D8" + spd;
+
+    _sender->writeDatagram(QByteArray::fromHex(accHexValue.toUtf8()), address_provider::get_address(1), dst_port);
+}
+
 void intercom::setDataSource(DataSource *ds)
 {
     _dataSource = ds;
@@ -90,7 +123,7 @@ void intercom::processDatagram() {
     //qDebug() << "Message: " << buffer;
 
 
-    if (_dataSource) {
+    if (_dataSource && buffer.size() >= MIN_DATA_PACKET_SIZE) {
         _dataSource->generateData(&buffer, 0);
     }
 }

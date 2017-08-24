@@ -21,8 +21,8 @@ QT_BEGIN_MOC_NAMESPACE
 QT_WARNING_PUSH
 QT_WARNING_DISABLE_DEPRECATED
 struct qt_meta_stringdata_DataSource_t {
-    QByteArrayData data[12];
-    char stringdata0[102];
+    QByteArrayData data[9];
+    char stringdata0[79];
 };
 #define QT_MOC_LITERAL(idx, ofs, len) \
     Q_STATIC_BYTE_ARRAY_DATA_HEADER_INITIALIZER_WITH_OFFSET(len, \
@@ -34,20 +34,17 @@ static const qt_meta_stringdata_DataSource_t qt_meta_stringdata_DataSource = {
 QT_MOC_LITERAL(0, 0, 10), // "DataSource"
 QT_MOC_LITERAL(1, 11, 12), // "generateData"
 QT_MOC_LITERAL(2, 24, 0), // ""
-QT_MOC_LITERAL(3, 25, 4), // "type"
-QT_MOC_LITERAL(4, 30, 8), // "rowCount"
-QT_MOC_LITERAL(5, 39, 8), // "colCount"
-QT_MOC_LITERAL(6, 48, 11), // "QByteArray*"
-QT_MOC_LITERAL(7, 60, 6), // "buffer"
-QT_MOC_LITERAL(8, 67, 3), // "row"
-QT_MOC_LITERAL(9, 71, 6), // "update"
-QT_MOC_LITERAL(10, 78, 16), // "QAbstractSeries*"
-QT_MOC_LITERAL(11, 95, 6) // "series"
+QT_MOC_LITERAL(3, 25, 11), // "QByteArray*"
+QT_MOC_LITERAL(4, 37, 6), // "buffer"
+QT_MOC_LITERAL(5, 44, 3), // "row"
+QT_MOC_LITERAL(6, 48, 6), // "update"
+QT_MOC_LITERAL(7, 55, 16), // "QAbstractSeries*"
+QT_MOC_LITERAL(8, 72, 6) // "series"
 
     },
-    "DataSource\0generateData\0\0type\0rowCount\0"
-    "colCount\0QByteArray*\0buffer\0row\0update\0"
-    "QAbstractSeries*\0series"
+    "DataSource\0generateData\0\0QByteArray*\0"
+    "buffer\0row\0update\0QAbstractSeries*\0"
+    "series"
 };
 #undef QT_MOC_LITERAL
 
@@ -57,7 +54,7 @@ static const uint qt_meta_data_DataSource[] = {
        7,       // revision
        0,       // classname
        0,    0, // classinfo
-       3,   14, // methods
+       2,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
@@ -65,14 +62,12 @@ static const uint qt_meta_data_DataSource[] = {
        0,       // signalCount
 
  // slots: name, argc, parameters, tag, flags
-       1,    3,   29,    2, 0x0a /* Public */,
-       1,    2,   36,    2, 0x0a /* Public */,
-       9,    1,   41,    2, 0x0a /* Public */,
+       1,    2,   24,    2, 0x0a /* Public */,
+       6,    1,   29,    2, 0x0a /* Public */,
 
  // slots: parameters
-    QMetaType::Void, QMetaType::Int, QMetaType::Int, QMetaType::Int,    3,    4,    5,
-    QMetaType::Void, 0x80000000 | 6, QMetaType::Int,    7,    8,
-    QMetaType::Void, 0x80000000 | 10,   11,
+    QMetaType::Void, 0x80000000 | 3, QMetaType::Int,    4,    5,
+    QMetaType::Void, 0x80000000 | 7,    8,
 
        0        // eod
 };
@@ -83,15 +78,14 @@ void DataSource::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, 
         DataSource *_t = static_cast<DataSource *>(_o);
         Q_UNUSED(_t)
         switch (_id) {
-        case 0: _t->generateData((*reinterpret_cast< int(*)>(_a[1])),(*reinterpret_cast< int(*)>(_a[2])),(*reinterpret_cast< int(*)>(_a[3]))); break;
-        case 1: _t->generateData((*reinterpret_cast< QByteArray*(*)>(_a[1])),(*reinterpret_cast< int(*)>(_a[2]))); break;
-        case 2: _t->update((*reinterpret_cast< QAbstractSeries*(*)>(_a[1]))); break;
+        case 0: _t->generateData((*reinterpret_cast< QByteArray*(*)>(_a[1])),(*reinterpret_cast< int(*)>(_a[2]))); break;
+        case 1: _t->update((*reinterpret_cast< QAbstractSeries*(*)>(_a[1]))); break;
         default: ;
         }
     } else if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
         switch (_id) {
         default: *reinterpret_cast<int*>(_a[0]) = -1; break;
-        case 2:
+        case 1:
             switch (*reinterpret_cast<int*>(_a[1])) {
             default: *reinterpret_cast<int*>(_a[0]) = -1; break;
             case 0:
@@ -127,13 +121,13 @@ int DataSource::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 3)
+        if (_id < 2)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 3;
+        _id -= 2;
     } else if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 3)
+        if (_id < 2)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 3;
+        _id -= 2;
     }
     return _id;
 }

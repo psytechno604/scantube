@@ -35,7 +35,7 @@ import IPsListModel 1.0
 ColumnLayout {
     property alias openGLButton: openGLButton
     property alias antialiasButton: antialiasButton
-    spacing: 8
+    //spacing: 8
     Layout.fillHeight: true
     signal animationsEnabled(bool enabled)
     signal seriesTypeChanged(string type)
@@ -46,7 +46,9 @@ ColumnLayout {
     signal sendOn()
     signal sendOff()
     signal selectMyIP(string ip)
-    height: 500
+    signal selectAccumulation(string acc)
+    signal selectSpeed(string spd)
+    height: 760
     property alias comboBox: comboBox
     property alias button: button
     property alias button1: button1
@@ -55,7 +57,9 @@ ColumnLayout {
     property alias signalSourceButton: signalSourceButton
     property alias sampleCountButton: sampleCountButton
     property alias multiButton: multiButton
-    width: 125
+    width: 151
+
+
 
     Text {
         id: text1
@@ -72,6 +76,7 @@ ColumnLayout {
         onSelectionChanged: openGlChanged(currentSelection == 1);
     }
 
+
     MultiButton {
         id: multiButton1
         text: "Graph: "
@@ -79,6 +84,7 @@ ColumnLayout {
         currentSelection: 0
         onSelectionChanged: seriesTypeChanged(items[currentSelection]);
     }
+
 
     MultiButton {
         id: signalSourceButton
@@ -91,6 +97,7 @@ ColumnLayout {
                                 sampleCountButton.items[sampleCountButton.currentSelection]);
     }
 
+
     MultiButton {
         id: sampleCountButton
         text: "Samples: "
@@ -102,6 +109,7 @@ ColumnLayout {
                                 selection);
     }
 
+
     MultiButton {
         id: multiButton
         text: "Refresh rate: "
@@ -109,6 +117,7 @@ ColumnLayout {
         currentSelection: 2
         onSelectionChanged: refreshRateChanged(items[currentSelection]);
     }
+
 
     MultiButton {
         id: antialiasButton
@@ -119,12 +128,14 @@ ColumnLayout {
         onSelectionChanged: antialiasingEnabled(currentSelection == 1);
     }
 
+
     ComboBox {
         id: comboBox
         model: myIPsListModel
         textRole: "text"
         onActivated: selectMyIP(currentText);
     }
+
 
     Button {
         id: button
@@ -144,6 +155,7 @@ ColumnLayout {
     }
 
 
+
     Button {
         id: button1
         width: 86
@@ -152,6 +164,41 @@ ColumnLayout {
         font.pointSize: 8
         checkable: false
         onClicked: sendOff();
+    }
+
+
+    ComboBox {
+        id: comboBox1
+        model: ["1", "2", "4", "8", "16", "32", "64", "128", "256", "512", "1024"]
+        onActivated: selectAccumulation(currentText);
+    }
+
+
+    Slider {
+        id: slider
+        width: 150
+        stepSize: 1
+        to: 194
+        value: 0
+    }
+
+
+
+    Slider {
+        id: slider1
+        stepSize: 1
+        to: 95
+        from: 80
+        value: 80
+    }
+
+
+
+
+    ComboBox {
+        id: comboBox2
+        model: ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F"]
+        onActivated: selectSpeed(currentText);
     }
 
 }

@@ -52,20 +52,20 @@ ChartView {
 
     ValueAxis {
         id: axisY1
-        min: 0
-        max: 65535
+        min: 32500
+        max: 33500
     }
 
     ValueAxis {
         id: axisY2
-        min: 0
-        max: 65535
+        min: 32500
+        max: 33500
     }
 
     ValueAxis {
         id: axisX
         min: 0
-        max: 1024
+        max: 750
     }
 
     LineSeries {
