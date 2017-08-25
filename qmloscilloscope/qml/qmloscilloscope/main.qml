@@ -35,63 +35,88 @@ Item {
     width: 1024
     height: 768
     property alias controlPanel: controlPanel
+    property alias text1Text: text1.text
+    property alias text2Text: text2.text
 
-
-    //![2]
-
-    Grid {
-        id: grid
-        anchors.fill: parent
-        rows: 2
-        columns: 2
-
-        ControlPanel {
-            id: controlPanel
-            spacing: 10.2
-            /*anchors.bottomMargin: 0
+    ControlPanel {
+        id: controlPanel
+        spacing: 10.2
+        /*anchors.bottomMargin: 0
             anchors.top: parent.top
             anchors.topMargin: 20
             anchors.bottom: parent.bottom
             anchors.left: parent.left
             anchors.leftMargin: 8*/
-            //![1]
+        //![1]
 
-            onSignalSourceChanged: {
-                if (source == "sin")
-                    dataSource.generateData(0, signalCount, sampleCount);
-                else
-                    dataSource.generateData(1, signalCount, sampleCount);
-                scopeView.axisX().max = sampleCount;
-            }
-            onSeriesTypeChanged: scopeView.changeSeriesType(type);
-            onRefreshRateChanged: scopeView.changeRefreshRate(rate);
-            onAntialiasingEnabled: scopeView.antialiasing = enabled;
-            onOpenGlChanged: {
-                scopeView.openGL = enabled;
-            }
-            onSendOn: _intercom.on();
-            onSendOff: _intercom.off();
-            onSelectMyIP: _intercom.setMyIP(ip);
-            onSelectAccumulation: _intercom.setAccumulation(acc);
-            onSelectSpeed: _intercom.setSpeed(spd);
+        onSignalSourceChanged: {
+            if (source == "sin")
+                dataSource.generateData(0, signalCount, sampleCount);
+            else
+                dataSource.generateData(1, signalCount, sampleCount);
+            scopeView.axisX().max = sampleCount;
         }
+        onSeriesTypeChanged: scopeView.changeSeriesType(type);
+        onRefreshRateChanged: scopeView.changeRefreshRate(rate);
+        onAntialiasingEnabled: scopeView.antialiasing = enabled;
+        onOpenGlChanged: {
+            scopeView.openGL = enabled;
+        }
+        onSendOn: _intercom.on();
+        onSendOff: _intercom.off();
+        onSelectMyIP: _intercom.setMyIP(ip);
+        onSelectAccumulation: _intercom.setAccumulation(acc);
+        onSelectSpeed: _intercom.setSpeed(spd);
+    }
+    ScopeView {
+        id: scopeView
+        width: 872
+        height: 700
+        anchors.top: parent.top
+        //anchors.bottom: parent.bottom
+        anchors.right: parent.right
+        //anchors.left: controlPanel.right
 
-        ScopeView {
-            id: scopeView
-            width: 872
-            height: 767
-            /*anchors.top: parent.top
-            anchors.bottom: parent.bottom
-            anchors.right: parent.right
-            anchors.left: controlPanel.right*/
-
-            onOpenGLSupportedChanged: {
-                if (!openGLSupported) {
-                    controlPanel.openGLButton.enabled = false
-                    controlPanel.openGLButton.currentSelection = 0
-                }
+        onOpenGLSupportedChanged: {
+            if (!openGLSupported) {
+                controlPanel.openGLButton.enabled = false
+                controlPanel.openGLButton.currentSelection = 0
             }
         }
+    }
+
+    Text {
+        id: text1
+        x: 259
+        y: 732
+        width: 126
+        height: 36
+        color: "#ffffff"
+        text: qsTr("Text")
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: 10
+        font.pixelSize: 16
+    }
+
+    Text {
+        id: text2
+        x: 724
+        y: 732
+        width: 126
+        height: 36
+        color: "#ffffff"
+        text: qsTr("Text")
+        font.pixelSize: 16
+        anchors.bottomMargin: 10
+        anchors.bottom: parent.bottom
+    }
+    function changeText1(msg) {
+        text1Text = msg
+        return
+    }
+    function changeText2(msg) {
+        text2Text = msg
+        return
     }
     //![2]
 }

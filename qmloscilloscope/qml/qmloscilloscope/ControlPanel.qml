@@ -169,6 +169,7 @@ ColumnLayout {
 
     ComboBox {
         id: comboBox1
+        height: 30
         model: ["1", "2", "4", "8", "16", "32", "64", "128", "256", "512", "1024"]
         onActivated: selectAccumulation(currentText);
     }
@@ -176,7 +177,8 @@ ColumnLayout {
 
     Slider {
         id: slider
-        width: 150
+        width: 151
+        Layout.fillWidth: true
         stepSize: 1
         to: 194
         value: 0
@@ -186,6 +188,8 @@ ColumnLayout {
 
     Slider {
         id: slider1
+        width: 151
+        Layout.fillWidth: true
         stepSize: 1
         to: 95
         from: 80

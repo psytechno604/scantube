@@ -50,10 +50,16 @@ DataSource::DataSource(QQuickView *appViewer, QObject *parent) :
     qRegisterMetaType<QAbstractAxis*>();
 
     datafile = new QFile("scantube.dat");
+    markupfile = new QFile("scantube.csv");
 
     if (!datafile->open(QFile::WriteOnly)){
-        qDebug() << "file cannot be opened";
+        qDebug() << "datafile cannot be opened";
     }
+    if (!markupfile->open(QFile::WriteOnly)){
+        qDebug() << "markupfile cannot be opened";
+    }
+
+    emit changeText("button clicked");
     //generateData(0, 5, 1024);
 }
 
@@ -62,11 +68,14 @@ DataSource::~DataSource()
     if (datafile) {
         datafile->close();
     }
+    if (markupfile) {
+        markupfile->close();
+    }
 }
 
 void DataSource::update(QAbstractSeries *series)
 {
-    mtx.lock_shared();
+    mtx.lock();
     if (series && m_data.count()>0) {
         QXYSeries *xySeries = static_cast<QXYSeries *>(series);
 
@@ -74,7 +83,7 @@ void DataSource::update(QAbstractSeries *series)
         // Use replace instead of clear + append, it's optimized for performance
         xySeries->replace(points);
     }
-    mtx.unlock_shared();
+    mtx.unlock();
 }
 
 void DataSource::generateData(QByteArray *buffer, int row)
@@ -83,11 +92,18 @@ void DataSource::generateData(QByteArray *buffer, int row)
 
     mtx.lock();
 
-    unsigned short i = (((*buffer)[0] << 8) + (*buffer)[1] ) % 2;
+    //datafile->write(*buffer);
+    //markupfile->write((QString::number((*buffer).length()) + QString(";")).toUtf8());
 
-    if (i) {
-        datafile->write(buffer->toHex());
-        datafile->write(QByteArray("\n"));
+    unsigned short i = (((*buffer)[0] << 8) + (*buffer)[1] );
+
+    if (i%2) {
+        datafile->write(*buffer);
+        //datafile->write(buffer->toHex());
+        //datafile->write(QByteArray("\n"));
+
+
+        //file.
 
         auto N = (*buffer).length();
 
@@ -97,10 +113,25 @@ void DataSource::generateData(QByteArray *buffer, int row)
         m_data.clear();
 
         for(auto i=2; i<N-1; i+=2) {
-            unsigned short p = ((*buffer)[i] << 8) + (*buffer)[i+1];
+            unsigned char b0 = (unsigned char)(*buffer)[i];
+            unsigned char b1 = (unsigned char)(*buffer)[i+1];
+            //unsigned short p = ((*buffer)[i] << 8) + (*buffer)[i+1];
+            unsigned short p = (b0 << 8) + b1;
+            //QString s;
+            //s.sprintf("%02X", p);
+            //markupfile->write(s.toUtf8());
+
+            //markupfile->write(QString::number(p).toUtf8());
+            //markupfile->write(QByteArray(";"));
+
             auto x = i/2;
             points.append(QPointF(x, p));
         }
+
+        //markupfile->write(QByteArray("\n"));
+        QQuickItem  *object = m_appViewer->rootObject();
+        QMetaObject::invokeMethod((QObject*)object, "changeText1", Q_ARG(QVariant, QString::number(i)));
+        QMetaObject::invokeMethod((QObject*)object, "changeText2", Q_ARG(QVariant, QString::number(points[0].y())));
 
         if (row < m_data.length())
             m_data[row] = points;

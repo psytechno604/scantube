@@ -51,7 +51,8 @@ public:
     explicit DataSource(QQuickView *appViewer, QObject *parent = 0);
     ~DataSource();
 Q_SIGNALS:
-
+signals:
+    void changeText(QString text);
 public slots:
     void generateData(QByteArray *buffer, int row);
     void update(QAbstractSeries *series);
@@ -61,7 +62,7 @@ private:
     QList<QVector<QPointF> > m_data;    
     int m_index;
     shared_mutex mtx;
-    QFile *datafile {nullptr};
+    QFile *datafile {nullptr}, *markupfile {nullptr};
 };
 
 #endif // DATASOURCE_H
