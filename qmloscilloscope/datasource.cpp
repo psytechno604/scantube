@@ -43,8 +43,7 @@ Q_DECLARE_METATYPE(QAbstractAxis *)
 
 DataSource::DataSource(QQuickView *appViewer, QObject *parent) :
     QObject(parent),
-    m_appViewer(appViewer),
-    m_index(-1)
+    m_appViewer(appViewer)
 {
     qRegisterMetaType<QAbstractSeries*>();
     qRegisterMetaType<QAbstractAxis*>();
@@ -76,12 +75,22 @@ DataSource::~DataSource()
 void DataSource::update(QAbstractSeries *series)
 {
     mtx.lock();
-    if (series && m_data.count()>0) {
+    if (series && m_data.size()>0) {
         QXYSeries *xySeries = static_cast<QXYSeries *>(series);
+        if (m_index > 1) {
+            m_index = 0;
+        }
+        //qDebug() << m_index;
+        if (m_index < m_data.size())    {
+            qDebug() << "update m_index=" << m_index;
+            QVector<QPointF> points = m_data.at(m_index);
+           // if (m_index == 0)
+                xySeries->replace(points);
+            m_index++;
+        }
 
-        QVector<QPointF> points = m_data.at(0);
         // Use replace instead of clear + append, it's optimized for performance
-        xySeries->replace(points);
+
     }
     mtx.unlock();
 }
@@ -97,8 +106,8 @@ void DataSource::generateData(QByteArray *buffer, int row)
 
     unsigned short i = (((*buffer)[0] << 8) + (*buffer)[1] );
 
-    if (i%2) {
-        datafile->write(*buffer);
+
+        //datafile->write(*buffer);
         //datafile->write(buffer->toHex());
         //datafile->write(QByteArray("\n"));
 
@@ -110,11 +119,14 @@ void DataSource::generateData(QByteArray *buffer, int row)
         QVector<QPointF> points;
         points.reserve(N / 2 - 1);
 
-        m_data.clear();
+        //m_data.clear();
 
-        for(auto i=2; i<N-1; i+=2) {
-            unsigned char b0 = (unsigned char)(*buffer)[i];
-            unsigned char b1 = (unsigned char)(*buffer)[i+1];
+        int b_index = i%2;
+        qDebug() << "generateData b_index=" << b_index;
+
+        for(auto j=2; j<N-1; j+=2) {
+            unsigned char b0 = (unsigned char)(*buffer)[j];
+            unsigned char b1 = (unsigned char)(*buffer)[j+1];
             //unsigned short p = ((*buffer)[i] << 8) + (*buffer)[i+1];
             unsigned short p = (b0 << 8) + b1;
             //QString s;
@@ -124,7 +136,7 @@ void DataSource::generateData(QByteArray *buffer, int row)
             //markupfile->write(QString::number(p).toUtf8());
             //markupfile->write(QByteArray(";"));
 
-            auto x = i/2;
+            auto x = j/2;
             points.append(QPointF(x, p));
         }
 
@@ -133,10 +145,10 @@ void DataSource::generateData(QByteArray *buffer, int row)
         QMetaObject::invokeMethod((QObject*)object, "changeText1", Q_ARG(QVariant, QString::number(i)));
         QMetaObject::invokeMethod((QObject*)object, "changeText2", Q_ARG(QVariant, QString::number(points[0].y())));
 
-        if (row < m_data.length())
-            m_data[row] = points;
-        else
-            m_data.append(points);
-    }
+        if (row * 2 + b_index >= m_data.length()) {
+             m_data.resize(row * 2 + b_index+1);
+        }
+        m_data[row * 2 + b_index] = points;
+
     mtx.unlock();
 }

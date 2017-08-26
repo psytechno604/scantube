@@ -59,8 +59,8 @@ public slots:
 
 private:
     QQuickView *m_appViewer {nullptr};
-    QList<QVector<QPointF> > m_data;    
-    int m_index;
+    QVector<QVector<QPointF> > m_data;
+    int m_index{0};
     shared_mutex mtx;
     QFile *datafile {nullptr}, *markupfile {nullptr};
 };
