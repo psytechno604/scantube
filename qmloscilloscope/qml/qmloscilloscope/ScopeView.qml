@@ -40,7 +40,9 @@ ChartView {
     onOpenGLChanged: {
         if (openGLSupported) {
             series("signal 1").useOpenGL = openGL;
+            series("signal s1").useOpenGL = openGL;
             series("signal 2").useOpenGL = openGL;
+            series("signal s2").useOpenGL = openGL;
         }
     }
     Component.onCompleted: {
@@ -51,16 +53,16 @@ ChartView {
     }
 
     ValueAxis {
-        id: axisY1
-        min: 30000
-        max: 33500
+        id: axisY
+        min: -3072
+        max: 1024
     }
-
     ValueAxis {
         id: axisY2
-        min: 30000
-        max: 33500
+        min: -0.00001
+        max: 0.00001
     }
+
 
     ValueAxis {
         id: axisX
@@ -72,12 +74,26 @@ ChartView {
         id: lineSeries1
         name: "signal 1"
         axisX: axisX
-        axisY: axisY1
+        axisY: axisY
+        useOpenGL: chartView.openGL
+    }
+    LineSeries {
+        id: lineSeriesS1
+        name: "signal 2"
+        axisX: axisX
+        axisY: axisY
         useOpenGL: chartView.openGL
     }
     LineSeries {
         id: lineSeries2
-        name: "signal 2"
+        name: "signal s1"
+        axisX: axisX
+        axisYRight: axisY2
+        useOpenGL: chartView.openGL
+    }
+    LineSeries {
+        id: lineSeriesS2
+        name: "signal s2"
         axisX: axisX
         axisYRight: axisY2
         useOpenGL: chartView.openGL
@@ -93,6 +109,8 @@ ChartView {
         onTriggered: {
             dataSource.update(chartView.series(0));
             dataSource.update(chartView.series(1));
+            dataSource.update(chartView.series(2));
+            dataSource.update(chartView.series(3));
         }
     }
     //![2]
@@ -105,25 +123,35 @@ ChartView {
         // but the series have their own y-axes to make it possible to control the y-offset
         // of the "signal sources".
         if (type == "line") {
-            var series1 = chartView.createSeries(ChartView.SeriesTypeLine, "signal 1",
-                                                 axisX, axisY1);
+            var series1 = chartView.createSeries(ChartView.SeriesTypeLine, "signal 1", axisX, axisY1);
             series1.useOpenGL = chartView.openGL
+            var seriesS1 = chartView.createSeries(ChartView.SeriesTypeLine, "signal s1", axisX, axisYs1);
+            seriesS1.useOpenGL = chartView.openGL
 
-            var series2 = chartView.createSeries(ChartView.SeriesTypeLine, "signal 2",
-                                                 axisX, axisY2);
+            var series2 = chartView.createSeries(ChartView.SeriesTypeLine, "signal 2", axisX, axisY2);
             series2.useOpenGL = chartView.openGL
+            var seriesS2 = chartView.createSeries(ChartView.SeriesTypeLine, "signal s2", axisX, axisYs2);
+            seriesS2.useOpenGL = chartView.openGL
         } else {
-            var series1 = chartView.createSeries(ChartView.SeriesTypeScatter, "signal 1",
-                                                 axisX, axisY1);
+            var series1 = chartView.createSeries(ChartView.SeriesTypeScatter, "signal 1", axisX, axisY1);
             series1.markerSize = 2;
             series1.borderColor = "transparent";
             series1.useOpenGL = chartView.openGL
 
-            var series2 = chartView.createSeries(ChartView.SeriesTypeScatter, "signal 2",
-                                                 axisX, axisY2);
+            var seriesS1 = chartView.createSeries(ChartView.SeriesTypeScatter, "signal s1", axisX, axisYs1);
+            seriesS1.markerSize = 2;
+            seriesS1.borderColor = "transparent";
+            seriesS1.useOpenGL = chartView.openGL
+
+            var series2 = chartView.createSeries(ChartView.SeriesTypeScatter, "signal 2", axisX, axisY2);
             series2.markerSize = 2;
             series2.borderColor = "transparent";
             series2.useOpenGL = chartView.openGL
+
+            var seriesS2 = chartView.createSeries(ChartView.SeriesTypeScatter, "signal s2", axisX, axisY2);
+            seriesS2.markerSize = 2;
+            seriesS2.borderColor = "transparent";
+            seriesS2.useOpenGL = chartView.openGL
         }
     }
 

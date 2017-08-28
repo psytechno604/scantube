@@ -10,7 +10,7 @@ intercom::intercom(QObject *parent) : QObject(parent)
 
 void intercom::on()
 {
-    qDebug() << QThread::currentThreadId();
+    qDebug() << "intercom::on" << QThread::currentThreadId();
     if (!_sender) {
         return;
     }
@@ -25,7 +25,7 @@ void intercom::on()
 }
 void intercom::off()
 {
-    qDebug() << QThread::currentThreadId();
+    qDebug() << "intercom::off" << QThread::currentThreadId();
     if (!_sender) {
         return;
     }
@@ -87,6 +87,15 @@ void intercom::setDataSource(DataSource *ds)
     _dataSource = ds;
 }
 
+void intercom::sendFix(QString distance)
+{
+    if (!myIP)
+        return;
+    //_sender->writeDatagram(QString::number(distance).toUtf8(), *myIP, listen_port);
+    _sender->writeDatagram(distance.toUtf8(), *myIP, listen_port);
+
+}
+
 void intercom::reCreateSender()
 {
     if (!myIP) {
@@ -122,8 +131,14 @@ void intercom::processDatagram() {
     //qDebug() << "Message port: " << senderPort;
     //qDebug() << "Message: " << buffer;
 
+    int s = buffer.size();
 
-    if (_dataSource && buffer.size() >= MIN_DATA_PACKET_SIZE) {
+    if (s>3 && s < MIN_DATA_PACKET_SIZE) {
+        _dataSource->save_point(buffer.toDouble(), 10);
+    }
+
+    if (_dataSource && s >= MIN_DATA_PACKET_SIZE) {
         _dataSource->generateData(&buffer, 0);
     }
+
 }

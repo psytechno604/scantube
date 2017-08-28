@@ -5,7 +5,7 @@
 #include "tssocket.h"
 #include "datasource.h"
 
-#define MIN_DATA_PACKET_SIZE 1000
+#define MIN_DATA_PACKET_SIZE 1456
 
 class intercom : public QObject
 {
@@ -18,6 +18,7 @@ public:
     Q_INVOKABLE void setAccumulation(QString acc);
     Q_INVOKABLE void setSpeed(QString spd);
     Q_INVOKABLE void setDataSource(DataSource *ds);
+    Q_INVOKABLE void sendFix(QString distance);
 private:
     QUdpSocket *_sender {nullptr};
     QHostAddress *myIP {nullptr};

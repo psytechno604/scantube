@@ -5,7 +5,11 @@ HEADERS += \
     shared_mutex.h \
     address_provider.h \
     intercom.h \
-    ipslistmodel.h
+    ipslistmodel.h \
+    ap.h \
+    apvt.h \
+    fft.h \
+    spline.h
 
 SOURCES += \
     main.cpp \
@@ -13,7 +17,9 @@ SOURCES += \
     shared_mutex.cpp \
     address_provider.cpp \
     intercom.cpp \
-    ipslistmodel.cpp
+    ipslistmodel.cpp \
+    ap.cpp \
+    fft.cpp
 
 RESOURCES += \
     resources.qrc
