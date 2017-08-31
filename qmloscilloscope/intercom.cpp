@@ -12,9 +12,11 @@ void intercom::on()
 {
     qDebug() << "intercom::on" << QThread::currentThreadId();
     if (!_sender) {
+        reCreateSender();
+    }
+    if (!_sender) {
         return;
     }
-
     _sender->writeDatagram(QByteArray::fromHex("490008"), address_provider::get_address(1), dst_port);
     QThread::msleep(100);
     _sender->writeDatagram(QByteArray::fromHex("4431"), address_provider::get_address(1), dst_port);
@@ -34,6 +36,8 @@ void intercom::off()
     QThread::msleep(100);
     _sender->writeDatagram(QByteArray::fromHex("4430"), address_provider::get_address(1), dst_port);
 
+    delete _sender;
+    _sender = nullptr;
     //qDebug() << _sender->hasPendingDatagrams();
     //_data_sockets[1]->send_data(QByteArray::fromHex("00017f1f7f0e7f017f027f1c7f287f197ef87f137f137f137f1e7f007f1a7f057f217f1c7f147f1a7f157f137f147f127f227f0f7f147f0f7f107f197f0f7f1c7f107f097f267f0b7f2d7f1f7f157f067f127f197f157f027f127f147f167f017f0c7f187f277f0f7f1e7f117f027f167f0e7f0a7f257f167f147f157f1a7f127f1c7f097f147f1c7f147f187f277f057f167f117f1c7f0c7f0c7f0d7f167f0e7f0e7f1c7f207f1b7f207f257f087f2d7f1a7f0a7f137f107f197f167f1d7f197f277f0f7f0f7f0d7f277f047f1d7f217f0d7f0c7f087f137f267f097f187f167f1b7f097f377f1d7f217f197f1c7f037f117f267f127f107f0b7f157f117ef97f087f237f177f067f107f047f137f247f177f1d7f0e7f1b7f0c7f267f1a7f157f207f0b7f057f167f187f147f207f317f147f097f187f297f177f137f1d7f057f047f127f0b7f047f117f137f1f7f257f097f1c7f187f087f087f0a7f1f7f107f167f297f0a7f127f177f0e7f1a7f147f207f137f0c7f1a7f1e7f117f207f167f0a7f2a7f0f7f187f097f117f1f7f147f097f287f207f157efb7f177f087f157f1c7f037f257f147f187f0b7f217f077f247f217f067f087f1b7f187f1d7f057f167f047f177f147f0d7f187f127f147f127f207f127f127efe7f0c7f167f1e7f1a7f087f107f0a7f1e7f1b7f217f0d7f0c7f0b7f217f147f147f317f1e7f047f297f0f7f267f227f1d7f157f147f137f197f037f1e7f0c7f107f1a7f1e7f317f1d7f157f187f0b7f207f0b7f227f117f087f147f297f297f1e7f047f157f0f7f1a7f1e7f1b7f077f197f187f137f207f0a7f167f1d7ef77f067f247f1d7f187f187f117f1c7f077f297f1f7f2b7f267f1a7f1a7f257f0e7f267f187f207f127f0f7f1d7f217f037f167f267f367f0b7f147f247f057f117f0c7f137f207f1b7f117eff7f257f1f7f237f167f177f127f1b7f297f147f277f1b7f167f197f1f7f137f0b7f147f127f347f1a7f1a7f117f1f7f007f0b7f1f7f207f1c7f197f1a7f247f0e7f207f207f0f7f197f147f1c7efe7f177f247f037f187f157f0c7f1e7f137f237f107f1a7f1f7f0d7f147f0d7f147f1e7f107f1c7f0f7f1a7f107f057f287f187f0a7f247f117f217f1c7f337f077f247f107f207f177f077f0e7f1d7f1a7f217f227eff7f147f0e7f027f197f0d7f0f7f1a7f187f307f2f7f277f327f157f157f147f1b7f1e7f267f1a7f0e7f187f1c7f127f0b7f267f1a7f0d7f167f1d7f227f167f0c7f177f1e7f037f117f197f1f7f267f187f0a7f217f1c7f1b7efb7f077f1a7f2c7f117f147f0d7f1b7f2a7f1e7f0c7f127f297f0f7efe7f207f157f207f127f157f1f7f187f0f7f1b7f097f047f157f1f7f177f0e7efb7f1c7f237f1b7f1e7f157f117f267f277f257f147f1d7f0e7f1e7f097f087f1e7f127f1b7f187f327f087f177f107f207f1a7f167f237f177f137f147f217f1a7f207f1c7f117f147f1c7f247f007f157f0b7f207f157f1b7f1e7f107f187f0e7f157f217f1d7f137f227f1e7f2c7f187f1f7f1f7f0d7f137f2e7f187f2b7f287f217f147f1d7f147f337f087f2f7f1e7f157f1a7f0d7f257f0d7f0e7f137f347f137f057f1e7f297f187f277f257f077f297f167f2d7f1e7f1a7f177f217f397f0a7f197f237f227f107f387f237f2c7f207f247f2e7f1b7f237f2a7f237f237f207f0a7f237f2a7f217f137f317f1a7f157f2b7f247f267f0d7f247f257f2a7f217f1e7f197f117f177f1d7f1f7f187f1f7f317f137f107f067f247f267f3a7f1c7f2d7f0e7f287f337f277f2a7f3a7f2b7f267f217f2e7f127f2c7f1e7f2d7f2f7f197f2f7f1c7f367f227f237f267f247f0b7f187f2b7f267f267f2c7f0e7f257f297f2a7f2c7f357f357f0e7f227f0b7f2d7f297f327f247f217f3a7f247f1a7f297f1d7f1f7f257f247f1f7f237f207f1c7f237f187f217f217f227f167f2f7f197f3c7f2d7f0a7f1b7f1c7f237f237f2f7f1b7f267f1e7f157f247f257f2d7f1f7f247f217f1e7f2c7f2c7f217f1f"));
 
@@ -45,7 +49,7 @@ void intercom::off()
 
 void intercom::setMyIP(QString ip)
 {
-    qDebug() << QThread::currentThreadId();
+    //qDebug() << QThread::currentThreadId();
     myIP = new QHostAddress(ip);
     reCreateSender();
 }
@@ -89,7 +93,7 @@ void intercom::setDataSource(DataSource *ds)
 
 void intercom::sendFix(QString distance)
 {
-    if (!myIP)
+    if (!myIP || !_sender)
         return;
     //_sender->writeDatagram(QString::number(distance).toUtf8(), *myIP, listen_port);
     _sender->writeDatagram(distance.toUtf8(), *myIP, listen_port);
@@ -134,10 +138,12 @@ void intercom::processDatagram() {
     int s = buffer.size();
 
     if (s>3 && s < MIN_DATA_PACKET_SIZE) {
-        _dataSource->save_point(buffer.toDouble(), 10);
+        //_dataSource->save_point(buffer.toDouble(), 10, 0);
+        _dataSource->save_point(distance, 10, 0);
+        distance = distance - 0.5;
     }
 
-    if (_dataSource && s >= MIN_DATA_PACKET_SIZE) {
+    if (_dataSource && s >= MIN_DATA_PACKET_SIZE) {        
         _dataSource->generateData(&buffer, 0);
     }
 

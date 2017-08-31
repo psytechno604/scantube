@@ -34,7 +34,7 @@
 #include <cassert>
 #include <vector>
 #include <algorithm>
-
+#include <QVector>
 
 // unnamed namespace only because the implementation is in this
 // header file and we don't want to export symbols to the obj files
@@ -48,8 +48,8 @@ namespace tk
 class band_matrix
 {
 private:
-    std::vector< std::vector<double> > m_upper;  // upper band
-    std::vector< std::vector<double> > m_lower;  // lower band
+    QVector< QVector<double> > m_upper;  // upper band
+    QVector< QVector<double> > m_lower;  // lower band
 public:
     band_matrix() {};                             // constructor
     band_matrix(int dim, int n_u, int n_l);       // constructor
@@ -71,9 +71,9 @@ public:
     double& saved_diag(int i);
     double  saved_diag(int i) const;
     void lu_decompose();
-    std::vector<double> r_solve(const std::vector<double>& b) const;
-    std::vector<double> l_solve(const std::vector<double>& b) const;
-    std::vector<double> lu_solve(const std::vector<double>& b,
+    QVector<double> r_solve(const QVector<double>& b) const;
+    QVector<double> l_solve(const QVector<double>& b) const;
+    QVector<double> lu_solve(const QVector<double>& b,
                                  bool is_lu_decomposed=false);
 
 };
@@ -89,10 +89,10 @@ public:
     };
 
 private:
-    std::vector<double> m_x,m_y;            // x,y coordinates of points
+    QVector<double> m_x,m_y;            // x,y coordinates of points
     // interpolation parameters
     // f(x) = a*(x-x_i)^3 + b*(x-x_i)^2 + c*(x-x_i) + y_i
-    std::vector<double> m_a,m_b,m_c;        // spline coefficients
+    QVector<double> m_a,m_b,m_c;        // spline coefficients
     double  m_b0, m_c0;                     // for left extrapol
     bd_type m_left, m_right;
     double  m_left_value, m_right_value;
@@ -111,8 +111,8 @@ public:
     void set_boundary(bd_type left, double left_value,
                       bd_type right, double right_value,
                       bool force_linear_extrapolation=false);
-    void set_points(const std::vector<double>& x,
-                    const std::vector<double>& y, bool cubic_spline=true);
+    void set_points(const QVector<double>& x,
+                    const QVector<double>& y, bool cubic_spline=true);
     double operator() (double x) const;
 };
 
@@ -222,10 +222,10 @@ void band_matrix::lu_decompose()
     }
 }
 // solves Ly=b
-std::vector<double> band_matrix::l_solve(const std::vector<double>& b) const
+QVector<double> band_matrix::l_solve(const QVector<double>& b) const
 {
     assert( this->dim()==(int)b.size() );
-    std::vector<double> x(this->dim());
+    QVector<double> x(this->dim());
     int j_start;
     double sum;
     for(int i=0; i<this->dim(); i++) {
@@ -237,10 +237,10 @@ std::vector<double> band_matrix::l_solve(const std::vector<double>& b) const
     return x;
 }
 // solves Rx=y
-std::vector<double> band_matrix::r_solve(const std::vector<double>& b) const
+QVector<double> band_matrix::r_solve(const QVector<double>& b) const
 {
     assert( this->dim()==(int)b.size() );
-    std::vector<double> x(this->dim());
+    QVector<double> x(this->dim());
     int j_stop;
     double sum;
     for(int i=this->dim()-1; i>=0; i--) {
@@ -252,11 +252,11 @@ std::vector<double> band_matrix::r_solve(const std::vector<double>& b) const
     return x;
 }
 
-std::vector<double> band_matrix::lu_solve(const std::vector<double>& b,
+QVector<double> band_matrix::lu_solve(const QVector<double>& b,
         bool is_lu_decomposed)
 {
     assert( this->dim()==(int)b.size() );
-    std::vector<double>  x,y;
+    QVector<double>  x,y;
     if(is_lu_decomposed==false) {
         this->lu_decompose();
     }
@@ -284,8 +284,8 @@ void spline::set_boundary(spline::bd_type left, double left_value,
 }
 
 
-void spline::set_points(const std::vector<double>& x,
-                        const std::vector<double>& y, bool cubic_spline)
+void spline::set_points(const QVector<double>& x,
+                        const QVector<double>& y, bool cubic_spline)
 {
     assert(x.size()==y.size());
     assert(x.size()>2);
@@ -301,7 +301,7 @@ void spline::set_points(const std::vector<double>& x,
         // setting up the matrix and right hand side of the equation system
         // for the parameters b[]
         band_matrix A(n,1,1);
-        std::vector<double>  rhs(n);
+        QVector<double>  rhs(n);
         for(int i=1; i<n-1; i++) {
             A(i,i-1)=1.0/3.0*(x[i]-x[i-1]);
             A(i,i)=2.0/3.0*(x[i+1]-x[i-1]);
@@ -379,7 +379,7 @@ double spline::operator() (double x) const
 {
     size_t n=m_x.size();
     // find the closest point m_x[idx] < x, idx=0 even if x<m_x[0]
-    std::vector<double>::const_iterator it;
+    QVector<double>::const_iterator it;
     it=std::lower_bound(m_x.begin(),m_x.end(),x);
     int idx=std::max( int(it-m_x.begin())-1, 0);
 

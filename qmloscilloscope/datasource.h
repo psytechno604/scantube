@@ -50,25 +50,27 @@ QT_CHARTS_USE_NAMESPACE
 #include <math.h>
 #include <limits.h>
 
-#include <vector>
+//#include <vector>
 #include <algorithm>
 #include <complex>
 #include <queue>
 #include <map>
 
-#define _N 727
-
+/*
+QVector
 typedef std::vector<double> vectord;
 typedef std::complex<double> complexd;
-typedef std::vector<complexd> vectorc;
+typedef std::vector<complexd> vectorc;*/
+typedef QVector<double> vectord;
+typedef std::complex<double> complexd;
+typedef QVector<complexd> vectorc;
 
 #include "fft.h"
 #include "spline.h"
 
 typedef struct {
     double distance;
-    double *raw_signal;
-    double *processed_signal;
+    QVector<double *> buffer;
 } measurement;
 
 class DataSource : public QObject
@@ -81,6 +83,7 @@ Q_SIGNALS:
 signals:
     void changeText(QString text);
 public slots:
+    void showFromBuffer(int b_index);
     void generateData(QByteArray *buffer, int row);
     void update(QAbstractSeries *series);
 
@@ -88,27 +91,51 @@ public slots:
 
     void process_signal(double *in, double *out, int *StartPosIndex, int *ObjectPosIndex, int numadc);
 
-    void save_point(double distance, int nf);
+    void save_point(double distance, int nf, int saveAsZeroSignal);
+    void start_recording(QString fbasename);
+
+    void open_file(QString openfname);
+
+    int get_channel_shift(int c);
+    void set_channel_shift(int c, int sh);
+
+    int getSubtractZeroSignal();
+    void setSubtractZeroSignal(int s);
+
+    int getUseFilter();
+    void setUseFilter(int uf);
+
+    double getValue(QString name);
+    void setValue(QString name, double value);
+
+    void showByIndex(int index);
 private:
-    QQuickItem  *object;
+    double _LP0_Td {1.0/(100.0*1E9)}, _LP0_fc {1000*1E6}, _LP0_ford {8};
+    double _HP0_Td {1.0/(100.0*1E9)}, _HP0_fc {300*1E6}, _HP0_ford {2};
+    double _LP1_Td {1.0/(100.0*1E9)}, _LP1_fc {1000*1E6}, _LP1_ford {2};
+
+    int _N{727};
+    QQuickItem  *object {nullptr};
     QQuickView *m_appViewer {nullptr};
     QVector<QVector<QPointF> > m_data;
     int m_index{0};
     shared_mutex mtx;
-    QFile *datafile {nullptr}, *markupfile {nullptr}, *savepoint {nullptr};
+    QFile *datafile {nullptr}, *markupfile {nullptr}, *pointfile {nullptr}, *zerofile {nullptr};
 
-    std::vector<std::vector<double>> X, Y;
-    std::vector<tk::spline> s;
+    QVector<QVector<double>> X, Y;
+    QVector<tk::spline> s;
 
-    std::vector<std::queue<int>> start_pos_acc;
-    std::vector<std::queue<int>> object_pos_acc;
+    QVector<std::queue<int>> start_pos_acc;
+    QVector<std::queue<int>> object_pos_acc;
+
+    QString fname {""}, zerofilename;
 
     int nchannels {2};
 
     int nframes {-1};
-    std::vector<int> fcount;
+    QVector<int> fcount;
     float distance {-1.0};
-    bool is_measured {false};
+    int is_measured {0};
 
     float sigTau;
     float Fdskr;
@@ -118,11 +145,16 @@ private:
     float* signal {nullptr};
     double *buffer_in {nullptr};
     double *buffer_out {nullptr};
-    std::vector<double *> raw_acc {nullptr};
-    std::vector<double *> processed_acc {nullptr};
+    QVector<double *> raw_acc {nullptr};
+    QVector<double *> processed_acc {nullptr};
     int buffer_size {_N};
     QVector<int> shY;
-    //std::vector<double, measurement> measurements;
+    QVector<measurement> _data;
+
+    QVector<double *> zero_signal;
+    int saveAsZeroSignal {0};
+    int subtractZeroSignal {1};
+    int useFilter {1};
 
     bool IsPowerOfTwo(ulong x);
     void calc_correlate_func(double *in, double *out, float *corrfunct, int n__corr, int numsmpl);
@@ -133,7 +165,9 @@ private:
 
     int _FindMaxValueInRangeOFArray(double* smp, int numsmp, int lowlim, int highlim);
 
-    void acc_measurement_data(int b_index);
+    void accumulateChannel(int b_index);
+
+    void clearMeasurementData();
 };
 
 #endif // DATASOURCE_H

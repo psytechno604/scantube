@@ -37,6 +37,10 @@ ChartView {
     theme: ChartView.ChartThemeDark
     property bool openGL: true
     property bool openGLSupported: true
+    property alias yMax: axisY.max
+    property alias yMin: axisY.min
+    property alias y2Max: axisY2.max
+    property alias y2Min: axisY2.min
     onOpenGLChanged: {
         if (openGLSupported) {
             series("signal 1").useOpenGL = openGL;
@@ -55,7 +59,7 @@ ChartView {
     ValueAxis {
         id: axisY
         min: -3072
-        max: 1024
+        max: 3072
     }
     ValueAxis {
         id: axisY2

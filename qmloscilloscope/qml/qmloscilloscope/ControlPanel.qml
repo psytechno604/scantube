@@ -31,8 +31,16 @@ import QtQuick 2.1
 import QtQuick.Layouts 1.0
 import QtQuick.Controls 2.2
 import IPsListModel 1.0
+import QtQuick.Extras 1.4
+import QtQuick.Controls.Universal 2.0
+import QtQuick.Window 2.3
+import QtQuick.Dialogs.qml 1.0
+import QtQuick.Templates 2.2
+import QtWebEngine.Controls1Delegates 1.0
+import QtQuick.Controls.Styles.Desktop 1.0
+import QtQuick.Controls.Styles 1.0
 
-ColumnLayout {
+Item {
     property alias openGLButton: openGLButton
     property alias antialiasButton: antialiasButton
     //spacing: 8
@@ -55,7 +63,7 @@ ColumnLayout {
     property alias text1: text1
     property alias multiButton1: multiButton1
     property alias signalSourceButton: signalSourceButton
-    property alias sampleCountButton: sampleCountButton
+   property alias sampleCountButton: sampleCountButton
     property alias multiButton: multiButton
     width: 151
 
@@ -86,7 +94,7 @@ ColumnLayout {
     }
 
 
-    MultiButton {
+   MultiButton {
         id: signalSourceButton
         text: "Source: "
         items: ["sin", "linear"]

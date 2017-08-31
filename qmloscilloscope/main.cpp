@@ -40,6 +40,7 @@
 #include "address_provider.h"
 #include "intercom.h"
 #include "ipslistmodel.h"
+#include "interfacehelper.h"
 
 #include <QtQml>
 
@@ -81,6 +82,9 @@ int main(int argc, char *argv[])
 
 
     viewer.rootContext()->setContextProperty("_intercom", _intercom);
+
+    InterfaceHelper *_interfaceHelper = new InterfaceHelper();
+    viewer.rootContext()->setContextProperty("_interfaceHelper", _interfaceHelper);
 
     IPsListModel myIPsListModel;
 

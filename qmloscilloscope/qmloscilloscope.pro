@@ -9,7 +9,8 @@ HEADERS += \
     ap.h \
     apvt.h \
     fft.h \
-    spline.h
+    spline.h \
+    interfacehelper.h
 
 SOURCES += \
     main.cpp \
@@ -19,7 +20,8 @@ SOURCES += \
     intercom.cpp \
     ipslistmodel.cpp \
     ap.cpp \
-    fft.cpp
+    fft.cpp \
+    interfacehelper.cpp
 
 RESOURCES += \
     resources.qrc

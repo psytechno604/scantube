@@ -28,6 +28,7 @@
 ****************************************************************************/
 
 import QtQuick 2.0
+import QtQuick.Dialogs 1.0
 
 //![1]
 import QtQuick.Controls 2.2
@@ -36,7 +37,7 @@ Item {
     width: 1024
     height: 768
     property alias column: column
-    property alias controlPanel: controlPanel
+    //property alias controlPanel: controlPanel
     property alias text1Text: text1.text
     property alias text2Text: text2.text
     property alias text3Text: text3.text
@@ -48,18 +49,396 @@ Item {
         id: row
         anchors.fill: parent
         z: -1
+        Item {
+            id : leftcolumn
+            width : 200
+            height: parent.height
 
+            ComboBox {
+                id: comboBox
+                x: 8
+                y: 8
+                width: 184
+                height: 32
+                model: myIPsListModel
+                textRole: "text"
+                onActivated: _intercom.setMyIP(currentText);
+            }
+
+
+            Button {
+                id: button
+                x: 8
+                y: 46
+                width: 85
+                height: 40
+                text: qsTr("Start")
+                padding: 0
+                rotation: 0
+                enabled: true
+                bottomPadding: 0
+                topPadding: 0
+                rightPadding: 0
+                leftPadding: 0
+                font.pointSize: 8
+                checkable: false
+                onClicked: _intercom.on();
+            }
+            Button {
+                id: button1
+                x: 114
+                y: 46
+                width: 78
+                height: 40
+                text: qsTr("Stop")
+                font.pointSize: 8
+                checkable: false
+                onClicked: _intercom.off();
+            }
+            ComboBox {
+                id: comboBox1
+                x: 8
+                y: 92
+                width: 85
+                height: 30
+                model: ["1", "2", "4", "8", "16", "32", "64", "128", "256", "512", "1024"]
+                onActivated: _intercom.setAccumulation(currentText);
+            }
+            ComboBox {
+                id: comboBox2
+                x: 114
+                y: 92
+                width: 78
+                height: 30
+                model: ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F"]
+                onActivated: _intercom.setSpeed(currentText);
+            }
+
+            TextField {
+                id: textField1
+                x: 8
+                y: 211
+                width: 124
+                height: 40
+                text: dataSource.get_channel_shift(0)
+                selectByMouse: true
+                MouseArea {
+                    acceptedButtons: Qt.NoButton
+                    cursorShape: Qt.IBeamCursor
+                    anchors.fill: parent
+                }
+                onTextChanged:{
+                    dataSource.set_channel_shift(0, text*1);
+                }
+            }
+            TextField {
+                id: textField2
+                x: 8
+                y: 257
+                width: 124
+                height: 40
+                text: dataSource.get_channel_shift(1)
+                selectByMouse: true
+                MouseArea {
+                    acceptedButtons: Qt.NoButton
+                    cursorShape: Qt.IBeamCursor
+                    anchors.fill: parent
+                }
+                onTextChanged:{
+                    dataSource.set_channel_shift(1, text*1);
+                }
+            }
+
+            Button {
+                id: button2
+                x: 8
+                y: 135
+                width: 85
+                height: 40
+                text: qsTr("Load file...")
+                font.pointSize: 8
+                checkable: false
+                rotation: 0
+                bottomPadding: 0
+                leftPadding: 0
+                rightPadding: 0
+                enabled: true
+                topPadding: 0
+                padding: 0
+                onClicked: fileDialog.open();
+            }
+
+            CheckBox {
+                id: checkBox_subtractZeroSignal
+                x: 6
+                y: 317
+                width: 144
+                height: 40
+                checked: dataSource.getSubtractZeroSignal();
+                text: qsTr("subtract Zero signal")
+                onCheckedChanged: {
+                    dataSource.setSubtractZeroSignal(checked);
+                }
+            }
+
+            CheckBox {
+                id: checkBox_useFilter
+                x: 6
+                y: 364
+                width: 144
+                height: 40
+                text: qsTr("use filter")
+                checked: dataSource.getUseFilter()
+                onCheckedChanged: {
+                    dataSource.setUseFilter(checked);
+                }
+            }
+
+            TextField {
+                id: textField_LP0_Td
+                x: 8
+                y: 437
+                width: 124
+                height: 26
+                text: dataSource.getValue("textField_LP0_Td")
+                selectByMouse: true
+                MouseArea {
+                    anchors.leftMargin: 0
+                    anchors.bottomMargin: 0
+                    acceptedButtons: Qt.NoButton
+                    cursorShape: Qt.IBeamCursor
+                    anchors.rightMargin: 0
+                    anchors.topMargin: 0
+                    anchors.fill: parent
+                }
+                onTextChanged: {
+                    dataSource.setValue("textField_LP0_Td", text * 1.0);
+                }
+            }
+
+            TextField {
+                id: textField_LP0_fc
+                x: 8
+                y: 464
+                width: 124
+                height: textField_LP0_Td.height
+                text: dataSource.getValue("textField_LP0_fc")
+                selectByMouse: true
+                MouseArea {
+                    anchors.leftMargin: 0
+                    anchors.bottomMargin: 0
+                    acceptedButtons: Qt.NoButton
+                    cursorShape: Qt.IBeamCursor
+                    anchors.rightMargin: 0
+                    anchors.topMargin: 0
+                    anchors.fill: parent
+                }
+                onTextChanged: {
+                    dataSource.setValue("textField_LP0_fc", text * 1.0);
+                }
+            }
+
+            TextField {
+                id: textField_LP0_ford
+                x: 8
+                y: 491
+                width: 124
+                height: textField_LP0_Td.height
+                text: dataSource.getValue("textField_LP0_ford")
+                selectByMouse: true
+                MouseArea {
+                    anchors.leftMargin: 0
+                    anchors.bottomMargin: 0
+                    acceptedButtons: Qt.NoButton
+                    cursorShape: Qt.IBeamCursor
+                    anchors.rightMargin: 0
+                    anchors.topMargin: 0
+                    anchors.fill: parent
+                }
+                onTextChanged: {
+                    dataSource.setValue("textField_LP0_ford", text * 1.0);
+                }
+            }
+
+            TextField {
+                id: textField_HP0_Td
+                x: 8
+                y: 533
+                width: 124
+                height: textField_LP0_Td.height
+                text: dataSource.getValue("textField_HP0_Td")
+                selectByMouse: true
+                MouseArea {
+                    anchors.leftMargin: 0
+                    anchors.bottomMargin: 0
+                    acceptedButtons: Qt.NoButton
+                    cursorShape: Qt.IBeamCursor
+                    anchors.rightMargin: 0
+                    anchors.topMargin: 0
+                    anchors.fill: parent
+                }
+                onTextChanged: {
+                    dataSource.setValue("textField_HP0_Td", text * 1.0);
+                }
+            }
+
+            TextField {
+                id: textField_HP0_fc
+                x: 8
+                y: 560
+                width: 124
+                height: textField_LP0_Td.height
+                text: dataSource.getValue("textField_HP0_fc")
+                selectByMouse: true
+                MouseArea {
+                    anchors.leftMargin: 0
+                    anchors.bottomMargin: 0
+                    acceptedButtons: Qt.NoButton
+                    cursorShape: Qt.IBeamCursor
+                    anchors.rightMargin: 0
+                    anchors.topMargin: 0
+                    anchors.fill: parent
+                }
+                onTextChanged: {
+                    dataSource.setValue("textField_HP0_fc", text * 1.0);
+                }
+            }
+
+            TextField {
+                id: textField_HP0_ford
+                x: 8
+                y: 587
+                width: 124
+                height: textField_LP0_Td.height
+                text: dataSource.getValue("textField_HP0_ford")
+                selectByMouse: true
+                MouseArea {
+                    anchors.leftMargin: 0
+                    anchors.bottomMargin: 0
+                    acceptedButtons: Qt.NoButton
+                    cursorShape: Qt.IBeamCursor
+                    anchors.rightMargin: 0
+                    anchors.topMargin: 0
+                    anchors.fill: parent
+                }
+                onTextChanged: {
+                    dataSource.setValue("textField_HP0_ford", text * 1.0);
+                }
+            }
+
+            TextField {
+                id: textField_LP1_Td
+                x: 8
+                y: 628
+                width: 124
+                height: textField_LP0_Td.height
+                text: dataSource.getValue("textField_LP1_Td")
+                selectByMouse: true
+                MouseArea {
+                    anchors.leftMargin: 0
+                    anchors.bottomMargin: 0
+                    acceptedButtons: Qt.NoButton
+                    cursorShape: Qt.IBeamCursor
+                    anchors.rightMargin: 0
+                    anchors.topMargin: 0
+                    anchors.fill: parent
+                }
+                onTextChanged: {
+                    dataSource.setValue("textField_LP1_Td", text * 1.0);
+                }
+            }
+
+            TextField {
+                id: textField_LP1_fc
+                x: 8
+                y: 655
+                width: 124
+                height: textField_LP0_Td.height
+                text: dataSource.getValue("textField_LP1_fc")
+                selectByMouse: true
+                MouseArea {
+                    anchors.leftMargin: 0
+                    anchors.bottomMargin: 0
+                    acceptedButtons: Qt.NoButton
+                    cursorShape: Qt.IBeamCursor
+                    anchors.rightMargin: 0
+                    anchors.topMargin: 0
+                    anchors.fill: parent
+                }
+                onTextChanged: {
+                    dataSource.setValue("textField_LP1_fc", text * 1.0);
+                }
+            }
+
+            TextField {
+                id: textField_LP1_ford
+                x: 8
+                y: 682
+                width: 124
+                height: textField_LP0_Td.height
+                text: dataSource.getValue("textField_LP1_ford")
+                selectByMouse: true
+                MouseArea {
+                    anchors.leftMargin: 0
+                    anchors.bottomMargin: 0
+                    acceptedButtons: Qt.NoButton
+                    cursorShape: Qt.IBeamCursor
+                    anchors.rightMargin: 0
+                    anchors.topMargin: 0
+                    anchors.fill: parent
+                }
+                onTextChanged: {
+                    dataSource.setValue("textField_LP1_ford", text * 1.0);
+                }
+            }
+
+            CheckBox {
+                id: checkBoxUseFile
+                x: 86
+                y: 135
+                width: 46
+                height: 40
+                checked: _interfaceHelper.getValue("checkBoxUseFile");
+                onCheckedChanged: {
+                    _interfaceHelper.setValue("checkBoxUseFile", checked * 1.0);
+                }
+            }
+
+            TextField {
+                id: textField3
+                x: 130
+                y: 135
+                width: 62
+                height: 40
+                text: qsTr("")
+                selectByMouse: true
+                MouseArea {
+                    anchors.leftMargin: 0
+                    anchors.bottomMargin: 0
+                    acceptedButtons: Qt.NoButton
+                    cursorShape: Qt.IBeamCursor
+                    anchors.rightMargin: 0
+                    anchors.topMargin: 0
+                    anchors.fill: parent
+                }
+                onTextChanged: {
+                    dataSource.showByIndex(text*1.0);
+                }
+            }
+        }
+
+        /*
         ControlPanel {
             id: controlPanel
             width: 200
             height: parent.height
             spacing: 10.2
-            /*anchors.bottomMargin: 0
-            anchors.top: parent.top
-            anchors.topMargin: 20
-            anchors.bottom: parent.bottom
-            anchors.left: parent.left
-            anchors.leftMargin: 8*/
+            //anchors.bottomMargin: 0
+            //anchors.top: parent.top
+            //anchors.topMargin: 20
+            //anchors.bottom: parent.bottom
+            //anchors.left: parent.left
+            //anchors.leftMargin: 8
             //![1]
 
             onSignalSourceChanged: {
@@ -80,7 +459,7 @@ Item {
             onSelectMyIP: _intercom.setMyIP(ip);
             onSelectAccumulation: _intercom.setAccumulation(acc);
             onSelectSpeed: _intercom.setSpeed(spd);
-        }
+        }*/
 
         Column {
             id: column
@@ -107,6 +486,62 @@ Item {
                             controlPanel.openGLButton.currentSelection = 0
                         }
                     }
+                    MouseArea {
+                        anchors.fill: parent
+                        acceptedButtons: Qt.LeftButton | Qt.RightButton
+                        onPressed: {
+                            console.log("onPressed")
+                            if (mouse.button == Qt.LeftButton)
+                            {
+                                console.log("Left", width, height, parent.yMax, parent.yMin)
+                                _interfaceHelper.ScopeView_LB = 1;
+                            }
+                            else if (mouse.button == Qt.RightButton)
+                            {
+                                console.log("Right")
+                                _interfaceHelper.ScopeView_RB = 1;
+                            }
+                            _interfaceHelper.ScopeView_x0 = mouseX;
+                            _interfaceHelper.ScopeView_ymax0 = parent.yMax;
+                            _interfaceHelper.ScopeView_ymin0 = parent.yMin;
+                            _interfaceHelper.ScopeView_y2max0 = parent.y2Max;
+                            _interfaceHelper.ScopeView_y2min0 = parent.y2Min;
+                            _interfaceHelper.ScopeView_y0 = mouseY;
+
+                            _interfaceHelper.ScopeView_axisNum = (mouseX < width/2)?0:1;
+                        }
+                        onPositionChanged: {
+                            if (_interfaceHelper.ScopeView_RB){
+
+                                var k = (mouseY - _interfaceHelper.ScopeView_y0) / height;
+                                if (_interfaceHelper.ScopeView_axisNum == 0)    {
+                                    parent.yMax = _interfaceHelper.ScopeView_ymax0 * (1 + k);
+                                    parent.yMin = _interfaceHelper.ScopeView_ymin0 * (1 + k);
+                                }
+                                if (_interfaceHelper.ScopeView_axisNum == 1)    {
+                                    parent.y2Max = _interfaceHelper.ScopeView_y2max0 * (1 + k);
+                                    parent.y2Min = _interfaceHelper.ScopeView_y2min0 * (1 + k);
+                                }
+                                console.log (mouseX, mouseY);
+                            }
+
+                        }
+                        onReleased: {
+                            console.log("onReleased")
+                            if (mouse.button == Qt.LeftButton)
+                            {
+                                console.log("Left")
+                                _interfaceHelper.ScopeView_LB = 0;
+                            }
+                            else if (mouse.button == Qt.RightButton)
+                            {
+                                console.log("Right")
+                                _interfaceHelper.ScopeView_RB = 0;
+                            }
+                        }
+
+
+                    }
                 }
             }
 
@@ -117,7 +552,7 @@ Item {
 
                 Text {
                     id: text1
-                    x: 196
+                    x: 333
                     y: 76
                     width: 126
                     height: 36
@@ -130,7 +565,7 @@ Item {
 
                 Text {
                     id: text2
-                    x: 197
+                    x: 334
                     y: 118
                     width: 126
                     height: 36
@@ -144,7 +579,7 @@ Item {
 
                 Text {
                     id: text3
-                    x: 529
+                    x: 666
                     y: 76
                     width: 126
                     height: 36
@@ -157,7 +592,7 @@ Item {
 
                 Text {
                     id: text4
-                    x: 529
+                    x: 666
                     y: 118
                     width: 126
                     height: 36
@@ -168,27 +603,9 @@ Item {
                     anchors.bottom: parent.bottom
                 }
 
-                Slider {
-                    id: slider
-                    x: 52
-                    y: 160
-                    width: 772
-                    height: 40
-                    value: 0.5
-                }
-
-                CheckBox {
-                    id: checkBox
-                    x: 0
-                    y: 160
-                    width: 46
-                    height: 40
-                    text: qsTr("")
-                }
-
                 Text {
                     id: text5
-                    x: 196
+                    x: 333
                     y: 34
                     width: 126
                     height: 36
@@ -201,7 +618,7 @@ Item {
 
                 Text {
                     id: text6
-                    x: 529
+                    x: 666
                     y: 34
                     width: 126
                     height: 36
@@ -213,21 +630,21 @@ Item {
                 }
 
                 Button {
-                    id: button
+                    id: buttonFix
                     width: 100
                     height: 36
                     text: qsTr("Fix")
                     anchors.left: parent.left
                     anchors.leftMargin: 23
                     anchors.top: parent.top
-                    anchors.topMargin: 76
+                    anchors.topMargin: 118
                     onClicked: sendFix();
                 }
 
                 TextInput {
                     id: textInput
                     x: 23
-                    y: 34
+                    y: 76
                     width: 100
                     height: 36
                     text: qsTr("18.0")
@@ -235,27 +652,107 @@ Item {
                     echoMode: TextInput.Normal
                     horizontalAlignment: Text.AlignHCenter
                     font.pixelSize: 21
+                    selectByMouse: true
+                    MouseArea {
+                        anchors.rightMargin: 0
+                        anchors.bottomMargin: -1
+                        anchors.leftMargin: 0
+                        anchors.topMargin: 1
+                        anchors.fill: parent
+                        cursorShape: Qt.IBeamCursor
+                        acceptedButtons: Qt.NoButton
+                    }
+                }
+
+                CheckBox {
+                    id: checkBox1
+                    x: 14
+                    y: 30
+                    width: 46
+                    height: 40
+                    text: qsTr("")
+                    onCheckedChanged: {
+                        if (checked) {
+                            dataSource.start_recording(textField.text);
+                        }
+                    }
+                }
+
+                ProgressBar {
+                    id: progressBar
+                    x: 22
+                    y: 13
+                    width: 200
+                    height: 11
+                    to: 1
+                    value: 0
+                }
+
+                TextField {
+                    id: textField
+                    x: 60
+                    y: 30
+                    width: 124
+                    height: 40
+                    text: qsTr("scantube")
+                    selectByMouse: true
+                    MouseArea {
+                        anchors.rightMargin: 0
+                        anchors.bottomMargin: 0
+                        anchors.leftMargin: 0
+                        anchors.topMargin: 0
+                        anchors.fill: parent
+                        cursorShape: Qt.IBeamCursor
+                        acceptedButtons: Qt.NoButton
+                    }
+                }
+
+                CheckBox {
+                    id: checkBox_saveAsZeroSignal
+                    x: 14
+                    y: 152
+                    text: qsTr("Save as Zero signal")
                 }
 
             }
 
         }
+
+    }
+    FileDialog {
+        id: fileDialog
+        title: "Please choose a file"
+        //folder: shortcuts.home
+        onAccepted: {
+            //C:\Users\RazumovSA\Source\Repos\ScanTube\qmloscilloscope
+
+            console.log("You chose: " + fileDialog.fileUrl)
+
+            dataSource.open_file(fileDialog.fileUrl.toString().replace("file:///", ""))
+            //Qt.quit()
+        }
+        onRejected: {
+            console.log("Canceled")
+            //Qt.quit()
+        }
+        //Component.onCompleted: visible = true
+    }
+    function setDistance(distance)  {
+        textInput.text = distance;
     }
 
-    ProgressBar {
-        id: progressBar
-        x: 222
-        y: 581
-        to: 0
-        value: 0
-    }
     function changeProgressBar(v) {
         pbValue = v*1
         return
     }
     function sendFix() {
-        dataSource.save_point(textInput.text*1, 50);
+        if (checkBox1.checked)
+            dataSource.save_point(textInput.text*1, 20, checkBox_saveAsZeroSignal.checked);
     }
+    function uncheck_checkBox_saveAsZeroSignal()    {
+        checkBox_saveAsZeroSignal.checked = 0;
+    }
+
     function changeText1(msg) {
         text1Text = msg
         return
