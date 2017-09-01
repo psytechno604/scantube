@@ -140,7 +140,7 @@ void intercom::processDatagram() {
     if (s>3 && s < MIN_DATA_PACKET_SIZE) {
         //_dataSource->save_point(buffer.toDouble(), 10, 0);
         _dataSource->save_point(distance, 10, 0);
-        distance = distance - 0.5;
+        distance = distance - 0.1;
     }
 
     if (_dataSource && s >= MIN_DATA_PACKET_SIZE) {        

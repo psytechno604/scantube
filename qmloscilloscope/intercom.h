@@ -27,7 +27,7 @@ private:
     int src_port {1024};
     int dst_port {4096};
     int listen_port {1024};
-    double distance {31.0};
+    double distance {14.0};
     void reCreateSender();
 signals:
 

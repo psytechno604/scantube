@@ -41,6 +41,7 @@
 #include "intercom.h"
 #include "ipslistmodel.h"
 #include "interfacehelper.h"
+#include "measurementmodel.h"
 
 #include <QtQml>
 
@@ -65,7 +66,7 @@ int main(int argc, char *argv[])
                                       QString::fromLatin1("qml")));
     QObject::connect(viewer.engine(), &QQmlEngine::quit, &viewer, &QWindow::close);
 
-    viewer.setTitle(QStringLiteral("QML Oscilloscope"));
+    viewer.setTitle(QStringLiteral("Scan Tube v0.0"));
 
     DataSource dataSource(&viewer);
     viewer.rootContext()->setContextProperty("dataSource", &dataSource);
@@ -96,15 +97,19 @@ int main(int argc, char *argv[])
     }
     viewer.rootContext()->setContextProperty("myIPsListModel", &myIPsListModel);
 
+    MeasurementModel measurementModel;
+    viewer.rootContext()->setContextProperty("measurementModel", &measurementModel);
+    dataSource.setMeasurementModel(&measurementModel);
+
 
     viewer.setSource(QUrl("qrc:/qml/qmloscilloscope/main.qml"));
     viewer.setResizeMode(QQuickView::SizeRootObjectToView);
     viewer.setColor(QColor("#404040"));
     viewer.show();
 
-    QQuickItem  *object = viewer.rootObject();
-    QMetaObject::invokeMethod((QObject*)object, "changeText1", Q_ARG(QVariant, "hello"));
-    QMetaObject::invokeMethod((QObject*)object, "changeText2", Q_ARG(QVariant, "hello"));
+    //QQuickItem  *object = viewer.rootObject();
+    //QMetaObject::invokeMethod((QObject*)object, "changeText1", Q_ARG(QVariant, "hello"));
+    //QMetaObject::invokeMethod((QObject*)object, "changeText2", Q_ARG(QVariant, "hello"));
 
 
 

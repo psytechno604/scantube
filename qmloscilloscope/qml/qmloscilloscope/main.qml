@@ -117,8 +117,8 @@ Item {
             TextField {
                 id: textField1
                 x: 8
-                y: 211
-                width: 124
+                y: 181
+                width: 85
                 height: 40
                 text: dataSource.get_channel_shift(0)
                 selectByMouse: true
@@ -133,9 +133,9 @@ Item {
             }
             TextField {
                 id: textField2
-                x: 8
-                y: 257
-                width: 124
+                x: 114
+                y: 181
+                width: 78
                 height: 40
                 text: dataSource.get_channel_shift(1)
                 selectByMouse: true
@@ -171,7 +171,7 @@ Item {
             CheckBox {
                 id: checkBox_subtractZeroSignal
                 x: 6
-                y: 317
+                y: 227
                 width: 144
                 height: 40
                 checked: dataSource.getSubtractZeroSignal();
@@ -184,7 +184,7 @@ Item {
             CheckBox {
                 id: checkBox_useFilter
                 x: 6
-                y: 364
+                y: 267
                 width: 144
                 height: 40
                 text: qsTr("use filter")
@@ -197,8 +197,8 @@ Item {
             TextField {
                 id: textField_LP0_Td
                 x: 8
-                y: 437
-                width: 124
+                y: 307
+                width: 62
                 height: 26
                 text: dataSource.getValue("textField_LP0_Td")
                 selectByMouse: true
@@ -218,9 +218,9 @@ Item {
 
             TextField {
                 id: textField_LP0_fc
-                x: 8
-                y: 464
-                width: 124
+                x: 73
+                y: 307
+                width: textField_LP0_Td.width
                 height: textField_LP0_Td.height
                 text: dataSource.getValue("textField_LP0_fc")
                 selectByMouse: true
@@ -240,9 +240,9 @@ Item {
 
             TextField {
                 id: textField_LP0_ford
-                x: 8
-                y: 491
-                width: 124
+                x: 138
+                y: 307
+                width: textField_LP0_Td.width
                 height: textField_LP0_Td.height
                 text: dataSource.getValue("textField_LP0_ford")
                 selectByMouse: true
@@ -263,12 +263,13 @@ Item {
             TextField {
                 id: textField_HP0_Td
                 x: 8
-                y: 533
-                width: 124
+                y: 339
+                width: textField_LP0_Td.width
                 height: textField_LP0_Td.height
                 text: dataSource.getValue("textField_HP0_Td")
                 selectByMouse: true
                 MouseArea {
+                    x: textField_LP0_Td.x
                     anchors.leftMargin: 0
                     anchors.bottomMargin: 0
                     acceptedButtons: Qt.NoButton
@@ -284,9 +285,9 @@ Item {
 
             TextField {
                 id: textField_HP0_fc
-                x: 8
-                y: 560
-                width: 124
+                x: 73
+                y: 339
+                width: textField_LP0_Td.width
                 height: textField_LP0_Td.height
                 text: dataSource.getValue("textField_HP0_fc")
                 selectByMouse: true
@@ -306,9 +307,9 @@ Item {
 
             TextField {
                 id: textField_HP0_ford
-                x: 8
-                y: 587
-                width: 124
+                x: 138
+                y: 339
+                width: textField_LP0_Td.width
                 height: textField_LP0_Td.height
                 text: dataSource.getValue("textField_HP0_ford")
                 selectByMouse: true
@@ -329,8 +330,8 @@ Item {
             TextField {
                 id: textField_LP1_Td
                 x: 8
-                y: 628
-                width: 124
+                y: 371
+                width: textField_LP0_Td.width
                 height: textField_LP0_Td.height
                 text: dataSource.getValue("textField_LP1_Td")
                 selectByMouse: true
@@ -350,9 +351,9 @@ Item {
 
             TextField {
                 id: textField_LP1_fc
-                x: 8
-                y: 655
-                width: 124
+                x: 73
+                y: 371
+                width: textField_LP0_Td.width
                 height: textField_LP0_Td.height
                 text: dataSource.getValue("textField_LP1_fc")
                 selectByMouse: true
@@ -372,9 +373,9 @@ Item {
 
             TextField {
                 id: textField_LP1_ford
-                x: 8
-                y: 682
-                width: 124
+                x: 138
+                y: 371
+                width: textField_LP0_Td.width
                 height: textField_LP0_Td.height
                 text: dataSource.getValue("textField_LP1_ford")
                 selectByMouse: true
@@ -424,6 +425,54 @@ Item {
                 onTextChanged: {
                     dataSource.showByIndex(text*1.0);
                 }
+            }
+
+            ListView {
+                id: listView
+                x: 8
+                y: 403
+                width: 192
+                height: parent.height-410
+                rotation: 0
+                flickableDirection: Flickable.VerticalFlick
+                contentWidth: 0
+                spacing: 0
+                orientation: ListView.Vertical
+                model: measurementModel
+                delegate: Item {
+                    x: 5
+                    width: 200
+                    height: 40
+                    Row {
+                        id: row1
+                        /*Rectangle {
+                    width: 40
+                    height: 40
+                    color: colorCode
+                }*/
+
+                        Text {
+                            property variant data: model
+                            text: model.text
+                            font.bold: true
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                        spacing: 10
+                    }
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: listView.currentIndex = index
+                    }
+
+                }
+                focus: true
+                onCurrentItemChanged: {
+
+
+
+                    dataSource.showByIndex(listView.currentIndex);
+                }
+
             }
         }
 
@@ -737,6 +786,17 @@ Item {
         }
         //Component.onCompleted: visible = true
     }
+    function clearListElements(){
+
+    }
+
+    function addListElement(name, colorCode)   {
+        listView.model.append({
+                                  name: name,
+                                  colorCode: colorCode
+                              });
+    }
+
     function setDistance(distance)  {
         textInput.text = distance;
     }

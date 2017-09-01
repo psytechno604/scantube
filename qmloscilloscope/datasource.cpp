@@ -37,7 +37,7 @@
 #include <QtCore/QtMath>
 #include <QDateTime>
 
-
+#include "measurement2.h"
 
 QT_CHARTS_USE_NAMESPACE
 
@@ -75,9 +75,10 @@ DataSource::DataSource(QQuickView *appViewer, QObject *parent) :
     shY.push_back(-160);
 
 
-    buffer_in = new double[buffer_size];
-    buffer_out = new double[buffer_size];
-
+    //buffer_in = new double[buffer_size];
+    //buffer_out = new double[buffer_size];
+    buffer_in.resize(buffer_size);
+    buffer_out.resize(buffer_size);
     //buffer_acc.resize(nchannels);
 
     X.resize(nchannels);
@@ -154,6 +155,10 @@ void DataSource::showFromBuffer(int b_index)
     int start_position, object_position;
     process_signal(buffer_in, buffer_out, &start_position, &object_position, buffer_size);
 
+    compareToData(b_index);
+
+    double myDistance = measurementModel->getDistance(b_index);
+
     for (auto i=0; i<buffer_size; i++) {
         points.append(QPointF(i, buffer_in[i]));
         pointsS.append(QPointF(i, buffer_out[i]));
@@ -161,12 +166,12 @@ void DataSource::showFromBuffer(int b_index)
     //markupfile->write(QByteArray("\n"));
 
     if (b_index == 0) {
-        QMetaObject::invokeMethod((QObject*)object, "changeText5", Q_ARG(QVariant, QString::number(start_position)));
+        QMetaObject::invokeMethod((QObject*)object, "changeText5", Q_ARG(QVariant, QString::number(myDistance)));
         QMetaObject::invokeMethod((QObject*)object, "changeText1", Q_ARG(QVariant, QString::number(object_position)));
         QMetaObject::invokeMethod((QObject*)object, "changeText2", Q_ARG(QVariant, QString::number(s[b_index](object_position))));
     }
     if (b_index == 1) {
-        QMetaObject::invokeMethod((QObject*)object, "changeText6", Q_ARG(QVariant, QString::number(start_position)));
+        QMetaObject::invokeMethod((QObject*)object, "changeText6", Q_ARG(QVariant, QString::number(myDistance)));
         QMetaObject::invokeMethod((QObject*)object, "changeText3", Q_ARG(QVariant, QString::number(object_position)));
         QMetaObject::invokeMethod((QObject*)object, "changeText4", Q_ARG(QVariant, QString::number(s[b_index](object_position))));
     }
@@ -201,7 +206,7 @@ void DataSource::update(QAbstractSeries *series)
     mtx.unlock();
 }
 
-void DataSource::calc_correlate_func(double *in, double *out, float *corrfunct, int n__corr, int numsmpl)
+void DataSource::calc_correlate_func(QVector <double> &in, QVector <double> &out, float *corrfunct, int n__corr, int numsmpl)
 {
     int i, j, offs;
     float sum;
@@ -246,7 +251,7 @@ bool DataSource::IsPowerOfTwo(ulong x)
 {
     return (x != 0) && ((x & (x - 1)) == 0);
 }
-void DataSource::process_signal(double *in, double *out, int *StartPosIndex, int *ObjectPosIndex, int numadc)
+void DataSource::process_signal(QVector <double> &in, QVector <double> &out, int *StartPosIndex, int *ObjectPosIndex, int numadc)
 {
     int i,j,x;
 
@@ -437,19 +442,19 @@ void DataSource::open_file(QString openfname)
         fileStream >> _nchannels;
         fileStream >> _n;
         if (_nchannels > 0 && _n > 0)   {
-            clearMeasurementData();
+            //clearMeasurementData();
+            clearMeasurementModel();
             /*auto fSize = file.size();
             auto sizeof_int = sizeof(int);
             auto sizeof_double = sizeof(double);*/
             auto nMeasurements = (file.size() - 2 * sizeof(int)) / (_nchannels * (_n  * sizeof(double) + sizeof(int)) + sizeof(double));
             qDebug() << "nMeasurements = " << nMeasurements;
 
-            _data.resize(nMeasurements);
-
             for(auto m=0; m<nMeasurements; m++){
-                measurement _M;
-                fileStream >> _M.distance;
-                _M.buffer.resize(_nchannels);
+                double distance;
+
+                fileStream >> distance;
+                Measurement2 *_M = new Measurement2(distance, _nchannels, _n);
                 for(auto c=0; c<_nchannels; c++)    {
                     int channel;
                     fileStream >> channel;
@@ -458,12 +463,12 @@ void DataSource::open_file(QString openfname)
                         file.close();
                         return;
                     }
-                    _M.buffer[channel] = new double[_n];
+                    //_M->buffer[channel] = new double[_n];
                     for(auto i=0; i<_n; i++)    {
-                        fileStream >> _M.buffer[channel][i];
+                        fileStream >> _M->buffer[channel][i];
                     }
                 }
-                _data[m] = _M;
+                measurementModel->add(_M);
             }
         }
         else {
@@ -471,6 +476,7 @@ void DataSource::open_file(QString openfname)
         }
         file.close();
         showByIndex(0);
+        updateListView();
     }
 }
 
@@ -538,14 +544,17 @@ void DataSource::setValue(QString name, double value)
 
 void DataSource::showByIndex(int index)
 {
-    if (index>=0 && index < _data.length())   {
+    if (measurementModel && index>=0 && index < measurementModel->rowCount())   {
+        auto m = measurementModel->get(index);
+        if (!m)
+            return;
         for (auto c=0; c<nchannels; c++)    {
             for (auto i=0; i<buffer_size; i++)  {
-                buffer_in[i] = _data[index].buffer[c][i];
+                buffer_in[i] = m->buffer[c][i];
             }
             showFromBuffer(c);
         }
-        QMetaObject::invokeMethod((QObject*)object, "setDistance", Q_ARG(QVariant, QString::number(_data[index].distance)));
+        QMetaObject::invokeMethod((QObject*)object, "setDistance", Q_ARG(QVariant, QString::number(m->distance)));
     }
 }
 
@@ -567,10 +576,12 @@ void DataSource::generateData(QByteArray *buffer, int row)
 
     if (N / 2 - 1 > buffer_size){
         buffer_size = N / 2 - 1;
-        if (buffer_in) delete [] buffer_in;
-        if (buffer_out) delete [] buffer_out;
-        buffer_in = new double[buffer_size];
-        buffer_out = new double[buffer_size];
+        buffer_in.resize(buffer_size);
+        buffer_out.resize(buffer_size);
+        //if (buffer_in) delete [] buffer_in;
+        //if (buffer_out) delete [] buffer_out;
+        //buffer_in = new double[buffer_size];
+        //buffer_out = new double[buffer_size];
     }
 
 
@@ -617,7 +628,7 @@ void DataSource::generateData(QByteArray *buffer, int row)
 }
 void DataSource::Make_HP_ButterworthFilter(vectorc& H, double Td, double fc, unsigned short ford)
 {
-  std::vector<complexd> Poles(ford); // полюса аналогового фильтра прототипа
+  QVector<complexd> Poles(ford); // полюса аналогового фильтра прототипа
   complexd Z, p1, G0 = complexd(1,0), K;
   int x, nx=H.length();
   int i;
@@ -651,7 +662,7 @@ void DataSource::Make_HP_ButterworthFilter(vectorc& H, double Td, double fc, uns
 }
 void DataSource::Make_LP_ButterworthFilter(vectorc& H, double Td, double fc, unsigned short ford)
 {
-  std::vector<complexd> Poles(ford); // полюса аналогового фильтра прототипа
+  QVector<complexd> Poles(ford); // полюса аналогового фильтра прототипа
   complexd Z, p1, G0 = complexd(1,0), K;
   int x, nx=H.length();
   int i;
@@ -732,7 +743,7 @@ void DataSource::icfft(vectorc& a)
     a[i] /= coeff;
   }
 }
-int DataSource::_FindMaxValueInRangeOFArray(double* smp, int numsmp, int lowlim, int highlim)
+int DataSource::_FindMaxValueInRangeOFArray(QVector <double>smp, int numsmp, int lowlim, int highlim)
 {
   int k;
   double maxv = 0;
@@ -809,15 +820,45 @@ void DataSource::accumulateChannel(int b_index)
     }
 }
 
-void DataSource::clearMeasurementData()
+void DataSource::updateListView()
 {
-    for(auto i=0; i < _data.size(); i++){
-       /* if (_data[i])
-            delete _data[i];*/
-        for(auto j=0;j < _data[i].buffer.size(); j++){
-            if (_data[i].buffer[j])
-                delete _data[i].buffer[j];
+    /*if (!object)
+        object = m_appViewer->rootObject();
+    for(auto i=0; i<_data.length(); i++)    {
+        QMetaObject::invokeMethod((QObject*)object, "addListElement", Q_ARG(QVariant, QString::number(i) + ": " + QString::number(_data[i].distance) + " #1:" + QString::number(_data[i]._sqerr[0]) + " #2:" + QString::number(_data[i]._sqerr[1])), Q_ARG(QVariant, "white"));
+    }*/
+}
+
+void DataSource::setMeasurementModel(MeasurementModel *mm)
+{
+    this->measurementModel = mm;
+}
+
+void DataSource::clearMeasurementModel()
+{
+    this->measurementModel->clear();
+}
+
+void DataSource::compareToData(int channel)
+{
+    if (!measurementModel)
+        return;
+    for (auto d=0; d<measurementModel->rowCount(); d++) {
+        auto m = measurementModel->get(d);
+        m->_sqerr[channel] = 0;
+        for (int i=0; i<buffer_size; i++)   {
+            m->_sqerr[channel] += (m->buffer[channel][i]-buffer_in[i])*(m->buffer[channel][i]-buffer_in[i]);
         }
+        m->_sqerr[channel] = sqrt(m->_sqerr[channel]);
+
+        m->_corr[channel] = m->pearsoncoeff(m->buffer[channel], buffer_in);
+
     }
-    _data.clear();
+
+    measurementModel->emitDataChanged();
+}
+
+double DataSource::corr(double *X, double *Y, int N)
+{
+    return 0;
 }

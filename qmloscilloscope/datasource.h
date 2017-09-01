@@ -56,6 +56,8 @@ QT_CHARTS_USE_NAMESPACE
 #include <queue>
 #include <map>
 
+#include "measurement2.h"
+#include "measurementmodel.h"
 /*
 QVector
 typedef std::vector<double> vectord;
@@ -70,6 +72,8 @@ typedef QVector<complexd> vectorc;
 
 typedef struct {
     double distance;
+    QVector<double> _sqerr;
+    QVector<double> _corr;
     QVector<double *> buffer;
 } measurement;
 
@@ -89,7 +93,7 @@ public slots:
 
     void init_correlate_parameters(float  sigTau, float Fdskr);
 
-    void process_signal(double *in, double *out, int *StartPosIndex, int *ObjectPosIndex, int numadc);
+    void process_signal(QVector <double> &in, QVector <double> &out, int *StartPosIndex, int *ObjectPosIndex, int numadc);
 
     void save_point(double distance, int nf, int saveAsZeroSignal);
     void start_recording(QString fbasename);
@@ -109,7 +113,13 @@ public slots:
     void setValue(QString name, double value);
 
     void showByIndex(int index);
+    void updateListView();
+
+    void setMeasurementModel(MeasurementModel *mm);
 private:
+    MeasurementModel *measurementModel {nullptr};
+    void clearMeasurementModel();
+
     double _LP0_Td {1.0/(100.0*1E9)}, _LP0_fc {1000*1E6}, _LP0_ford {8};
     double _HP0_Td {1.0/(100.0*1E9)}, _HP0_fc {300*1E6}, _HP0_ford {2};
     double _LP1_Td {1.0/(100.0*1E9)}, _LP1_fc {1000*1E6}, _LP1_ford {2};
@@ -143,13 +153,13 @@ private:
     float kt_dt;
     float Fc;
     float* signal {nullptr};
-    double *buffer_in {nullptr};
-    double *buffer_out {nullptr};
+    QVector<double> buffer_in;
+    QVector <double> buffer_out;
     QVector<double *> raw_acc {nullptr};
     QVector<double *> processed_acc {nullptr};
     int buffer_size {_N};
     QVector<int> shY;
-    QVector<measurement> _data;
+    QVector<Measurement2 *> _data;
 
     QVector<double *> zero_signal;
     int saveAsZeroSignal {0};
@@ -157,17 +167,22 @@ private:
     int useFilter {1};
 
     bool IsPowerOfTwo(ulong x);
-    void calc_correlate_func(double *in, double *out, float *corrfunct, int n__corr, int numsmpl);
+    void calc_correlate_func(QVector <double> &in, QVector <double>&out, float *corrfunct, int n__corr, int numsmpl);
     void Make_HP_ButterworthFilter(vectorc& H, double Td, double fc, unsigned short ford);
     void Make_LP_ButterworthFilter(vectorc& H, double Td, double fc, unsigned short ford);
     void cfft(vectorc& a);
     void icfft(vectorc& a);
 
-    int _FindMaxValueInRangeOFArray(double* smp, int numsmp, int lowlim, int highlim);
+    int _FindMaxValueInRangeOFArray(QVector <double> smp, int numsmp, int lowlim, int highlim);
 
     void accumulateChannel(int b_index);
 
     void clearMeasurementData();
+
+
+    void compareToData(int channel);
+
+    double corr(double *X, double *Y, int N);
 };
 
 #endif // DATASOURCE_H

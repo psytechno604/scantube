@@ -10,7 +10,10 @@ HEADERS += \
     apvt.h \
     fft.h \
     spline.h \
-    interfacehelper.h
+    interfacehelper.h \
+    measurementmodel.h \
+    measurement.h \
+    measurement2.h
 
 SOURCES += \
     main.cpp \
@@ -21,7 +24,10 @@ SOURCES += \
     ipslistmodel.cpp \
     ap.cpp \
     fft.cpp \
-    interfacehelper.cpp
+    interfacehelper.cpp \
+    measurementmodel.cpp \
+    measurement.cpp \
+    measurement2.cpp
 
 RESOURCES += \
     resources.qrc
