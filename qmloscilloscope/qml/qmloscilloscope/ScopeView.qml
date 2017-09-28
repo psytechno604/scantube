@@ -47,6 +47,8 @@ ChartView {
             series("signal s1").useOpenGL = openGL;
             series("signal 2").useOpenGL = openGL;
             series("signal s2").useOpenGL = openGL;
+            series("signal selected 1").useOpenGL = openGL;
+            series("signal selected 2").useOpenGL = openGL;
         }
     }
     Component.onCompleted: {
@@ -63,8 +65,8 @@ ChartView {
     }
     ValueAxis {
         id: axisY2
-        min: -0.00001
-        max: 0.00001
+        min: -3072
+        max: 3072
     }
 
 
@@ -102,6 +104,20 @@ ChartView {
         axisYRight: axisY2
         useOpenGL: chartView.openGL
     }
+    LineSeries {
+        id: lineSeriesSelected1
+        name: "signal selected 1"
+        axisX: axisX
+        axisYRight: axisY
+        useOpenGL: chartView.openGL
+    }
+    LineSeries {
+        id: lineSeriesSelected2
+        name: "signal selected 2"
+        axisX: axisX
+        axisYRight: axisY
+        useOpenGL: chartView.openGL
+    }
 //![1]
 
     //![2]
@@ -115,6 +131,8 @@ ChartView {
             dataSource.update(chartView.series(1));
             dataSource.update(chartView.series(2));
             dataSource.update(chartView.series(3));
+            dataSource.update(chartView.series(4));
+            dataSource.update(chartView.series(5));
         }
     }
     //![2]
@@ -127,22 +145,28 @@ ChartView {
         // but the series have their own y-axes to make it possible to control the y-offset
         // of the "signal sources".
         if (type == "line") {
-            var series1 = chartView.createSeries(ChartView.SeriesTypeLine, "signal 1", axisX, axisY1);
+            var series1 = chartView.createSeries(ChartView.SeriesTypeLine, "signal 1", axisX, axisY);
             series1.useOpenGL = chartView.openGL
-            var seriesS1 = chartView.createSeries(ChartView.SeriesTypeLine, "signal s1", axisX, axisYs1);
+            var seriesS1 = chartView.createSeries(ChartView.SeriesTypeLine, "signal s1", axisX, axisY2);
             seriesS1.useOpenGL = chartView.openGL
 
-            var series2 = chartView.createSeries(ChartView.SeriesTypeLine, "signal 2", axisX, axisY2);
+            var series2 = chartView.createSeries(ChartView.SeriesTypeLine, "signal 2", axisX, axisY);
             series2.useOpenGL = chartView.openGL
-            var seriesS2 = chartView.createSeries(ChartView.SeriesTypeLine, "signal s2", axisX, axisYs2);
+            var seriesS2 = chartView.createSeries(ChartView.SeriesTypeLine, "signal s2", axisX, axisY2);
             seriesS2.useOpenGL = chartView.openGL
+
+            var seriesSelected1 = chartView.createSeries(ChartView.SeriesTypeLine, "signal selected 1", axisX, axisY);
+            seriesSelected1.useOpenGL = chartView.openGL
+            var seriesSelected2 = chartView.createSeries(ChartView.SeriesTypeLine, "signal selected 2", axisX, axisY);
+            seriesSelected1.useOpenGL = chartView.openGL
+
         } else {
-            var series1 = chartView.createSeries(ChartView.SeriesTypeScatter, "signal 1", axisX, axisY1);
+            var series1 = chartView.createSeries(ChartView.SeriesTypeScatter, "signal 1", axisX, axisY);
             series1.markerSize = 2;
             series1.borderColor = "transparent";
             series1.useOpenGL = chartView.openGL
 
-            var seriesS1 = chartView.createSeries(ChartView.SeriesTypeScatter, "signal s1", axisX, axisYs1);
+            var seriesS1 = chartView.createSeries(ChartView.SeriesTypeScatter, "signal s1", axisX, axisY2);
             seriesS1.markerSize = 2;
             seriesS1.borderColor = "transparent";
             seriesS1.useOpenGL = chartView.openGL
@@ -156,6 +180,16 @@ ChartView {
             seriesS2.markerSize = 2;
             seriesS2.borderColor = "transparent";
             seriesS2.useOpenGL = chartView.openGL
+
+            var seriesSelected1 = chartView.createSeries(ChartView.SeriesTypeScatter, "signal selected 1", axisX, axisY);
+            seriesSelected1.markerSize = 2;
+            seriesSelected1.borderColor = "transparent";
+            seriesSelected1.useOpenGL = chartView.openGL
+
+            var seriesSelected2 = chartView.createSeries(ChartView.SeriesTypeScatter, "signal selected 1", axisX, axisY);
+            seriesSelected2.markerSize = 2;
+            seriesSelected2.borderColor = "transparent";
+            seriesSelected2.useOpenGL = chartView.openGL
         }
     }
 

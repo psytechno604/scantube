@@ -1,4 +1,4 @@
-QT += charts qml quick network
+QT += charts qml quick quickcontrols2 network 3dcore 3drender 3dinput 3dquick 3dextras
 
 HEADERS += \
     datasource.h \
@@ -12,8 +12,9 @@ HEADERS += \
     spline.h \
     interfacehelper.h \
     measurementmodel.h \
+    scantube.h \
     measurement.h \
-    measurement2.h
+    timeline3d.h
 
 SOURCES += \
     main.cpp \
@@ -26,8 +27,9 @@ SOURCES += \
     fft.cpp \
     interfacehelper.cpp \
     measurementmodel.cpp \
+    scantube.cpp \
     measurement.cpp \
-    measurement2.cpp
+    timeline3d.cpp
 
 RESOURCES += \
     resources.qrc

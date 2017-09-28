@@ -2,6 +2,7 @@
 #define INTERFACEHELPER_H
 
 #include <QObject>
+#include <QJsonObject>
 
 class InterfaceHelper : public QObject
 {
@@ -15,10 +16,13 @@ signals:
 
 public slots:
 
-    int getValue(QString id);
+    int getIntValue(QString id);
+    QString getQStringValue(QString id);
     void setValue(QString id, int value);
+    void setValue(QString id, QString value);
 private:
     int checkbox_fileInput_checked {0};
+    QJsonObject jsonData;
 };
 
 #endif // INTERFACEHELPER_H

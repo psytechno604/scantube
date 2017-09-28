@@ -37,7 +37,8 @@
 #include <QtCore/QtMath>
 #include <QDateTime>
 
-#include "measurement2.h"
+#include "measurement.h"
+#include "scantube.h"
 
 QT_CHARTS_USE_NAMESPACE
 
@@ -66,7 +67,7 @@ DataSource::DataSource(QQuickView *appViewer, QObject *parent) :
     //emit changeText("button clicked");
 
 
-    m_data.resize(nchannels * 2);
+    m_data.resize(nchannels * 3);
     //generateData(0, 5, 1024);
 
     init_correlate_parameters(80*1E-12, 100*1E9);
@@ -141,7 +142,7 @@ DataSource::~DataSource()
     }
 }
 
-void DataSource::showFromBuffer(int b_index)
+void DataSource::showFromBuffer(int b_index, int block)
 {
     if (!object)
         object = m_appViewer->rootObject();
@@ -149,35 +150,37 @@ void DataSource::showFromBuffer(int b_index)
     QVector<QPointF> points;
     points.reserve(buffer_size);
 
-    QVector<QPointF> pointsS;
-    pointsS.reserve(buffer_size);
+    //QVector<QPointF> pointsS;
+    //pointsS.reserve(buffer_size);
 
-    int start_position, object_position;
-    process_signal(buffer_in, buffer_out, &start_position, &object_position, buffer_size);
+    //int start_position, object_position;
+    //process_signal(buffer_in, buffer_out, &start_position, &object_position, buffer_size);
 
     compareToData(b_index);
 
-    double myDistance = measurementModel->getDistance(b_index);
+    double myDistance = 0;
+    if (measurementModel)
+        myDistance = measurementModel->getDistance(b_index);
 
     for (auto i=0; i<buffer_size; i++) {
         points.append(QPointF(i, buffer_in[i]));
-        pointsS.append(QPointF(i, buffer_out[i]));
+        //pointsS.append(QPointF(i, buffer_out[i]));
     }
     //markupfile->write(QByteArray("\n"));
 
     if (b_index == 0) {
         QMetaObject::invokeMethod((QObject*)object, "changeText5", Q_ARG(QVariant, QString::number(myDistance)));
-        QMetaObject::invokeMethod((QObject*)object, "changeText1", Q_ARG(QVariant, QString::number(object_position)));
-        QMetaObject::invokeMethod((QObject*)object, "changeText2", Q_ARG(QVariant, QString::number(s[b_index](object_position))));
+        //QMetaObject::invokeMethod((QObject*)object, "changeText1", Q_ARG(QVariant, QString::number(object_position)));
+        //QMetaObject::invokeMethod((QObject*)object, "changeText2", Q_ARG(QVariant, QString::number(s[b_index](object_position))));
     }
     if (b_index == 1) {
         QMetaObject::invokeMethod((QObject*)object, "changeText6", Q_ARG(QVariant, QString::number(myDistance)));
-        QMetaObject::invokeMethod((QObject*)object, "changeText3", Q_ARG(QVariant, QString::number(object_position)));
-        QMetaObject::invokeMethod((QObject*)object, "changeText4", Q_ARG(QVariant, QString::number(s[b_index](object_position))));
+        //QMetaObject::invokeMethod((QObject*)object, "changeText3", Q_ARG(QVariant, QString::number(object_position)));
+        //QMetaObject::invokeMethod((QObject*)object, "changeText4", Q_ARG(QVariant, QString::number(s[b_index](object_position))));
     }
 
-    m_data[b_index] = points;
-    m_data[nchannels + b_index] = pointsS;
+    m_data[block * nchannels + b_index] = points;
+    //m_data[nchannels + b_index] = pointsS;
 
     if (is_measured) accumulateChannel(b_index);
 
@@ -188,7 +191,7 @@ void DataSource::update(QAbstractSeries *series)
     mtx.lock();
     if (series && m_data.size()>0) {
         QXYSeries *xySeries = static_cast<QXYSeries *>(series);
-        if (m_index > 3) {
+        if (m_index > m_data.size()-1) {
             m_index = 0;
         }
         //qDebug() << m_index;
@@ -204,6 +207,14 @@ void DataSource::update(QAbstractSeries *series)
 
     }
     mtx.unlock();
+}
+void DataSource::updateDistances(QAbstractSeries *series)
+{
+    dst_lock.lockForRead();
+
+
+
+    dst_lock.unlock();
 }
 
 void DataSource::calc_correlate_func(QVector <double> &in, QVector <double> &out, float *corrfunct, int n__corr, int numsmpl)
@@ -454,7 +465,7 @@ void DataSource::open_file(QString openfname)
                 double distance;
 
                 fileStream >> distance;
-                Measurement2 *_M = new Measurement2(distance, _nchannels, _n);
+                Measurement *_M = new Measurement(distance, _nchannels, _n);
                 for(auto c=0; c<_nchannels; c++)    {
                     int channel;
                     fileStream >> channel;
@@ -552,7 +563,7 @@ void DataSource::showByIndex(int index)
             for (auto i=0; i<buffer_size; i++)  {
                 buffer_in[i] = m->buffer[c][i];
             }
-            showFromBuffer(c);
+            showFromBuffer(c, 1);
         }
         QMetaObject::invokeMethod((QObject*)object, "setDistance", Q_ARG(QVariant, QString::number(m->distance)));
     }
@@ -622,7 +633,7 @@ void DataSource::generateData(QByteArray *buffer, int row)
     buffer_in[0] = 0;
     //calc_correlate_func(points, pointsS, signal, kt_dt, N / 2 - 1);
 
-    showFromBuffer(b_index);
+    showFromBuffer(b_index, 0);
 
     mtx.unlock();
 }
@@ -834,6 +845,20 @@ void DataSource::setMeasurementModel(MeasurementModel *mm)
     this->measurementModel = mm;
 }
 
+int DataSource::getMaxCorrelationShift(QVector<double> a, QVector<double> b)
+{
+    double max_corr = -1, tmp;
+    int ret = -a.length()/2;
+    for (auto i=-a.length()/2; i< a.length()/2; i++){
+        tmp = shiftedcorr(a, b, i);
+        if (tmp > max_corr) {
+            max_corr = tmp;
+            ret = i;
+        }
+    }
+    return ret;
+}
+
 void DataSource::clearMeasurementModel()
 {
     this->measurementModel->clear();
@@ -851,7 +876,7 @@ void DataSource::compareToData(int channel)
         }
         m->_sqerr[channel] = sqrt(m->_sqerr[channel]);
 
-        m->_corr[channel] = m->pearsoncoeff(m->buffer[channel], buffer_in);
+        m->_corr[channel] = pearsoncoeff(m->buffer[channel], buffer_in);
 
     }
 

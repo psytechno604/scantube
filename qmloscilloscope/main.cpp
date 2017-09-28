@@ -45,6 +45,8 @@
 
 #include <QtQml>
 
+#include "timeline3d.h"
+
 int main(int argc, char *argv[])
 {
     qDebug() << QThread::currentThreadId();
@@ -52,6 +54,8 @@ int main(int argc, char *argv[])
     QApplication app(argc, argv);
 
     qmlRegisterType<IPsListModel>("IPsListModel", 1, 0, "IPsListModel");
+
+    qmlRegisterType<Timeline3D>("com.example.Timeline3D", 1, 0, "Timeline3D");
 
     QQuickView viewer;
 
@@ -75,7 +79,7 @@ int main(int argc, char *argv[])
     //QThread* thread = new QThread();
     //thread->start();
 
-    intercom *_intercom = new intercom();
+    intercom *_intercom = new intercom(&viewer);
 
     _intercom->setDataSource(&dataSource);
     //_intercom->moveToThread(thread);

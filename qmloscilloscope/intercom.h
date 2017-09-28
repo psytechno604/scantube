@@ -11,7 +11,7 @@ class intercom : public QObject
 {
     Q_OBJECT
 public:
-    explicit intercom(QObject *parent = nullptr);
+    explicit intercom(QQuickView *appViewer, QObject *parent = nullptr);
     Q_INVOKABLE void on();
     Q_INVOKABLE void off();
     Q_INVOKABLE void setMyIP(QString ip);
@@ -20,6 +20,8 @@ public:
     Q_INVOKABLE void setDataSource(DataSource *ds);
     Q_INVOKABLE void sendFix(QString distance);
 private:
+    QQuickItem  *object {nullptr};
+    QQuickView *m_appViewer {nullptr};
     QUdpSocket *_sender {nullptr};
     QHostAddress *myIP {nullptr};
     DataSource *_dataSource {nullptr};
@@ -27,7 +29,7 @@ private:
     int src_port {1024};
     int dst_port {4096};
     int listen_port {1024};
-    double distance {14.0};
+    double distance {30.6};
     void reCreateSender();
 signals:
 

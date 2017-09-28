@@ -55,8 +55,9 @@ QT_CHARTS_USE_NAMESPACE
 #include <complex>
 #include <queue>
 #include <map>
+#include <QVector>
 
-#include "measurement2.h"
+#include "measurement.h"
 #include "measurementmodel.h"
 /*
 QVector
@@ -69,6 +70,8 @@ typedef QVector<complexd> vectorc;
 
 #include "fft.h"
 #include "spline.h"
+
+#include <QReadWriteLock>
 
 typedef struct {
     double distance;
@@ -87,9 +90,10 @@ Q_SIGNALS:
 signals:
     void changeText(QString text);
 public slots:
-    void showFromBuffer(int b_index);
+    void showFromBuffer(int b_index, int block);
     void generateData(QByteArray *buffer, int row);
     void update(QAbstractSeries *series);
+    void updateDistances(QAbstractSeries *series);
 
     void init_correlate_parameters(float  sigTau, float Fdskr);
 
@@ -116,7 +120,11 @@ public slots:
     void updateListView();
 
     void setMeasurementModel(MeasurementModel *mm);
+
+    int getMaxCorrelationShift(QVector<double> a, QVector<double> b);
 private:
+    //QVector<QVector<double>> X, Y;
+    
     MeasurementModel *measurementModel {nullptr};
     void clearMeasurementModel();
 
@@ -128,8 +136,14 @@ private:
     QQuickItem  *object {nullptr};
     QQuickView *m_appViewer {nullptr};
     QVector<QVector<QPointF> > m_data;
+
+    QVector<double> m_distances;
+
     int m_index{0};
+
     shared_mutex mtx;
+    QReadWriteLock dst_lock;
+
     QFile *datafile {nullptr}, *markupfile {nullptr}, *pointfile {nullptr}, *zerofile {nullptr};
 
     QVector<QVector<double>> X, Y;
@@ -159,7 +173,7 @@ private:
     QVector<double *> processed_acc {nullptr};
     int buffer_size {_N};
     QVector<int> shY;
-    QVector<Measurement2 *> _data;
+    QVector<Measurement *> _data;
 
     QVector<double *> zero_signal;
     int saveAsZeroSignal {0};

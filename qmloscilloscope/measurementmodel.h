@@ -6,7 +6,7 @@
 #include <QStringList>
 
 #include "measurement.h"
-#include "measurement2.h"
+#include "measurement.h"
 
 
 class MeasurementModel : public QAbstractListModel
@@ -27,9 +27,9 @@ public:
     virtual Qt::ItemFlags flags(const QModelIndex &index) const;
 
     Q_INVOKABLE void add(QString text);
-    Q_INVOKABLE void add(Measurement2 *_M);
+    Q_INVOKABLE void add(Measurement *_M);
     void emitDataChanged();
-    Measurement2 * get(int i);
+    Measurement * get(int i);
     double getDistance(int channel);
 signals:
 
@@ -37,7 +37,7 @@ public slots:
     void clear();
 private:
     QStringList m_data;
-    QVector<Measurement2 *> _data;
+    QVector<Measurement *> _data;
 };
 
 #endif // MEASUREMENT_H

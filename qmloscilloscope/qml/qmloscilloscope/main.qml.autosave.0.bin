@@ -32,19 +32,6 @@ import QtQuick.Dialogs 1.0
 
 //![1]
 import QtQuick.Controls 2.2
-
-import QtQuick.Layouts 1.3
-
-import QtCharts 2.2
-
-import Qt3D.Core 2.0
-import Qt3D.Render 2.0
-import QtQuick.Scene3D 2.0
-
-import com.example.Timeline3D 1.0
-
-
-
 Item {
     id: main
     width: 1024
@@ -556,165 +543,86 @@ Item {
                 width: parent.width
                 height: parent.height-200
 
+                ScopeView {
+                    id: scopeView
+                    width: 872
+                    height: 650
+                    anchors.fill: item1
 
-            Column {
-                width: parent.width
-                height: parent.height
-                TabBar {
-                    id: tabBar
-                    width: parent.width
-                    TabButton {
-                            text: qsTr("Signal waveform")
-                        }
-                    TabButton {
-                            text: qsTr("Distances diagram")
-                        }
-                    TabButton {
-                            text: qsTr("Timeline 3D")
-                        }
-                }
-                StackLayout {
-                    width: parent.width
-                    height: parent.height - tabBar.height
-                    currentIndex: tabBar.currentIndex
-                    Item {
-                        id: signal_waveform_tab
-                        width: parent.width
-                        height: parent.height
-                        ScopeView {
-                            id: scopeView
-
-
-                            anchors.fill: signal_waveform_tab
-
-                            onOpenGLSupportedChanged: {
-                                if (!openGLSupported) {
-                                    controlPanel.openGLButton.enabled = false
-                                    controlPanel.openGLButton.currentSelection = 0
-                                }
-                            }
-                            MouseArea {
-                                z: -1
-                                anchors.fill: parent
-                                acceptedButtons: Qt.LeftButton | Qt.RightButton
-                                onPressed: {
-                                    console.log("onPressed")
-                                    if (mouse.button == Qt.LeftButton)
-                                    {
-                                        console.log("Left", width, height, parent.yMax, parent.yMin)
-                                        _interfaceHelper.ScopeView_LB = 1;
-                                    }
-                                    else if (mouse.button == Qt.RightButton)
-                                    {
-                                        console.log("Right")
-                                        _interfaceHelper.ScopeView_RB = 1;
-                                    }
-                                    _interfaceHelper.ScopeView_x0 = mouseX;
-                                    _interfaceHelper.ScopeView_ymax0 = parent.yMax;
-                                    _interfaceHelper.ScopeView_ymin0 = parent.yMin;
-                                    _interfaceHelper.ScopeView_y2max0 = parent.y2Max;
-                                    _interfaceHelper.ScopeView_y2min0 = parent.y2Min;
-                                    _interfaceHelper.ScopeView_y0 = mouseY;
-
-                                    _interfaceHelper.ScopeView_axisNum = (mouseX < width/2)?0:1;
-                                }
-                                onPositionChanged: {
-                                    if (_interfaceHelper.ScopeView_RB){
-
-                                        var k = (mouseY - _interfaceHelper.ScopeView_y0) / height;
-                                        //if (_interfaceHelper.ScopeView_axisNum == 0)    {
-                                        parent.yMax = _interfaceHelper.ScopeView_ymax0 * (1 + k);
-                                        parent.yMin = _interfaceHelper.ScopeView_ymin0 * (1 + k);
-                                        //}
-                                        //if (_interfaceHelper.ScopeView_axisNum == 1)    {
-                                        parent.y2Max = _interfaceHelper.ScopeView_y2max0 * (1 + k);
-                                        parent.y2Min = _interfaceHelper.ScopeView_y2min0 * (1 + k);
-                                        //}
-                                        console.log (mouseX, mouseY);
-                                    }
-
-                                }
-                                onReleased: {
-                                    console.log("onReleased")
-                                    if (mouse.button == Qt.LeftButton)
-                                    {
-                                        console.log("Left")
-                                        _interfaceHelper.ScopeView_LB = 0;
-                                    }
-                                    else if (mouse.button == Qt.RightButton)
-                                    {
-                                        console.log("Right")
-                                        _interfaceHelper.ScopeView_RB = 0;
-                                    }
-                                }
-                            }
+                    onOpenGLSupportedChanged: {
+                        if (!openGLSupported) {
+                            controlPanel.openGLButton.enabled = false
+                            controlPanel.openGLButton.currentSelection = 0
                         }
                     }
-                    Item {
-                        id: distances_diagram
-                        width: parent.width
-                        height: parent.height
-                        PolarChartView {
-                            title: "Tube edge"
-                            anchors.fill: parent
-
-                            antialiasing: true
-                            ValueAxis {
-                                    id: axisAngular
-                                    min: 0
-                                    max: 32
-                                    tickCount: 33
-                                    labelsVisible: false;
-                                }
-
-                                ValueAxis {
-                                    id: axisRadial
-                                    min: 0
-                                    max: 6
-                                    labelsVisible: false;
-                                }
-
-                                SplineSeries {
-                                    id: series1
-                                    axisAngular: axisAngular
-                                    axisRadial: axisRadial
-                                    pointsVisible: true
-                                    pointLabelsVisible: true
-                                }
-                                Component.onCompleted: {
-                                    for (var i = 0; i <= 32; i++) {
-                                        if (i==0 || i==32)
-                                            series1.append(i, 5.0);
-                                        else
-                                            series1.append(i, 5.0 + Math.random());
-                                    }
-                                }
-                        }
-                        Timer {
-                            id: refreshTimer
-                            interval: 1 / 60 * 1000 // 60 Hz
-                            running: true
-                            repeat: true
-                            onTriggered: {
-                                dataSource.updateDistances(series1);
-                            }
-                        }
-                    }
-                    Item {
-                        id: timeline_3d
+                    MouseArea {
+                        z: -1
                         anchors.fill: parent
-                        Scene3D {
-                            anchors.fill: parent
-                            focus: true
-                            Timeline3D {
-                                id: timeline_3d_object
+                        acceptedButtons: Qt.LeftButton | Qt.RightButton
+                        onPressed: {
+                            console.log("onPressed")
+                            if (mouse.button == Qt.LeftButton)
+                            {
+                                console.log("Left", width, height, parent.yMax, parent.yMin)
+                                _interfaceHelper.ScopeView_LB = 1;
+                            }
+                            else if (mouse.button == Qt.RightButton)
+                            {
+                                console.log("Right")
+                                _interfaceHelper.ScopeView_RB = 1;
+                            }
+                            _interfaceHelper.ScopeView_x0 = mouseX;
+                            _interfaceHelper.ScopeView_ymax0 = parent.yMax;
+                            _interfaceHelper.ScopeView_ymin0 = parent.yMin;
+                            _interfaceHelper.ScopeView_y2max0 = parent.y2Max;
+                            _interfaceHelper.ScopeView_y2min0 = parent.y2Min;
+                            _interfaceHelper.ScopeView_y0 = mouseY;
+
+                            _interfaceHelper.ScopeView_axisNum = (mouseX < width/2)?0:1;
+                        }
+                        onPositionChanged: {
+                            if (_interfaceHelper.ScopeView_RB){
+
+                                var k = (mouseY - _interfaceHelper.ScopeView_y0) / height;
+                                //if (_interfaceHelper.ScopeView_axisNum == 0)    {
+                                parent.yMax = _interfaceHelper.ScopeView_ymax0 * (1 + k);
+                                parent.yMin = _interfaceHelper.ScopeView_ymin0 * (1 + k);
+                                //}
+                                //if (_interfaceHelper.ScopeView_axisNum == 1)    {
+                                parent.y2Max = _interfaceHelper.ScopeView_y2max0 * (1 + k);
+                                parent.y2Min = _interfaceHelper.ScopeView_y2min0 * (1 + k);
+                                //}
+                                console.log (mouseX, mouseY);
+                            }
+
+                        }
+                        onReleased: {
+                            console.log("onReleased")
+                            if (mouse.button == Qt.LeftButton)
+                            {
+                                console.log("Left")
+                                _interfaceHelper.ScopeView_LB = 0;
+                            }
+                            else if (mouse.button == Qt.RightButton)
+                            {
+                                console.log("Right")
+                                _interfaceHelper.ScopeView_RB = 0;
                             }
                         }
 
 
                     }
                 }
-            }
+
+                TabView {
+                    id: tabView
+                    width: parent.width
+                    height: parent.height
+                    Tab {
+                            title: "Red"
+                            Rectangle { color: "red" }
+                        }
+                }
             }
 
             Item {
@@ -998,4 +906,3 @@ Item {
     }
     //![2]
 }
-

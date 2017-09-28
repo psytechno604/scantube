@@ -56,7 +56,7 @@ void MeasurementModel::add(QString text)
 
 }
 
-void MeasurementModel::add(Measurement2 *_M)
+void MeasurementModel::add(Measurement *_M)
 {
     if (_M) {
         beginInsertRows(QModelIndex(), _data.size(), _data.size());
@@ -72,7 +72,7 @@ void MeasurementModel::emitDataChanged()
     emit dataChanged(top, bottom);
 }
 
-Measurement2 * MeasurementModel::get(int i)
+Measurement * MeasurementModel::get(int i)
 {
     if (i<0 || i>=_data.length())
         return nullptr;
@@ -82,21 +82,23 @@ Measurement2 * MeasurementModel::get(int i)
 double MeasurementModel::getDistance(int channel)
 {
     auto max = std::max_element( _data.begin(), _data.end(),
-                                 [channel]( Measurement2 *a, const Measurement2  *b )
+                                 [channel]( Measurement *a, const Measurement  *b )
                                  {
                                      return a->_corr[channel] < b->_corr[channel];
                                  } );
-    return (*max)->distance;
+    return (*max)?(*max)->distance:0;
 }
 
 void MeasurementModel::clear()
 {
-    beginRemoveRows(QModelIndex(), _data.size(), _data.size());
+    beginRemoveRows(QModelIndex(), 0, _data.size());
     for (auto i=0; i<_data.length(); i++)   {
         if (_data[i])
             delete _data[i];
     }
     _data.clear();
+    //emitDataChanged();
     endRemoveRows();
+
 }
 

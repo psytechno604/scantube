@@ -1,20 +1,29 @@
 #include "interfacehelper.h"
+#include <QtCore/QDebug>
 
 InterfaceHelper::InterfaceHelper(QObject *parent) : QObject(parent)
 {
 
 }
 
-int InterfaceHelper::getValue(QString id)
+int InterfaceHelper::getIntValue(QString id)
 {
-    if (id == "checkBoxUseFile")    {
-        return checkbox_fileInput_checked;
-    }
+    return jsonData[id].toInt();
+}
+
+QString InterfaceHelper::getQStringValue(QString id)
+{
+    return jsonData[id].toString();
 }
 
 void InterfaceHelper::setValue(QString id, int value)
 {
-    if (id == "checkBoxUseFile")    {
-        checkbox_fileInput_checked = value;
-    }
+    qDebug() << "int: " << value;
+    jsonData[id] = value;
+}
+
+void InterfaceHelper::setValue(QString id, QString value)
+{
+    qDebug() << "QString: " << value;
+    jsonData[id] = value;
 }

@@ -3,8 +3,10 @@
 #include <QThread>
 #include <QCoreApplication>
 #include <QString>
+#include <QtQuick/QQuickView>
+#include <QtQuick/QQuickItem>
 
-intercom::intercom(QObject *parent) : QObject(parent)
+intercom::intercom(QQuickView *appViewer, QObject *parent) : QObject(parent), m_appViewer(appViewer)
 {
 }
 
@@ -22,6 +24,7 @@ void intercom::on()
     _sender->writeDatagram(QByteArray::fromHex("4431"), address_provider::get_address(1), dst_port);
     QThread::msleep(100);
     _sender->writeDatagram(QByteArray::fromHex("4431"), address_provider::get_address(0), dst_port);
+    QThread::msleep(100);
 
     //qDebug() << "sender: " << _sender->hasPendingDatagrams() << " receiver: " << _receiver->hasPendingDatagrams();
 }
@@ -141,6 +144,11 @@ void intercom::processDatagram() {
         //_dataSource->save_point(buffer.toDouble(), 10, 0);
         _dataSource->save_point(distance, 10, 0);
         distance = distance - 0.1;
+
+        if (!object)
+            object = m_appViewer->rootObject();
+
+        QMetaObject::invokeMethod((QObject*)object, "setDistance", Q_ARG(QVariant, QString::number(distance)));
     }
 
     if (_dataSource && s >= MIN_DATA_PACKET_SIZE) {        
