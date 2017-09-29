@@ -128,7 +128,7 @@ void intercom::processDatagram() {
     QByteArray buffer;
     buffer.resize(_sender->pendingDatagramSize());
 
-
+   // _sender->
 
     QHostAddress sender;
     quint16 senderPort;
@@ -142,7 +142,7 @@ void intercom::processDatagram() {
 
     if (s>3 && s < MIN_DATA_PACKET_SIZE) {
         //_dataSource->save_point(buffer.toDouble(), 10, 0);
-        _dataSource->save_point(distance, 10, 0);
+        _dataSource->savePoint(distance, 10, 0);
         distance = distance - 0.1;
 
         if (!object)
@@ -152,7 +152,7 @@ void intercom::processDatagram() {
     }
 
     if (_dataSource && s >= MIN_DATA_PACKET_SIZE) {        
-        _dataSource->generateData(&buffer, 0);
+        _dataSource->readData(&buffer, sender);
     }
 
 }

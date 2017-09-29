@@ -56,6 +56,7 @@ QT_CHARTS_USE_NAMESPACE
 #include <queue>
 #include <map>
 #include <QVector>
+#include <QHostAddress>
 
 #include "measurement.h"
 #include "measurementmodel.h"
@@ -91,21 +92,22 @@ signals:
     void changeText(QString text);
 public slots:
     void showFromBuffer(int b_index, int block);
-    void generateData(QByteArray *buffer, int row);
+    void readData(QByteArray *buffer, QHostAddress sender);
     void update(QAbstractSeries *series);
     void updateDistances(QAbstractSeries *series);
 
-    void init_correlate_parameters(float  sigTau, float Fdskr);
+    void initCorrelationParameters(float  sigTau, float Fdskr);
 
-    void process_signal(QVector <double> &in, QVector <double> &out, int *StartPosIndex, int *ObjectPosIndex, int numadc);
+    void processSignal(QVector <double> &in, QVector <double> &out, int *StartPosIndex, int *ObjectPosIndex, int numadc);
 
-    void save_point(double distance, int nf, int saveAsZeroSignal);
-    void start_recording(QString fbasename);
+    void savePoint(double distance, int nf, int saveAsZeroSignal);
+    void startRecording(QString fbasename);
 
-    void open_file(QString openfname);
 
-    int get_channel_shift(int c);
-    void set_channel_shift(int c, int sh);
+    void openFile(QString openfname);
+
+    int getChannelShift(int c);
+    void setChannelShift(int c, int sh);
 
     int getSubtractZeroSignal();
     void setSubtractZeroSignal(int s);
@@ -122,9 +124,15 @@ public slots:
     void setMeasurementModel(MeasurementModel *mm);
 
     int getMaxCorrelationShift(QVector<double> a, QVector<double> b);
-private:
+
+
+private:    
+    QVector<QVector<unsigned short>> scan_data;
+
     //QVector<QVector<double>> X, Y;
-    
+    int getChannelNum(QByteArray *buffer, QHostAddress sender);
+    int maxchannels {32};
+
     MeasurementModel *measurementModel {nullptr};
     void clearMeasurementModel();
 
@@ -132,7 +140,8 @@ private:
     double _HP0_Td {1.0/(100.0*1E9)}, _HP0_fc {300*1E6}, _HP0_ford {2};
     double _LP1_Td {1.0/(100.0*1E9)}, _LP1_fc {1000*1E6}, _LP1_ford {2};
 
-    int _N{727};
+    int _N{727}; //TODO: remove hardcode!
+
     QQuickItem  *object {nullptr};
     QQuickView *m_appViewer {nullptr};
     QVector<QVector<QPointF> > m_data;
@@ -181,9 +190,9 @@ private:
     int useFilter {1};
 
     bool IsPowerOfTwo(ulong x);
-    void calc_correlate_func(QVector <double> &in, QVector <double>&out, float *corrfunct, int n__corr, int numsmpl);
-    void Make_HP_ButterworthFilter(vectorc& H, double Td, double fc, unsigned short ford);
-    void Make_LP_ButterworthFilter(vectorc& H, double Td, double fc, unsigned short ford);
+    void calcCorrelationFunc(QVector <double> &in, QVector <double>&out, float *corrfunct, int n__corr, int numsmpl);
+    void MakeHPButterworthFilter(vectorc& H, double Td, double fc, unsigned short ford);
+    void MakeLPButterworthFilter(vectorc& H, double Td, double fc, unsigned short ford);
     void cfft(vectorc& a);
     void icfft(vectorc& a);
 

@@ -49,7 +49,10 @@ DataSource::DataSource(QQuickView *appViewer, QObject *parent) :
     QObject(parent),
     m_appViewer(appViewer)
 {
+    if (!object)
+        object = m_appViewer->rootObject();
 
+    //QQuickItem *item = qobject_cast<QQuickItem*>(object);
 
     qRegisterMetaType<QAbstractSeries*>();
     qRegisterMetaType<QAbstractAxis*>();
@@ -68,9 +71,15 @@ DataSource::DataSource(QQuickView *appViewer, QObject *parent) :
 
 
     m_data.resize(nchannels * 3);
+
+    scan_data.resize(nchannels);
+    foreach (QVector<unsigned short> scan, scan_data) {
+        scan.resize(buffer_size);
+    }
+
     //generateData(0, 5, 1024);
 
-    init_correlate_parameters(80*1E-12, 100*1E9);
+    initCorrelationParameters(80*1E-12, 100*1E9);
 
     shY.push_back(1145);
     shY.push_back(-160);
@@ -217,7 +226,7 @@ void DataSource::updateDistances(QAbstractSeries *series)
     dst_lock.unlock();
 }
 
-void DataSource::calc_correlate_func(QVector <double> &in, QVector <double> &out, float *corrfunct, int n__corr, int numsmpl)
+void DataSource::calcCorrelationFunc(QVector <double> &in, QVector <double> &out, float *corrfunct, int n__corr, int numsmpl)
 {
     int i, j, offs;
     float sum;
@@ -241,7 +250,7 @@ void DataSource::calc_correlate_func(QVector <double> &in, QVector <double> &out
     }
 }
 
-void DataSource::init_correlate_parameters(float sigTau, float Fdskr)
+void DataSource::initCorrelationParameters(float sigTau, float Fdskr)
 {
     if (sigTau == 0 || Fdskr == 0)
         return;
@@ -262,7 +271,7 @@ bool DataSource::IsPowerOfTwo(ulong x)
 {
     return (x != 0) && ((x & (x - 1)) == 0);
 }
-void DataSource::process_signal(QVector <double> &in, QVector <double> &out, int *StartPosIndex, int *ObjectPosIndex, int numadc)
+void DataSource::processSignal(QVector <double> &in, QVector <double> &out, int *StartPosIndex, int *ObjectPosIndex, int numadc)
 {
     int i,j,x;
 
@@ -285,7 +294,7 @@ void DataSource::process_signal(QVector <double> &in, QVector <double> &out, int
       }
       else */
       if (useFilter)
-        calc_correlate_func( in, out, signal, kt_dt, numadc );
+        calcCorrelationFunc( in, out, signal, kt_dt, numadc );
       else {
           for (auto i=0; i<buffer_size; i++)    {
               out[i] = in[i];
@@ -296,7 +305,7 @@ void DataSource::process_signal(QVector <double> &in, QVector <double> &out, int
       //---- фильтр НЧ (для убирания шумов лишних в ВЧ обл.)
       if(1)
       {
-        Make_LP_ButterworthFilter(H, _LP0_Td,_LP0_fc, _LP0_ford);
+        MakeLPButterworthFilter(H, _LP0_Td,_LP0_fc, _LP0_ford);
         //Make_LP_ChebyshevFilter(H, 200*1E6, 0.3,2, 1.0/(100.0*1E9));
 
         for(j=0;j<ndaln2;j++) dblbubl[j]=complexd(0,0);
@@ -324,7 +333,7 @@ void DataSource::process_signal(QVector <double> &in, QVector <double> &out, int
       //---- фильтр ВЧ (для убирания пост. составл. в сигнале)
       if(1)
       {
-        Make_HP_ButterworthFilter(H, _HP0_Td,_HP0_fc, _HP0_ford);
+        MakeHPButterworthFilter(H, _HP0_Td,_HP0_fc, _HP0_ford);
 
         for(j=0;j<ndaln2;j++) dblbubl[j]=complexd(0,0);
         for(j=0;j<numadc;j++) dblbubl[j] = complexd( out[j],0 );
@@ -351,7 +360,7 @@ void DataSource::process_signal(QVector <double> &in, QVector <double> &out, int
       //---- фильтр НЧ для огибающей
       if(1)
       {
-        Make_LP_ButterworthFilter(H, _LP1_Td,_LP1_fc, _LP1_ford);
+        MakeLPButterworthFilter(H, _LP1_Td,_LP1_fc, _LP1_ford);
 
         for(j=0;j<ndaln2;j++) dblbubl[j]=complexd(0,0);
         for(j=0;j<numadc;j++) dblbubl[j] = complexd( out[j],0 );
@@ -387,7 +396,7 @@ void DataSource::process_signal(QVector <double> &in, QVector <double> &out, int
       *ObjectPosIndex = obj_position;
 }
 
-void DataSource::save_point(double distance, int nframes, int saveAsZeroSignal)
+void DataSource::savePoint(double distance, int nframes, int saveAsZeroSignal)
 {
     if (this->is_measured)
         return;
@@ -425,7 +434,7 @@ void DataSource::save_point(double distance, int nframes, int saveAsZeroSignal)
 
 }
 
-void DataSource::start_recording(QString fbasename)
+void DataSource::startRecording(QString fbasename)
 {
     QString strN = QString::number(_N);
 
@@ -443,7 +452,7 @@ void DataSource::start_recording(QString fbasename)
     }
 }
 
-void DataSource::open_file(QString openfname)
+void DataSource::openFile(QString openfname)
 {    
     QFile file(openfname);
     if (file.open(QIODevice::ReadOnly))    {
@@ -491,13 +500,13 @@ void DataSource::open_file(QString openfname)
     }
 }
 
-int DataSource::get_channel_shift(int c)
+int DataSource::getChannelShift(int c)
 {
     if (c >= 0 && c < shY.size())
         return shY[c];
 }
 
-void DataSource::set_channel_shift(int c, int sh)
+void DataSource::setChannelShift(int c, int sh)
 {
     if (c >= 0 && c < shY.size())
         shY[c] = sh;
@@ -569,16 +578,17 @@ void DataSource::showByIndex(int index)
     }
 }
 
-void DataSource::generateData(QByteArray *buffer, int row)
+void DataSource::readData(QByteArray *buffer, QHostAddress sender)
 {
    mtx.lock();
 
+   int ch_num = getChannelNum(buffer, sender);
 
 
     if (!object)
         object = m_appViewer->rootObject();
 
-    unsigned short i = (((*buffer)[0] << 8) + (*buffer)[1] );
+
 
 
     datafile->write(*buffer);
@@ -599,7 +609,7 @@ void DataSource::generateData(QByteArray *buffer, int row)
 
     //m_data.clear();
 
-    int b_index = i%2;
+
     //qDebug() << "generateData b_index=" << b_index;
 
     unsigned short med = 0x8000;
@@ -623,21 +633,24 @@ void DataSource::generateData(QByteArray *buffer, int row)
 
 
         buffer_in[x] = p;
+
+        scan_data[ch_num][x] = p;
+
         signal_sum += p;
         //pointsS.append(QPointF(x, 0));
     }   
     signal_sum = signal_sum / buffer_size;
     for (auto i=0; i<buffer_size; i++) {
-        buffer_in[i] -= signal_sum + ((subtractZeroSignal)?(zero_signal[b_index][i]):(0.0));
+        buffer_in[i] -= signal_sum + ((subtractZeroSignal)?(zero_signal[ch_num][i]):(0.0));
     }
     buffer_in[0] = 0;
     //calc_correlate_func(points, pointsS, signal, kt_dt, N / 2 - 1);
 
-    showFromBuffer(b_index, 0);
+    showFromBuffer(ch_num, 0);
 
     mtx.unlock();
 }
-void DataSource::Make_HP_ButterworthFilter(vectorc& H, double Td, double fc, unsigned short ford)
+void DataSource::MakeHPButterworthFilter(vectorc& H, double Td, double fc, unsigned short ford)
 {
   QVector<complexd> Poles(ford); // полюса аналогового фильтра прототипа
   complexd Z, p1, G0 = complexd(1,0), K;
@@ -671,7 +684,7 @@ void DataSource::Make_HP_ButterworthFilter(vectorc& H, double Td, double fc, uns
   }
 //#undef cv
 }
-void DataSource::Make_LP_ButterworthFilter(vectorc& H, double Td, double fc, unsigned short ford)
+void DataSource::MakeLPButterworthFilter(vectorc& H, double Td, double fc, unsigned short ford)
 {
   QVector<complexd> Poles(ford); // полюса аналогового фильтра прототипа
   complexd Z, p1, G0 = complexd(1,0), K;
@@ -773,20 +786,20 @@ int DataSource::_FindMaxValueInRangeOFArray(QVector <double>smp, int numsmp, int
   return idx;
 }
 
-void DataSource::accumulateChannel(int b_index)
+void DataSource::accumulateChannel(int ch_num)
 {
-    if (fcount[b_index] < 0)
+    if (fcount[ch_num] < 0)
         return;
     for (auto i=0; i<buffer_size; i++)  {
-        raw_acc[b_index][i] += buffer_in[i];
+        raw_acc[ch_num][i] += buffer_in[i];
        // processed_acc[b_index][i] += buffer_out[i];
     }
-    auto _tmp = QString::number((fcount[b_index] * 1.0) / (nframes * 1.0));
+    auto _tmp = QString::number((fcount[ch_num] * 1.0) / (nframes * 1.0));
     QMetaObject::invokeMethod((QObject*)object, "changeProgressBar", Q_ARG(QVariant, _tmp));
-    fcount[b_index]--;
-    if (fcount[b_index] == 0)    {
+    fcount[ch_num]--;
+    if (fcount[ch_num] == 0)    {
         for (auto i=0; i<buffer_size; i++)  {
-            raw_acc[b_index][i] = raw_acc[b_index][i] / nframes;
+            raw_acc[ch_num][i] = raw_acc[ch_num][i] / nframes;
            // processed_acc[b_index][i] = processed_acc[b_index][i] / nframes;
         }
 
@@ -794,12 +807,12 @@ void DataSource::accumulateChannel(int b_index)
         if (pointfile && pointfile->open(QIODevice::WriteOnly | QIODevice::Append)) {
             QDataStream out(pointfile);
             out.setVersion(QDataStream::Qt_5_9);
-            out << b_index;
+            out << ch_num;
             for (auto i=0; i<buffer_size; i++){
                 //out << std::htons(((unsigned short)raw_acc[b_index][i] + med));
-                out << raw_acc[b_index][i];
+                out << raw_acc[ch_num][i];
                 if (saveAsZeroSignal)   {
-                    zero_signal[b_index][i] = raw_acc[b_index][i];
+                    zero_signal[ch_num][i] = raw_acc[ch_num][i];
                 }
             }
 
@@ -811,11 +824,11 @@ void DataSource::accumulateChannel(int b_index)
                 if (zerofile && zerofile->open(QIODevice::WriteOnly | QIODevice::Append)) {
                     QDataStream outz(zerofile);
                     outz.setVersion(QDataStream::Qt_5_9);
-                    outz << b_index;
+                    outz << ch_num;
 
                     for (auto i=0; i<buffer_size; i++){
                        // outz << ((unsigned short)zero_signal[b_index][i]+med);
-                        outz << zero_signal[b_index][i];
+                        outz << zero_signal[ch_num][i];
                     }
                     zerofile->close();
                 }
@@ -824,8 +837,8 @@ void DataSource::accumulateChannel(int b_index)
             }
 
             pointfile->close();
-
-
+            delete pointfile;
+            pointfile = nullptr;
         }
         is_measured --;
     }
@@ -857,6 +870,15 @@ int DataSource::getMaxCorrelationShift(QVector<double> a, QVector<double> b)
         }
     }
     return ret;
+}
+
+int DataSource::getChannelNum(QByteArray *buffer, QHostAddress sender)
+{
+    //TODO: work with sender, it can contain necessary data
+
+    unsigned short i = (((*buffer)[0] << 8) + (*buffer)[1] );
+
+    return i%nchannels;
 }
 
 void DataSource::clearMeasurementModel()

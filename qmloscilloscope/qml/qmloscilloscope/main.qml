@@ -45,6 +45,7 @@ import com.example.Timeline3D 1.0
 
 
 
+
 Item {
     id: main
     width: 1024
@@ -138,7 +139,7 @@ Item {
                 y: 181
                 width: 85
                 height: 40
-                text: dataSource.get_channel_shift(0)
+                text: dataSource.getChannelShift(0)
                 selectByMouse: true
                 MouseArea {
                     acceptedButtons: Qt.NoButton
@@ -146,7 +147,7 @@ Item {
                     anchors.fill: parent
                 }
                 onTextChanged:{
-                    dataSource.set_channel_shift(0, text*1);
+                    dataSource.setChannelShift(0, text*1);
                 }
             }
             TextField {
@@ -155,7 +156,7 @@ Item {
                 y: 181
                 width: 78
                 height: 40
-                text: dataSource.get_channel_shift(1)
+                text: dataSource.getChannelShift(1)
                 selectByMouse: true
                 MouseArea {
                     acceptedButtons: Qt.NoButton
@@ -163,7 +164,7 @@ Item {
                     anchors.fill: parent
                 }
                 onTextChanged:{
-                    dataSource.set_channel_shift(1, text*1);
+                    dataSource.setChannelShift(1, text*1);
                 }
             }
 
@@ -997,5 +998,8 @@ Item {
         return
     }
     //![2]
+    Component.onCompleted: {
+        timeline_3d_object.connectDataSource(dataSource);
+    }
 }
 

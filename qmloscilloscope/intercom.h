@@ -30,7 +30,7 @@ private:
     int dst_port {4096};
     int listen_port {1024};
     double distance {30.6};
-    void reCreateSender();
+    void reCreateSender();    
 signals:
 
 public slots:

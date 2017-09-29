@@ -56,6 +56,11 @@ Timeline3D::Timeline3D(QNode *parent)
     timer->start(100);
 }
 
+void Timeline3D::connectDataSource(DataSource *dataSource)
+{
+    this->dataSource = dataSource;
+}
+
 void Timeline3D::addPoint() {
     float* reVertexArray;
 
