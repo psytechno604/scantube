@@ -36,6 +36,7 @@ import QtQuick.Controls 2.2
 import QtQuick.Layouts 1.3
 
 import QtCharts 2.2
+import QtDataVisualization 1.2
 
 import Qt3D.Core 2.0
 import Qt3D.Render 2.0
@@ -43,6 +44,7 @@ import QtQuick.Scene3D 2.0
 
 import com.example.Timeline3D 1.0
 
+import QtQuick.Controls.Styles 1.4
 
 
 
@@ -50,6 +52,7 @@ Item {
     id: main
     width: 1024
     height: 768
+    property alias checkBox_subtractZeroSignal: checkBox_subtractZeroSignal
     property alias column: column
     //property alias controlPanel: controlPanel
     property alias text1Text: text1.text
@@ -195,9 +198,29 @@ Item {
                 height: 40
                 checked: dataSource.getSubtractZeroSignal();
                 text: qsTr("subtract Zero signal")
+                spacing: 5
+                font.weight: Font.Normal
                 onCheckedChanged: {
                     dataSource.setSubtractZeroSignal(checked);
                 }
+                /*style: CheckBoxStyle {
+                    indicator: Rectangle {
+                            implicitWidth: 16
+                            implicitHeight: 16
+                            radius: 3
+                            border.color: control.activeFocus ? "darkblue" : "gray"
+                            border.width: 1
+                            Rectangle {
+                                visible: control.checked
+                                color: "#555"
+                                border.color: "#333"
+                                radius: 1
+                                anchors.margins: 4
+                                anchors.fill: parent
+                            }
+                    }
+                }*/
+
             }
 
             CheckBox {
@@ -210,205 +233,6 @@ Item {
                 checked: dataSource.getUseFilter()
                 onCheckedChanged: {
                     dataSource.setUseFilter(checked);
-                }
-            }
-
-            TextField {
-                id: textField_LP0_Td
-                x: 8
-                y: 307
-                width: 62
-                height: 26
-                text: dataSource.getValue("textField_LP0_Td")
-                selectByMouse: true
-                MouseArea {
-                    anchors.leftMargin: 0
-                    anchors.bottomMargin: 0
-                    acceptedButtons: Qt.NoButton
-                    cursorShape: Qt.IBeamCursor
-                    anchors.rightMargin: 0
-                    anchors.topMargin: 0
-                    anchors.fill: parent
-                }
-                onTextChanged: {
-                    dataSource.setValue("textField_LP0_Td", text * 1.0);
-                }
-            }
-
-            TextField {
-                id: textField_LP0_fc
-                x: 73
-                y: 307
-                width: textField_LP0_Td.width
-                height: textField_LP0_Td.height
-                text: dataSource.getValue("textField_LP0_fc")
-                selectByMouse: true
-                MouseArea {
-                    anchors.leftMargin: 0
-                    anchors.bottomMargin: 0
-                    acceptedButtons: Qt.NoButton
-                    cursorShape: Qt.IBeamCursor
-                    anchors.rightMargin: 0
-                    anchors.topMargin: 0
-                    anchors.fill: parent
-                }
-                onTextChanged: {
-                    dataSource.setValue("textField_LP0_fc", text * 1.0);
-                }
-            }
-
-            TextField {
-                id: textField_LP0_ford
-                x: 138
-                y: 307
-                width: textField_LP0_Td.width
-                height: textField_LP0_Td.height
-                text: dataSource.getValue("textField_LP0_ford")
-                selectByMouse: true
-                MouseArea {
-                    anchors.leftMargin: 0
-                    anchors.bottomMargin: 0
-                    acceptedButtons: Qt.NoButton
-                    cursorShape: Qt.IBeamCursor
-                    anchors.rightMargin: 0
-                    anchors.topMargin: 0
-                    anchors.fill: parent
-                }
-                onTextChanged: {
-                    dataSource.setValue("textField_LP0_ford", text * 1.0);
-                }
-            }
-
-            TextField {
-                id: textField_HP0_Td
-                x: 8
-                y: 339
-                width: textField_LP0_Td.width
-                height: textField_LP0_Td.height
-                text: dataSource.getValue("textField_HP0_Td")
-                selectByMouse: true
-                MouseArea {
-                    x: textField_LP0_Td.x
-                    anchors.leftMargin: 0
-                    anchors.bottomMargin: 0
-                    acceptedButtons: Qt.NoButton
-                    cursorShape: Qt.IBeamCursor
-                    anchors.rightMargin: 0
-                    anchors.topMargin: 0
-                    anchors.fill: parent
-                }
-                onTextChanged: {
-                    dataSource.setValue("textField_HP0_Td", text * 1.0);
-                }
-            }
-
-            TextField {
-                id: textField_HP0_fc
-                x: 73
-                y: 339
-                width: textField_LP0_Td.width
-                height: textField_LP0_Td.height
-                text: dataSource.getValue("textField_HP0_fc")
-                selectByMouse: true
-                MouseArea {
-                    anchors.leftMargin: 0
-                    anchors.bottomMargin: 0
-                    acceptedButtons: Qt.NoButton
-                    cursorShape: Qt.IBeamCursor
-                    anchors.rightMargin: 0
-                    anchors.topMargin: 0
-                    anchors.fill: parent
-                }
-                onTextChanged: {
-                    dataSource.setValue("textField_HP0_fc", text * 1.0);
-                }
-            }
-
-            TextField {
-                id: textField_HP0_ford
-                x: 138
-                y: 339
-                width: textField_LP0_Td.width
-                height: textField_LP0_Td.height
-                text: dataSource.getValue("textField_HP0_ford")
-                selectByMouse: true
-                MouseArea {
-                    anchors.leftMargin: 0
-                    anchors.bottomMargin: 0
-                    acceptedButtons: Qt.NoButton
-                    cursorShape: Qt.IBeamCursor
-                    anchors.rightMargin: 0
-                    anchors.topMargin: 0
-                    anchors.fill: parent
-                }
-                onTextChanged: {
-                    dataSource.setValue("textField_HP0_ford", text * 1.0);
-                }
-            }
-
-            TextField {
-                id: textField_LP1_Td
-                x: 8
-                y: 371
-                width: textField_LP0_Td.width
-                height: textField_LP0_Td.height
-                text: dataSource.getValue("textField_LP1_Td")
-                selectByMouse: true
-                MouseArea {
-                    anchors.leftMargin: 0
-                    anchors.bottomMargin: 0
-                    acceptedButtons: Qt.NoButton
-                    cursorShape: Qt.IBeamCursor
-                    anchors.rightMargin: 0
-                    anchors.topMargin: 0
-                    anchors.fill: parent
-                }
-                onTextChanged: {
-                    dataSource.setValue("textField_LP1_Td", text * 1.0);
-                }
-            }
-
-            TextField {
-                id: textField_LP1_fc
-                x: 73
-                y: 371
-                width: textField_LP0_Td.width
-                height: textField_LP0_Td.height
-                text: dataSource.getValue("textField_LP1_fc")
-                selectByMouse: true
-                MouseArea {
-                    anchors.leftMargin: 0
-                    anchors.bottomMargin: 0
-                    acceptedButtons: Qt.NoButton
-                    cursorShape: Qt.IBeamCursor
-                    anchors.rightMargin: 0
-                    anchors.topMargin: 0
-                    anchors.fill: parent
-                }
-                onTextChanged: {
-                    dataSource.setValue("textField_LP1_fc", text * 1.0);
-                }
-            }
-
-            TextField {
-                id: textField_LP1_ford
-                x: 138
-                y: 371
-                width: textField_LP0_Td.width
-                height: textField_LP0_Td.height
-                text: dataSource.getValue("textField_LP1_ford")
-                selectByMouse: true
-                MouseArea {
-                    anchors.leftMargin: 0
-                    anchors.bottomMargin: 0
-                    acceptedButtons: Qt.NoButton
-                    cursorShape: Qt.IBeamCursor
-                    anchors.rightMargin: 0
-                    anchors.topMargin: 0
-                    anchors.fill: parent
-                }
-                onTextChanged: {
-                    dataSource.setValue("textField_LP1_ford", text * 1.0);
                 }
             }
 
@@ -449,15 +273,15 @@ Item {
             Slider {
                 id: slider1
                 x: 0
-                y: 403
+                y: 323
                 value: 0.5
             }
 
             ListView {
                 id: listView
-                x: 8
-                y: 445
-                width: 192
+                x: 0
+                y: 363
+                width: 200
                 height: parent.height-y
                 keyNavigationWraps: false
                 highlightFollowsCurrentItem: false
@@ -572,6 +396,9 @@ Item {
                         }
                     TabButton {
                             text: qsTr("Timeline 3D")
+                        }
+                    TabButton {
+                            text: qsTr("Timeline 3D Surface")
                         }
                 }
                 StackLayout {
@@ -713,6 +540,53 @@ Item {
                         }
 
 
+                    }
+                    Item {
+                        id: timeline_3d_surface
+                        anchors.fill: parent
+
+                        Surface3D {
+                            id: timeline_3d_surface_object
+                            anchors.fill: parent
+                            axisX.min: 0.0
+                            axisX.max: 100.0
+                            axisX.title: "Scan"
+                            axisX.titleVisible: true
+
+                            axisZ.min: 0.0
+                            axisZ.max: 727.0
+                            axisZ.title: "Distance"
+                            axisZ.titleVisible: true
+
+                            axisY.min: -1024
+                            axisY.max: 1024
+                            axisY.title: "Signal level"
+                            axisY.titleVisible: true
+
+                            horizontalAspectRatio: 2
+
+                            shadowQuality: AbstractGraph3D.ShadowQualityMedium
+                            selectionMode: AbstractGraph3D.SelectionSlice | AbstractGraph3D.SelectionItemAndRow
+                            scene.activeCamera.cameraPreset: Camera3D.CameraPresetIsometricLeft
+
+                            theme: Theme3D {
+                                type: Theme3D.ThemeStoneMoss
+                                font.family: "STCaiyun"
+                                font.pointSize: 35
+                                colorStyle: Theme3D.ColorStyleRangeGradient
+                               // baseGradients: [surfaceGradient]
+                            }
+
+                            Surface3DSeries {
+                                id: surfaceSeries
+                                flatShadingEnabled: false
+                                drawMode: Surface3DSeries.DrawSurface
+                            }
+
+                            Component.onCompleted: {
+                               dataSource.updateSurface3D(surfaceSeries);
+                            }
+                        }
                     }
                 }
             }

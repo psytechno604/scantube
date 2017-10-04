@@ -30,9 +30,19 @@
 #ifndef DATASOURCE_H
 #define DATASOURCE_H
 
+
+
 #include <QtCore/QObject>
 #include <QtCharts/QAbstractSeries>
 #include <QFile>
+
+#include <QtDataVisualization>
+#include <QAbstract3DSeries>
+
+#include <QtDataVisualization/Q3DSurface>
+#include <QtDataVisualization/QSurfaceDataProxy>
+#include <QtDataVisualization/QHeightMapSurfaceDataProxy>
+#include <QtDataVisualization/QSurface3DSeries>
 
 QT_BEGIN_NAMESPACE
 class QQuickView;
@@ -95,6 +105,7 @@ public slots:
     void readData(QByteArray *buffer, QHostAddress sender);
     void update(QAbstractSeries *series);
     void updateDistances(QAbstractSeries *series);
+    void updateSurface3D(QtDataVisualization::QAbstract3DSeries *series);
 
     void initCorrelationParameters(float  sigTau, float Fdskr);
 
@@ -125,7 +136,7 @@ public slots:
 
     int getMaxCorrelationShift(QVector<double> a, QVector<double> b);
 
-
+    QVector<QVector<unsigned short> > *getScanData();
 private:    
     QVector<QVector<unsigned short>> scan_data;
 
@@ -152,6 +163,7 @@ private:
 
     shared_mutex mtx;
     QReadWriteLock dst_lock;
+    QReadWriteLock surface_data_lock;
 
     QFile *datafile {nullptr}, *markupfile {nullptr}, *pointfile {nullptr}, *zerofile {nullptr};
 

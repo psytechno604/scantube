@@ -27,6 +27,7 @@
 **
 ****************************************************************************/
 
+
 #include "datasource.h"
 #include "shared_mutex.h"
 #include <QtCharts/QXYSeries>
@@ -36,6 +37,9 @@
 #include <QtCore/QDebug>
 #include <QtCore/QtMath>
 #include <QDateTime>
+
+#include <QtDataVisualization/QValue3DAxis>
+#include <QtDataVisualization/Q3DTheme>
 
 #include "measurement.h"
 #include "scantube.h"
@@ -224,6 +228,48 @@ void DataSource::updateDistances(QAbstractSeries *series)
 
 
     dst_lock.unlock();
+}
+
+void DataSource::updateSurface3D(QtDataVisualization::QAbstract3DSeries *series)
+{
+    auto sampleCountZ = 10;
+    auto sampleCountX = 101;
+
+    surface_data_lock.lockForRead();
+
+    auto s3ds =  static_cast<QtDataVisualization::QSurface3DSeries *>(series);
+
+    auto proxy = s3ds->dataProxy();
+
+    //auto series = new QtDataVisualization::QSurface3DSeries(proxy);
+
+    auto dataArray = new QtDataVisualization::QSurfaceDataArray();
+
+    dataArray->reserve(sampleCountZ);
+
+    for (int i = 0 ; i < sampleCountZ ; i++) {
+        QtDataVisualization::QSurfaceDataRow *newRow = new QtDataVisualization::QSurfaceDataRow(sampleCountX);
+        // Keep values within range bounds, since just adding step can cause minor drift due
+        // to the rounding errors.
+        float z = 5*i+100;
+        int index = 0;
+        for (int j = 0; j < sampleCountX; j++) {
+            float x = j; // "Scan"
+
+            float y = i+j+j*i+i*i+j*j;
+            (*newRow)[index++].setPosition(QVector3D(x, y, z));
+        }
+        *dataArray << newRow;
+    }
+
+    proxy->resetArray(dataArray);
+
+    //proxy->
+
+    //proxy->
+    //s3ds
+
+    surface_data_lock.unlock();
 }
 
 void DataSource::calcCorrelationFunc(QVector <double> &in, QVector <double> &out, float *corrfunct, int n__corr, int numsmpl)
@@ -870,6 +916,11 @@ int DataSource::getMaxCorrelationShift(QVector<double> a, QVector<double> b)
         }
     }
     return ret;
+}
+
+QVector<QVector<unsigned short> > *DataSource::getScanData()
+{
+    return &scan_data;
 }
 
 int DataSource::getChannelNum(QByteArray *buffer, QHostAddress sender)

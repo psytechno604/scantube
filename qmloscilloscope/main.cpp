@@ -75,16 +75,9 @@ int main(int argc, char *argv[])
     DataSource dataSource(&viewer);
     viewer.rootContext()->setContextProperty("dataSource", &dataSource);
 
-
-    //QThread* thread = new QThread();
-    //thread->start();
-
     intercom *_intercom = new intercom(&viewer);
 
     _intercom->setDataSource(&dataSource);
-    //_intercom->moveToThread(thread);
-    //QObject::connect(thread, SIGNAL(started()), &_intercom, SLOT(run()));
-
 
     viewer.rootContext()->setContextProperty("_intercom", _intercom);
 
@@ -111,13 +104,7 @@ int main(int argc, char *argv[])
     viewer.setColor(QColor("#404040"));
     viewer.show();
 
-    //QQuickItem  *object = viewer.rootObject();
-    //QMetaObject::invokeMethod((QObject*)object, "changeText1", Q_ARG(QVariant, "hello"));
-    //QMetaObject::invokeMethod((QObject*)object, "changeText2", Q_ARG(QVariant, "hello"));
-
-
-
-    auto ret = app.exec();
+     auto ret = app.exec();
     _intercom->off();
     return ret;
 }

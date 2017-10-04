@@ -17,13 +17,14 @@ class Timeline3D : public QEntity
     Q_OBJECT
 public:
     Timeline3D(QNode *parent = 0);
-    void addScan(QVector<QVector<unsigned short>> &scan_data);
+    Q_INVOKABLE void addScan();
     Q_INVOKABLE void connectDataSource(DataSource *dataSource);
-
 private:
-    DataSource *dataSource;
+    DataSource *dataSource {nullptr};
 
     QCamera *m_camera;
+
+    Qt3DCore::QTransform *lightTransform;
 
     int m_count;
     float x,y;

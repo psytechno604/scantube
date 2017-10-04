@@ -9,8 +9,8 @@ Timeline3D::Timeline3D(QNode *parent)
     : QEntity(parent)
     , m_camera(new QCamera())
     , m_count(0)
-    , y(5000.0f)
-    , x(50000.0f)
+    , y(0.0f)
+    , x(0.0f)
 {
     m_camera->lens()->setPerspectiveProjection(45.0f, 16.0f/9.0f, 0.1f, 1000.0f);
 
@@ -54,6 +54,29 @@ Timeline3D::Timeline3D(QNode *parent)
     QObject::connect(timer, &QTimer::timeout,this,&Timeline3D::onTimerUpdate);
 
     timer->start(100);
+
+    Qt3DCore::QEntity *lightEntity = new Qt3DCore::QEntity(this);
+    Qt3DRender::QPointLight *light = new Qt3DRender::QPointLight(lightEntity);
+    light->setColor("yellow");
+    light->setIntensity(1000);
+    lightEntity->addComponent(light);
+    lightTransform = new Qt3DCore::QTransform(lightEntity);
+    lightTransform->setTranslation(QVector3D(0, 0, 0));
+    lightEntity->addComponent(lightTransform);
+
+    //m_camera->setPosition(QVector3D(y,sinf(M_PI/12)*30.0f,x+50.0f));
+    //m_camera->setViewCenter(QVector3D(y,0.0f,x));
+}
+
+void Timeline3D::addScan()
+{
+    if (!dataSource)
+        return;
+
+    auto scan_data = dataSource->getScanData();
+
+    if (!scan_data)
+        return;
 }
 
 void Timeline3D::connectDataSource(DataSource *dataSource)
@@ -68,6 +91,7 @@ void Timeline3D::addPoint() {
     y += qrand() % 2 - 1;
 
     if (!(m_count % 100)) {
+        //every 100-th timer tick:
         m_geometryRenderer = new QGeometryRenderer();
         QGeometry* meshGeometry = new QGeometry(m_geometryRenderer);
 
@@ -112,6 +136,8 @@ void Timeline3D::addPoint() {
         entity->addComponent(m_geometryRenderer);
         entity->addComponent(m_planeMaterial);
 
+
+
         return;
     }
 
@@ -128,7 +154,7 @@ void Timeline3D::addPoint() {
 
     //coordinates of right vertex
     reVertexArray[3] = y+5.0f;
-    reVertexArray[4] = 0.0f;
+    reVertexArray[4] = 1.0f;
     reVertexArray[5] = x;
 
     uint vertexCount = positionAttribute->count();
@@ -143,5 +169,10 @@ void Timeline3D::onTimerUpdate()
     m_camera->setPosition(QVector3D(y,sinf(M_PI/12)*30.0f,x+50.0f));
     m_camera->setViewCenter(QVector3D(y,0.0f,x));
 
+    qDebug() << "x=" << x << "; y=" << y;
+
+    lightTransform->setTranslation(QVector3D(y, 10.0f, x));
+
     m_count++;
 }
+
