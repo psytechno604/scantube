@@ -19,6 +19,7 @@ public:
     Q_INVOKABLE void setSpeed(QString spd);
     Q_INVOKABLE void setDataSource(DataSource *ds);
     Q_INVOKABLE void sendFix(QString distance);
+    Q_INVOKABLE void sendScan();
 private:
     QQuickItem  *object {nullptr};
     QQuickView *m_appViewer {nullptr};
@@ -26,10 +27,15 @@ private:
     QHostAddress *myIP {nullptr};
     DataSource *_dataSource {nullptr};
 
+    //number of ip's in system
+    int ips_count {2};
+
+
     int src_port {1024};
     int dst_port {4096};
     int listen_port {1024};
     double distance {30.6};
+
     void reCreateSender();    
 signals:
 

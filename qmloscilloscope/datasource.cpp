@@ -43,6 +43,7 @@
 
 #include "measurement.h"
 #include "scantube.h"
+#include "addressprovider.h"
 
 QT_CHARTS_USE_NAMESPACE
 
@@ -56,6 +57,7 @@ DataSource::DataSource(QQuickView *appViewer, QObject *parent) :
     if (!object)
         object = m_appViewer->rootObject();
 
+    nchannels = AddressProvider::getReceiverCount() * inputsPerReceiver * channelsInPacket;
     //QQuickItem *item = qobject_cast<QQuickItem*>(object);
 
     qRegisterMetaType<QAbstractSeries*>();
@@ -76,9 +78,11 @@ DataSource::DataSource(QQuickView *appViewer, QObject *parent) :
 
     m_data.resize(nchannels * 3);
 
-    scan_data.resize(nchannels);
-    foreach (QVector<unsigned short> scan, scan_data) {
-        scan.resize(buffer_size);
+
+
+
+    for(auto i=0; i<nchannels; i++) {
+        scan_data.insert(i, *(new QVector<unsigned short>(buffer_size)));
     }
 
     //generateData(0, 5, 1024);
@@ -97,7 +101,7 @@ DataSource::DataSource(QQuickView *appViewer, QObject *parent) :
 
     X.resize(nchannels);
     Y.resize(nchannels);
-    s.resize(nchannels);
+    //s.resize(nchannels);
     raw_acc.resize(nchannels);
     processed_acc.resize(nchannels);
     fcount.resize(nchannels);
@@ -109,7 +113,7 @@ DataSource::DataSource(QQuickView *appViewer, QObject *parent) :
     for(int c=0; c<nchannels; c++) {
         X[c].resize(T);
         Y[c].resize(T);
-        s[c] = *(new tk::spline());
+        //s[c] = *(new tk::spline());
         raw_acc[c] = new double[buffer_size];
         processed_acc[c] = new double[buffer_size];
         zero_signal[c] = new double[buffer_size];
@@ -140,9 +144,9 @@ DataSource::DataSource(QQuickView *appViewer, QObject *parent) :
     X[0][k]=455;	Y[0][k]=26.5;		X[1][k]=459;	Y[1][k]=26.5; k++;
     X[0][k]=457;	Y[0][k]=27.2;		X[1][k]=465;	Y[1][k]=27.2; k++;
 
-    for(int c=0; c<nchannels; c++) {
+    /*for(int c=0; c<nchannels; c++) {
         s[c].set_points(X[c],Y[c]);
-    }
+    }*/
 }
 
 DataSource::~DataSource()
@@ -232,7 +236,7 @@ void DataSource::updateDistances(QAbstractSeries *series)
 
 void DataSource::updateSurface3D(QtDataVisualization::QAbstract3DSeries *series)
 {
-    auto sampleCountZ = 10;
+    auto sampleCountZ = 727;
     auto sampleCountX = 101;
 
     surface_data_lock.lockForRead();
@@ -251,12 +255,12 @@ void DataSource::updateSurface3D(QtDataVisualization::QAbstract3DSeries *series)
         QtDataVisualization::QSurfaceDataRow *newRow = new QtDataVisualization::QSurfaceDataRow(sampleCountX);
         // Keep values within range bounds, since just adding step can cause minor drift due
         // to the rounding errors.
-        float z = 5*i+100;
+        float z = i; //"Distance"
         int index = 0;
         for (int j = 0; j < sampleCountX; j++) {
             float x = j; // "Scan"
 
-            float y = i+j+j*i+i*i+j*j;
+            float y = i+j; // "Level"
             (*newRow)[index++].setPosition(QVector3D(x, y, z));
         }
         *dataArray << newRow;
@@ -624,11 +628,11 @@ void DataSource::showByIndex(int index)
     }
 }
 
-void DataSource::readData(QByteArray *buffer, QHostAddress sender)
+void DataSource::readData(int buffer_part, QByteArray *buffer, QHostAddress sender)
 {
    mtx.lock();
 
-   int ch_num = getChannelNum(buffer, sender);
+   int ch_num = getChannelNum(buffer_part, buffer, sender);
 
 
     if (!object)
@@ -636,9 +640,12 @@ void DataSource::readData(QByteArray *buffer, QHostAddress sender)
 
 
 
+    if (datafile)
+        datafile->write(*buffer);
 
-    datafile->write(*buffer);
+    int b_shift = buffer_part * (buffer_size + 1) * 2;
 
+    /*
     auto N = (*buffer).length();
 
     if (N / 2 - 1 > buffer_size){
@@ -650,7 +657,7 @@ void DataSource::readData(QByteArray *buffer, QHostAddress sender)
         //buffer_in = new double[buffer_size];
         //buffer_out = new double[buffer_size];
     }
-
+*/
 
 
     //m_data.clear();
@@ -663,8 +670,8 @@ void DataSource::readData(QByteArray *buffer, QHostAddress sender)
     //buffer_in[0] = 0;
     double signal_sum = 0;
     for(auto j=0; j<buffer_size; j++) {
-        unsigned char b0 = (unsigned char)(*buffer)[(j+1)*2];
-        unsigned char b1 = (unsigned char)(*buffer)[(j+1)*2+1];
+        unsigned char b0 = (unsigned char)(*buffer)[b_shift + (j+1)*2];
+        unsigned char b1 = (unsigned char)(*buffer)[b_shift + (j+1)*2+1];
         //unsigned short p = ((*buffer)[i] << 8) + (*buffer)[i+1];
         double p = (b0 << 8) + b1 - med /*+ shY[b_index] - ((subtractZeroSignal)?(zero_signal[b_index][j]):(0.0))*/;
         //QString s;
@@ -918,12 +925,12 @@ int DataSource::getMaxCorrelationShift(QVector<double> a, QVector<double> b)
     return ret;
 }
 
-QVector<QVector<unsigned short> > *DataSource::getScanData()
+QMap<int, QVector<unsigned short> > *DataSource::getScanData()
 {
     return &scan_data;
 }
 
-int DataSource::getChannelNum(QByteArray *buffer, QHostAddress sender)
+int DataSource::getChannelNum(int buffer_part, QByteArray *buffer, QHostAddress sender)
 {
     //TODO: work with sender, it can contain necessary data
 

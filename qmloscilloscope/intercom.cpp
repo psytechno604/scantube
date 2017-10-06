@@ -1,5 +1,5 @@
 #include "intercom.h"
-#include "address_provider.h"
+#include "addressprovider.h"
 #include <QThread>
 #include <QCoreApplication>
 #include <QString>
@@ -19,12 +19,14 @@ void intercom::on()
     if (!_sender) {
         return;
     }
-    _sender->writeDatagram(QByteArray::fromHex("490008"), address_provider::get_address(1), dst_port);
+    for (auto i=1; i<ips_count; i++) {
+        _sender->writeDatagram(QByteArray::fromHex("490008"), AddressProvider::getAddress(1), dst_port);
+        QThread::msleep(100);
+        _sender->writeDatagram(QByteArray::fromHex("4431"), AddressProvider::getAddress(1), dst_port);
+    }
     QThread::msleep(100);
-    _sender->writeDatagram(QByteArray::fromHex("4431"), address_provider::get_address(1), dst_port);
-    QThread::msleep(100);
-    _sender->writeDatagram(QByteArray::fromHex("4431"), address_provider::get_address(0), dst_port);
-    QThread::msleep(100);
+    _sender->writeDatagram(QByteArray::fromHex("4431"), AddressProvider::getAddress(0), dst_port);
+    //QThread::msleep(100);
 
     //qDebug() << "sender: " << _sender->hasPendingDatagrams() << " receiver: " << _receiver->hasPendingDatagrams();
 }
@@ -35,9 +37,9 @@ void intercom::off()
         return;
     }
 
-    _sender->writeDatagram(QByteArray::fromHex("4430"), address_provider::get_address(0), dst_port);
-    QThread::msleep(100);
-    _sender->writeDatagram(QByteArray::fromHex("4430"), address_provider::get_address(1), dst_port);
+    _sender->writeDatagram(QByteArray::fromHex("4430"), AddressProvider::getAddress(0), dst_port);
+    //QThread::msleep(100);
+    //_sender->writeDatagram(QByteArray::fromHex("4430"), address_provider::get_address(1), dst_port);
 
     delete _sender;
     _sender = nullptr;
@@ -76,7 +78,7 @@ void intercom::setAccumulation(QString acc)
     if (acc=="1024") command = "57010A";
 
     if (command != "")
-        _sender->writeDatagram(QByteArray::fromHex(command.toUtf8()), address_provider::get_address(1), dst_port);
+        _sender->writeDatagram(QByteArray::fromHex(command.toUtf8()), AddressProvider::getAddress(1), dst_port);
 }
 
 void intercom::setSpeed(QString spd)
@@ -86,7 +88,7 @@ void intercom::setSpeed(QString spd)
     }
     QString accHexValue = "570D8" + spd;
 
-    _sender->writeDatagram(QByteArray::fromHex(accHexValue.toUtf8()), address_provider::get_address(1), dst_port);
+    _sender->writeDatagram(QByteArray::fromHex(accHexValue.toUtf8()), AddressProvider::getAddress(1), dst_port);
 }
 
 void intercom::setDataSource(DataSource *ds)
@@ -101,6 +103,13 @@ void intercom::sendFix(QString distance)
     //_sender->writeDatagram(QString::number(distance).toUtf8(), *myIP, listen_port);
     _sender->writeDatagram(distance.toUtf8(), *myIP, listen_port);
 
+}
+
+void intercom::sendScan()
+{
+    if (!_sender)
+        return;
+    _sender->writeDatagram(QByteArray::fromHex("4453"), AddressProvider::getAddress(0), dst_port);
 }
 
 void intercom::reCreateSender()
@@ -152,7 +161,8 @@ void intercom::processDatagram() {
     }
 
     if (_dataSource && s >= MIN_DATA_PACKET_SIZE) {        
-        _dataSource->readData(&buffer, sender);
+        _dataSource->readData(0, &buffer, sender);
+        _dataSource->readData(1, &buffer, sender);
     }
 
 }

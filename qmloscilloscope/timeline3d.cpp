@@ -169,7 +169,7 @@ void Timeline3D::onTimerUpdate()
     m_camera->setPosition(QVector3D(y,sinf(M_PI/12)*30.0f,x+50.0f));
     m_camera->setViewCenter(QVector3D(y,0.0f,x));
 
-    qDebug() << "x=" << x << "; y=" << y;
+    //qDebug() << "x=" << x << "; y=" << y;
 
     lightTransform->setTranslation(QVector3D(y, 10.0f, x));
 

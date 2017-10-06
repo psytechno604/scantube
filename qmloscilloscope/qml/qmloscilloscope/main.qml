@@ -92,7 +92,7 @@ Item {
                 id: button
                 x: 8
                 y: 46
-                width: 85
+                width: 41
                 height: 40
                 text: qsTr("Start")
                 padding: 0
@@ -108,9 +108,9 @@ Item {
             }
             Button {
                 id: button1
-                x: 114
+                x: 55
                 y: 46
-                width: 78
+                width: 38
                 height: 40
                 text: qsTr("Stop")
                 font.pointSize: 8
@@ -332,6 +332,19 @@ Item {
 
             }
 
+            Button {
+                id: button3
+                x: 114
+                y: 46
+                width: 78
+                height: 40
+                text: qsTr("Scan")
+                checked: false
+                checkable: false
+                font.pointSize: 8
+                onClicked: _intercom.sendScan();
+            }
+
         }
 
         /*
@@ -548,7 +561,7 @@ Item {
                         Surface3D {
                             id: timeline_3d_surface_object
                             anchors.fill: parent
-                            axisX.min: 0.0
+                           /* axisX.min: 0.0
                             axisX.max: 100.0
                             axisX.title: "Scan"
                             axisX.titleVisible: true
@@ -561,13 +574,13 @@ Item {
                             axisY.min: -1024
                             axisY.max: 1024
                             axisY.title: "Signal level"
-                            axisY.titleVisible: true
+                            axisY.titleVisible: true*/
 
                             horizontalAspectRatio: 2
 
                             shadowQuality: AbstractGraph3D.ShadowQualityMedium
                             selectionMode: AbstractGraph3D.SelectionSlice | AbstractGraph3D.SelectionItemAndRow
-                            scene.activeCamera.cameraPreset: Camera3D.CameraPresetIsometricLeft
+                            //scene.activeCamera.cameraPreset: Camera3D.CameraPresetIsometricLeft
 
                             theme: Theme3D {
                                 type: Theme3D.ThemeStoneMoss

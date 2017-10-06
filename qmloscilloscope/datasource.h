@@ -102,7 +102,7 @@ signals:
     void changeText(QString text);
 public slots:
     void showFromBuffer(int b_index, int block);
-    void readData(QByteArray *buffer, QHostAddress sender);
+    void readData(int buffer_part, QByteArray *buffer, QHostAddress sender);
     void update(QAbstractSeries *series);
     void updateDistances(QAbstractSeries *series);
     void updateSurface3D(QtDataVisualization::QAbstract3DSeries *series);
@@ -136,12 +136,15 @@ public slots:
 
     int getMaxCorrelationShift(QVector<double> a, QVector<double> b);
 
-    QVector<QVector<unsigned short> > *getScanData();
+    QMap<int, QVector<unsigned short> > *getScanData();
 private:    
-    QVector<QVector<unsigned short>> scan_data;
+    QMap<int, QVector<unsigned short>> scan_data;
+    QVector<bool> channel_data_received;
 
     //QVector<QVector<double>> X, Y;
-    int getChannelNum(QByteArray *buffer, QHostAddress sender);
+    int inputsPerReceiver {8};
+    int channelsInPacket {2};
+    int getChannelNum(int buffer_part, QByteArray *buffer, QHostAddress sender);
     int maxchannels {32};
 
     MeasurementModel *measurementModel {nullptr};
@@ -151,7 +154,7 @@ private:
     double _HP0_Td {1.0/(100.0*1E9)}, _HP0_fc {300*1E6}, _HP0_ford {2};
     double _LP1_Td {1.0/(100.0*1E9)}, _LP1_fc {1000*1E6}, _LP1_ford {2};
 
-    int _N{727}; //TODO: remove hardcode!
+    int _N{363}; //TODO: remove hardcode!
 
     QQuickItem  *object {nullptr};
     QQuickView *m_appViewer {nullptr};
@@ -168,14 +171,14 @@ private:
     QFile *datafile {nullptr}, *markupfile {nullptr}, *pointfile {nullptr}, *zerofile {nullptr};
 
     QVector<QVector<double>> X, Y;
-    QVector<tk::spline> s;
+    //QVector<tk::spline> s;
 
     QVector<std::queue<int>> start_pos_acc;
     QVector<std::queue<int>> object_pos_acc;
 
     QString fname {""}, zerofilename;
 
-    int nchannels {2};
+    int nchannels {64};
 
     int nframes {-1};
     QVector<int> fcount;

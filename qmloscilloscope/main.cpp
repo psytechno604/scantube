@@ -37,7 +37,7 @@
 #include <QObject>
 #include "datasource.h"
 #include "tssocket.h"
-#include "address_provider.h"
+#include "addressprovider.h"
 #include "intercom.h"
 #include "ipslistmodel.h"
 #include "interfacehelper.h"
@@ -50,6 +50,9 @@
 int main(int argc, char *argv[])
 {
     qDebug() << QThread::currentThreadId();
+
+    AddressProvider::Init();
+
     // Qt Charts uses Qt Graphics View Framework for drawing, therefore QApplication must be used.
     QApplication app(argc, argv);
 
