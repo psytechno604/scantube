@@ -137,14 +137,22 @@ public slots:
     int getMaxCorrelationShift(QVector<double> a, QVector<double> b);
 
     QMap<int, QVector<unsigned short> > *getScanData();
-private:    
+
+    Q_INVOKABLE void selectIP(QString v);
+    Q_INVOKABLE void selectEmitter(QString v);
+    Q_INVOKABLE void selectRow(QString v);
+private:
+
+    int currentUnitIndex {0};
+    QString ipNum {"1"}, emitterNum {"0"}, rowNum {"0"};
+
     QMap<int, QVector<unsigned short>> scan_data;
     QVector<bool> channel_data_received;
 
     //QVector<QVector<double>> X, Y;
     int inputsPerReceiver {8};
     int channelsInPacket {2};
-    int getChannelNum(int buffer_part, QByteArray *buffer, QHostAddress sender);
+    int getUnitIndex(int buffer_part, QByteArray *buffer, QHostAddress sender);
     int maxchannels {32};
 
     MeasurementModel *measurementModel {nullptr};

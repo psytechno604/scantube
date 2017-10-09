@@ -73,7 +73,7 @@ ChartView {
     ValueAxis {
         id: axisX
         min: 0
-        max: 750
+        max: 363
     }
 
     LineSeries {
@@ -128,11 +128,11 @@ ChartView {
         repeat: true
         onTriggered: {
             dataSource.update(chartView.series(0));
-            dataSource.update(chartView.series(1));
+            /*dataSource.update(chartView.series(1));
             dataSource.update(chartView.series(2));
             dataSource.update(chartView.series(3));
             dataSource.update(chartView.series(4));
-            dataSource.update(chartView.series(5));
+            dataSource.update(chartView.series(5));*/
         }
     }
     //![2]

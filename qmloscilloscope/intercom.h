@@ -20,7 +20,10 @@ public:
     Q_INVOKABLE void setDataSource(DataSource *ds);
     Q_INVOKABLE void sendFix(QString distance);
     Q_INVOKABLE void sendScan();
+    Q_INVOKABLE void sendTest();
 private:
+    bool connected {false};
+
     QQuickItem  *object {nullptr};
     QQuickView *m_appViewer {nullptr};
     QUdpSocket *_sender {nullptr};

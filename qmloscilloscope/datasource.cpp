@@ -206,21 +206,36 @@ void DataSource::showFromBuffer(int b_index, int block)
 void DataSource::update(QAbstractSeries *series)
 {
     mtx.lock();
-    if (series && m_data.size()>0) {
-        QXYSeries *xySeries = static_cast<QXYSeries *>(series);
-        if (m_index > m_data.size()-1) {
-            m_index = 0;
-        }
-        //qDebug() << m_index;
-        if (m_index < m_data.size())    {
-            //qDebug() << "update m_index=" << m_index;
-            QVector<QPointF> points = m_data.at(m_index);
-           // if (m_index == 0)
-                xySeries->replace(points);
-            m_index++;
-        }
 
-        // Use replace instead of clear + append, it's optimized for performance
+    /*if(series) {
+        QVector<QPointF> points;
+        QXYSeries *xySeries = static_cast<QXYSeries *>(series);
+        points.resize(buffer_size);
+        for(auto i=0; i<buffer_size; i++) {
+            points[i] =
+        }
+    }*/
+    try {
+        if (series && m_data.size()>0) {
+            QXYSeries *xySeries = static_cast<QXYSeries *>(series);
+            if (m_index > 0) {
+                m_index = 0;
+            }
+            //qDebug() << m_index;
+            if (m_index == 0 && currentUnitIndex >= 0)    {
+                //qDebug() << "update m_index=" << m_index;
+                QVector<QPointF> points = m_data.at(currentUnitIndex);
+                // if (m_index == 0)
+                xySeries->replace(points);
+
+            }
+            m_index++;
+            // Use replace instead of clear + append, it's optimized for performance
+
+        }
+    }
+    catch (...)
+    {
 
     }
     mtx.unlock();
@@ -630,9 +645,11 @@ void DataSource::showByIndex(int index)
 
 void DataSource::readData(int buffer_part, QByteArray *buffer, QHostAddress sender)
 {
+    qDebug() << "readData...";
+
    mtx.lock();
 
-   int ch_num = getChannelNum(buffer_part, buffer, sender);
+   int ch_num = getUnitIndex(buffer_part, buffer, sender);
 
 
     if (!object)
@@ -930,13 +947,36 @@ QMap<int, QVector<unsigned short> > *DataSource::getScanData()
     return &scan_data;
 }
 
-int DataSource::getChannelNum(int buffer_part, QByteArray *buffer, QHostAddress sender)
+void DataSource::selectIP(QString v)
+{
+    ipNum = v;
+
+    currentUnitIndex = AddressProvider::getUnitIndex(ipNum + emitterNum + rowNum);
+}
+
+void DataSource::selectEmitter(QString v)
+{
+    emitterNum = v;
+
+    currentUnitIndex = AddressProvider::getUnitIndex(ipNum + emitterNum + rowNum);
+}
+
+void DataSource::selectRow(QString v)
+{
+    rowNum = v;
+
+    currentUnitIndex = AddressProvider::getUnitIndex(ipNum + emitterNum + rowNum);
+}
+
+int DataSource::getUnitIndex(int buffer_part, QByteArray *buffer, QHostAddress sender)
 {
     //TODO: work with sender, it can contain necessary data
 
-    unsigned short i = (((*buffer)[0] << 8) + (*buffer)[1] );
+    auto _ipNum = AddressProvider::getIndex(sender) * 100;
 
-    return i%nchannels;
+    unsigned short i = ((((*buffer)[0] << 8) + (*buffer)[1] )%inputsPerReceiver) * 10;
+
+    return AddressProvider::getUnitIndex(_ipNum + i + buffer_part);
 }
 
 void DataSource::clearMeasurementModel()

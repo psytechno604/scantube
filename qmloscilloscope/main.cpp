@@ -53,6 +53,8 @@ int main(int argc, char *argv[])
 
     AddressProvider::Init();
 
+    qDebug() << AddressProvider::getUnitIndex(360);
+
     // Qt Charts uses Qt Graphics View Framework for drawing, therefore QApplication must be used.
     QApplication app(argc, argv);
 

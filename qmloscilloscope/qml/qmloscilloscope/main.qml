@@ -128,9 +128,9 @@ Item {
             }
             ComboBox {
                 id: comboBox2
-                x: 114
+                x: 107
                 y: 92
-                width: 78
+                width: 85
                 height: 30
                 model: ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F"]
                 onActivated: _intercom.setSpeed(currentText);
@@ -334,15 +334,28 @@ Item {
 
             Button {
                 id: button3
-                x: 114
+                x: 107
                 y: 46
-                width: 78
+                width: 43
                 height: 40
                 text: qsTr("Scan")
                 checked: false
                 checkable: false
                 font.pointSize: 8
                 onClicked: _intercom.sendScan();
+            }
+
+            Button {
+                id: button4
+                x: 156
+                y: 46
+                width: 36
+                height: 40
+                text: qsTr("Test")
+                checkable: false
+                checked: false
+                font.pointSize: 8
+                onClicked: _intercom.sendTest();
             }
 
         }
@@ -422,70 +435,91 @@ Item {
                         id: signal_waveform_tab
                         width: parent.width
                         height: parent.height
-                        ScopeView {
-                            id: scopeView
-
-
-                            anchors.fill: signal_waveform_tab
-
-                            onOpenGLSupportedChanged: {
-                                if (!openGLSupported) {
-                                    controlPanel.openGLButton.enabled = false
-                                    controlPanel.openGLButton.currentSelection = 0
+                        Column {
+                            anchors.fill: parent
+                            Row {
+                                id: row_selectReceiver
+                                ComboBox {
+                                    id: comboBox_selectIP
+                                    model: ["1", "2", "2", "4"]
+                                    onActivated: dataSource.selectIP(currentText);
+                                }
+                                ComboBox {
+                                    id: comboBox_selectEmitter
+                                    model: ["0", "1", "2", "3", "4", "5", "6", "7"]
+                                    onActivated: dataSource.selectEmitter(currentText);
+                                }
+                                ComboBox {
+                                    id: comboBox_selectRow
+                                    model: ["0", "1"]
+                                    onActivated: dataSource.selectRow(currentText);
                                 }
                             }
-                            MouseArea {
-                                z: -1
-                                anchors.fill: parent
-                                acceptedButtons: Qt.LeftButton | Qt.RightButton
-                                onPressed: {
-                                    console.log("onPressed")
-                                    if (mouse.button == Qt.LeftButton)
-                                    {
-                                        console.log("Left", width, height, parent.yMax, parent.yMin)
-                                        _interfaceHelper.ScopeView_LB = 1;
-                                    }
-                                    else if (mouse.button == Qt.RightButton)
-                                    {
-                                        console.log("Right")
-                                        _interfaceHelper.ScopeView_RB = 1;
-                                    }
-                                    _interfaceHelper.ScopeView_x0 = mouseX;
-                                    _interfaceHelper.ScopeView_ymax0 = parent.yMax;
-                                    _interfaceHelper.ScopeView_ymin0 = parent.yMin;
-                                    _interfaceHelper.ScopeView_y2max0 = parent.y2Max;
-                                    _interfaceHelper.ScopeView_y2min0 = parent.y2Min;
-                                    _interfaceHelper.ScopeView_y0 = mouseY;
+                            ScopeView {
+                                id: scopeView
 
-                                    _interfaceHelper.ScopeView_axisNum = (mouseX < width/2)?0:1;
+
+                                width: parent.width
+                                height: parent.height - row_selectReceiver.height
+                                onOpenGLSupportedChanged: {
+                                    if (!openGLSupported) {
+                                        controlPanel.openGLButton.enabled = false
+                                        controlPanel.openGLButton.currentSelection = 0
+                                    }
                                 }
-                                onPositionChanged: {
-                                    if (_interfaceHelper.ScopeView_RB){
+                                MouseArea {
+                                    z: -1
+                                    anchors.fill: parent
+                                    acceptedButtons: Qt.LeftButton | Qt.RightButton
+                                    onPressed: {
+                                        console.log("onPressed")
+                                        if (mouse.button == Qt.LeftButton)
+                                        {
+                                            console.log("Left", width, height, parent.yMax, parent.yMin)
+                                            _interfaceHelper.ScopeView_LB = 1;
+                                        }
+                                        else if (mouse.button == Qt.RightButton)
+                                        {
+                                            console.log("Right")
+                                            _interfaceHelper.ScopeView_RB = 1;
+                                        }
+                                        _interfaceHelper.ScopeView_x0 = mouseX;
+                                        _interfaceHelper.ScopeView_ymax0 = parent.yMax;
+                                        _interfaceHelper.ScopeView_ymin0 = parent.yMin;
+                                        _interfaceHelper.ScopeView_y2max0 = parent.y2Max;
+                                        _interfaceHelper.ScopeView_y2min0 = parent.y2Min;
+                                        _interfaceHelper.ScopeView_y0 = mouseY;
 
-                                        var k = (mouseY - _interfaceHelper.ScopeView_y0) / height;
-                                        //if (_interfaceHelper.ScopeView_axisNum == 0)    {
-                                        parent.yMax = _interfaceHelper.ScopeView_ymax0 * (1 + k);
-                                        parent.yMin = _interfaceHelper.ScopeView_ymin0 * (1 + k);
-                                        //}
-                                        //if (_interfaceHelper.ScopeView_axisNum == 1)    {
-                                        parent.y2Max = _interfaceHelper.ScopeView_y2max0 * (1 + k);
-                                        parent.y2Min = _interfaceHelper.ScopeView_y2min0 * (1 + k);
-                                        //}
-                                        console.log (mouseX, mouseY);
+                                        _interfaceHelper.ScopeView_axisNum = (mouseX < width/2)?0:1;
                                     }
+                                    onPositionChanged: {
+                                        if (_interfaceHelper.ScopeView_RB){
 
-                                }
-                                onReleased: {
-                                    console.log("onReleased")
-                                    if (mouse.button == Qt.LeftButton)
-                                    {
-                                        console.log("Left")
-                                        _interfaceHelper.ScopeView_LB = 0;
+                                            var k = (mouseY - _interfaceHelper.ScopeView_y0) / height;
+                                            //if (_interfaceHelper.ScopeView_axisNum == 0)    {
+                                            parent.yMax = _interfaceHelper.ScopeView_ymax0 * (1 + k);
+                                            parent.yMin = _interfaceHelper.ScopeView_ymin0 * (1 + k);
+                                            //}
+                                            //if (_interfaceHelper.ScopeView_axisNum == 1)    {
+                                            parent.y2Max = _interfaceHelper.ScopeView_y2max0 * (1 + k);
+                                            parent.y2Min = _interfaceHelper.ScopeView_y2min0 * (1 + k);
+                                            //}
+                                            console.log (mouseX, mouseY);
+                                        }
+
                                     }
-                                    else if (mouse.button == Qt.RightButton)
-                                    {
-                                        console.log("Right")
-                                        _interfaceHelper.ScopeView_RB = 0;
+                                    onReleased: {
+                                        console.log("onReleased")
+                                        if (mouse.button == Qt.LeftButton)
+                                        {
+                                            console.log("Left")
+                                            _interfaceHelper.ScopeView_LB = 0;
+                                        }
+                                        else if (mouse.button == Qt.RightButton)
+                                        {
+                                            console.log("Right")
+                                            _interfaceHelper.ScopeView_RB = 0;
+                                        }
                                     }
                                 }
                             }
