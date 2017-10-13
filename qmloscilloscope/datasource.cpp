@@ -41,6 +41,8 @@
 #include <QtDataVisualization/QValue3DAxis>
 #include <QtDataVisualization/Q3DTheme>
 
+#include <QSplineSeries>
+
 #include "measurement.h"
 #include "scantube.h"
 #include "addressprovider.h"
@@ -83,6 +85,7 @@ DataSource::DataSource(QQuickView *appViewer, QObject *parent) :
 
     for(auto i=0; i<nchannels; i++) {
         scan_data.insert(i, *(new QVector<unsigned short>(buffer_size)));
+        scan_data_0.insert(i, *(new QVector<unsigned short>(buffer_size)));
     }
 
     //generateData(0, 5, 1024);
@@ -205,7 +208,7 @@ void DataSource::showFromBuffer(int b_index, int block)
 
 void DataSource::update(QAbstractSeries *series)
 {
-    mtx.lock();
+    mtx.lockForRead();
 
     /*if(series) {
         QVector<QPointF> points;
@@ -240,13 +243,53 @@ void DataSource::update(QAbstractSeries *series)
     }
     mtx.unlock();
 }
-void DataSource::updateDistances(QAbstractSeries *series)
+void DataSource::updateDistances(QAbstractSeries *series, int set)
 {
-    dst_lock.lockForRead();
+    mtx.lockForRead();
 
 
+    auto dss = static_cast<QSplineSeries *>(series);
 
-    dst_lock.unlock();
+    QVector<QPointF> points;
+
+    //dss->replace()
+
+    int j=0;
+
+    unsigned short med = 0x8000;
+
+    int step = 2;
+
+    for(auto e : scan_data.keys())  {
+        if ((e%2) == set)    {
+            double avg = 0, maxabs = 0;
+            for (auto i=0; i < scan_data.value(e).count(); i+=step) {
+                double tmp = use_scan_data_0?(scan_data[e][i] - scan_data_0[e][i]):(scan_data[e][i]);
+                avg += tmp;
+                if (abs(tmp) > maxabs)
+                    maxabs = abs(tmp);
+            }
+            /*for (auto i=0; i < scan_data.value(e).count(); i++) {
+                double tmp = use_scan_data_0?(scan_data[e][i] - scan_data_0[e][i]):(scan_data[e][i]);
+                avg += tmp;
+                if (abs(tmp) > maxabs)
+                    maxabs = abs(tmp);
+            }*/
+            avg = avg / scan_data.value(e).count() * step;
+            for (auto i=0; i < scan_data.value(e).count(); i+=step) {
+                float v = 2000+(float(use_scan_data_0?(scan_data[e][i] - scan_data_0[e][i]):(scan_data[e][i])) - avg);
+                if (v != 2000) {
+                    auto dummy = 1;
+                    dummy++;
+                }
+                points.append(QPointF(j++, v));
+            }
+        }
+    }
+
+    dss->replace(points);
+
+    mtx.unlock();
 }
 
 void DataSource::updateSurface3D(QtDataVisualization::QAbstract3DSeries *series)
@@ -565,17 +608,7 @@ void DataSource::openFile(QString openfname)
     }
 }
 
-int DataSource::getChannelShift(int c)
-{
-    if (c >= 0 && c < shY.size())
-        return shY[c];
-}
 
-void DataSource::setChannelShift(int c, int sh)
-{
-    if (c >= 0 && c < shY.size())
-        shY[c] = sh;
-}
 
 int DataSource::getSubtractZeroSignal()
 {
@@ -645,12 +678,18 @@ void DataSource::showByIndex(int index)
 
 void DataSource::readData(int buffer_part, QByteArray *buffer, QHostAddress sender)
 {
-    qDebug() << "readData...";
+    //qDebug() << "readData...";
 
-   mtx.lock();
+   mtx.lockForWrite();
 
    int ch_num = getUnitIndex(buffer_part, buffer, sender);
 
+   if (ch_num==0)   {
+       auto dummy = 0;
+       dummy ++;
+   }
+
+    ch_num = getUnitIndex(buffer_part, buffer, sender);
 
     if (!object)
         object = m_appViewer->rootObject();
@@ -684,13 +723,18 @@ void DataSource::readData(int buffer_part, QByteArray *buffer, QHostAddress send
 
     unsigned short med = 0x8000;
 
+
+    //unsigned short p = ((*buffer)[i] << 8) + (*buffer)[i+1];
+   //qDebug() << "ch_num=" << ch_num << "p[0]=" << ((unsigned char)(*buffer)[b_shift + (0+1)*2] << 8) + (unsigned char)(*buffer)[b_shift + (0+1)*2+1] - med;
+
     //buffer_in[0] = 0;
     double signal_sum = 0;
     for(auto j=0; j<buffer_size; j++) {
         unsigned char b0 = (unsigned char)(*buffer)[b_shift + (j+1)*2];
         unsigned char b1 = (unsigned char)(*buffer)[b_shift + (j+1)*2+1];
+        unsigned short b = (b0 << 8) + b1;
         //unsigned short p = ((*buffer)[i] << 8) + (*buffer)[i+1];
-        double p = (b0 << 8) + b1 - med /*+ shY[b_index] - ((subtractZeroSignal)?(zero_signal[b_index][j]):(0.0))*/;
+        double p = b - med /*+ shY[b_index] - ((subtractZeroSignal)?(zero_signal[b_index][j]):(0.0))*/;
         //QString s;
         //s.sprintf("%02X", p);
         //markupfile->write(s.toUtf8());
@@ -701,17 +745,18 @@ void DataSource::readData(int buffer_part, QByteArray *buffer, QHostAddress send
 
         int x = j;
 
+        scan_data[ch_num][x] = b;
 
-        buffer_in[x] = p;
+        buffer_in[x] = use_scan_data_0?(b - scan_data_0[ch_num][x]):(b - med);
 
-        scan_data[ch_num][x] = p;
+        //scan_data[ch_num][x] = b - use_scan_data_0?scan_data_0[ch_num][x]:0;
 
-        signal_sum += p;
+        signal_sum += buffer_in[x];
         //pointsS.append(QPointF(x, 0));
     }   
     signal_sum = signal_sum / buffer_size;
     for (auto i=0; i<buffer_size; i++) {
-        buffer_in[i] -= signal_sum + ((subtractZeroSignal)?(zero_signal[ch_num][i]):(0.0));
+        buffer_in[i] -= signal_sum/* + ((subtractZeroSignal)?(zero_signal[ch_num][i]):(0.0))*/;
     }
     buffer_in[0] = 0;
     //calc_correlate_func(points, pointsS, signal, kt_dt, N / 2 - 1);
@@ -968,13 +1013,26 @@ void DataSource::selectRow(QString v)
     currentUnitIndex = AddressProvider::getUnitIndex(ipNum + emitterNum + rowNum);
 }
 
+void DataSource::saveAsScanData0()
+{
+    mtx.lockForRead();
+    for(auto e : scan_data.keys())  {
+        for (auto i=0; i < scan_data.value(e).count(); i++) {
+            scan_data_0[e][i] = scan_data[e][i];
+        }
+    }
+    mtx.unlock();
+}
+
 int DataSource::getUnitIndex(int buffer_part, QByteArray *buffer, QHostAddress sender)
 {
     //TODO: work with sender, it can contain necessary data
 
     auto _ipNum = AddressProvider::getIndex(sender) * 100;
 
-    unsigned short i = ((((*buffer)[0] << 8) + (*buffer)[1] )%inputsPerReceiver) * 10;
+    unsigned short i = (((unsigned char((*buffer)[0]) << 8) + unsigned char((*buffer)[1]) )%inputsPerReceiver) * 10;
+
+    //qDebug() << "_ipNum" << _ipNum << "first bytes=" << (((*buffer)[0] << 8) + (*buffer)[1] ) << " i=" << i;
 
     return AddressProvider::getUnitIndex(_ipNum + i + buffer_part);
 }

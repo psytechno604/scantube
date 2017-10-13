@@ -104,7 +104,7 @@ public slots:
     void showFromBuffer(int b_index, int block);
     void readData(int buffer_part, QByteArray *buffer, QHostAddress sender);
     void update(QAbstractSeries *series);
-    void updateDistances(QAbstractSeries *series);
+    void updateDistances(QAbstractSeries *series, int set);
     void updateSurface3D(QtDataVisualization::QAbstract3DSeries *series);
 
     void initCorrelationParameters(float  sigTau, float Fdskr);
@@ -116,9 +116,6 @@ public slots:
 
 
     void openFile(QString openfname);
-
-    int getChannelShift(int c);
-    void setChannelShift(int c, int sh);
 
     int getSubtractZeroSignal();
     void setSubtractZeroSignal(int s);
@@ -141,12 +138,16 @@ public slots:
     Q_INVOKABLE void selectIP(QString v);
     Q_INVOKABLE void selectEmitter(QString v);
     Q_INVOKABLE void selectRow(QString v);
+
+    Q_INVOKABLE void saveAsScanData0();
 private:
 
     int currentUnitIndex {0};
     QString ipNum {"1"}, emitterNum {"0"}, rowNum {"0"};
 
     QMap<int, QVector<unsigned short>> scan_data;
+    QMap<int, QVector<unsigned short>> scan_data_0;
+    bool use_scan_data_0 {true};
     QVector<bool> channel_data_received;
 
     //QVector<QVector<double>> X, Y;
@@ -172,7 +173,7 @@ private:
 
     int m_index{0};
 
-    shared_mutex mtx;
+    QReadWriteLock mtx;
     QReadWriteLock dst_lock;
     QReadWriteLock surface_data_lock;
 

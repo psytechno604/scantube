@@ -47,6 +47,28 @@
 
 #include "timeline3d.h"
 
+class NewQuickView: public QQuickView {
+public:
+    NewQuickView():
+        QQuickView() {}
+    void setIntercom(intercom *_intercom)
+    {
+        this->_intercom = _intercom;
+    }
+public:
+
+    bool event(QEvent *event) override
+    {
+        if (event->type() == QEvent::Close) {
+            // your code here
+            _intercom->stopScanTimer();
+        }
+        return QQuickView::event(event);
+    }
+private:
+    intercom *_intercom;
+};
+
 int main(int argc, char *argv[])
 {
     qDebug() << QThread::currentThreadId();
@@ -57,12 +79,17 @@ int main(int argc, char *argv[])
 
     // Qt Charts uses Qt Graphics View Framework for drawing, therefore QApplication must be used.
     QApplication app(argc, argv);
+    app.setOrganizationName("KaTech");
+    app.setOrganizationDomain("KaTech.ru");
+    app.setApplicationName("ScanTube");
 
     qmlRegisterType<IPsListModel>("IPsListModel", 1, 0, "IPsListModel");
 
     qmlRegisterType<Timeline3D>("com.example.Timeline3D", 1, 0, "Timeline3D");
 
-    QQuickView viewer;
+    //
+    NewQuickView viewer;
+
 
     // The following are needed to make examples run without having to install the module
     // in desktop environments.
@@ -78,15 +105,16 @@ int main(int argc, char *argv[])
     viewer.setTitle(QStringLiteral("Scan Tube v0.0"));
 
     DataSource dataSource(&viewer);
-    viewer.rootContext()->setContextProperty("dataSource", &dataSource);
 
     intercom *_intercom = new intercom(&viewer);
+    viewer.setIntercom(_intercom);
 
     _intercom->setDataSource(&dataSource);
 
-    viewer.rootContext()->setContextProperty("_intercom", _intercom);
-
     InterfaceHelper *_interfaceHelper = new InterfaceHelper();
+
+    viewer.rootContext()->setContextProperty("dataSource", &dataSource);
+    viewer.rootContext()->setContextProperty("_intercom", _intercom);
     viewer.rootContext()->setContextProperty("_interfaceHelper", _interfaceHelper);
 
     IPsListModel myIPsListModel;
@@ -109,8 +137,15 @@ int main(int argc, char *argv[])
     viewer.setColor(QColor("#404040"));
     viewer.show();
 
-     auto ret = app.exec();
-    _intercom->off();
+    /*QThread thread_1;
+    QObject::connect(&thread_1, &QThread::started, _intercom, &intercom::run);
+    QObject::connect(_intercom, &intercom::finished, &thread_1, &QThread::terminate);
+    _intercom->moveToThread(&thread_1);
+    thread_1.start();*/
+
+    auto ret = app.exec();
+    _intercom->off();    
+    //_intercom->setRunning(false);
     return ret;
 }
 //WOI1013046429B7AEA7211

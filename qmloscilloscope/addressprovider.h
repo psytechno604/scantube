@@ -16,13 +16,14 @@ public:
     static int getUnitIndex(QString unitName);
     static int getUnitIndex(int unitPseudoIndex);
     static QString getUnitName(int unitIndex);
+    static QString getShiftCommand(int value);
 signals:
 
 public slots:
 
 private:
     static QVector<QHostAddress> address_table;
-
+    static QVector<QString> shift_command_table;
     static QMap<int, int> pseudo_index_table;
 };
 

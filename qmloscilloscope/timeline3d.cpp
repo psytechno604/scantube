@@ -73,7 +73,7 @@ void Timeline3D::addScan()
     if (!dataSource)
         return;
 
-    auto scan_data = dataSource->getScanData();
+    scan_data = dataSource->getScanData();
 
     if (!scan_data)
         return;
@@ -86,19 +86,25 @@ void Timeline3D::connectDataSource(DataSource *dataSource)
 
 void Timeline3D::addPoint() {
     float* reVertexArray;
+    unsigned int* reIndexArray;
 
     x -= 5.0f;
     y += qrand() % 2 - 1;
 
-    if (!(m_count % 100)) {
+    if (!(m_count % sliceCount)) {
+    //if (!m_count) {
         //every 100-th timer tick:
         m_geometryRenderer = new QGeometryRenderer();
         QGeometry* meshGeometry = new QGeometry(m_geometryRenderer);
 
         QByteArray vertexArray;
-        vertexArray.resize(200*3*sizeof(float));
+        vertexArray.resize(pointCount*3*sizeof(float));
         reVertexArray = reinterpret_cast<float*>(vertexArray.data());
 
+        QByteArray indexArray;
+        indexArray.resize(pointCount*sizeof(int));
+        reIndexArray = reinterpret_cast<unsigned int*>(indexArray.data());
+/*
         //coordinates of left vertex
         reVertexArray[0] = y-5.0f;
         reVertexArray[1] = 0.0f;
@@ -107,11 +113,31 @@ void Timeline3D::addPoint() {
         //coordinates of right vertex
         reVertexArray[3] = y+5.0f;
         reVertexArray[4] = 0.0f;
-        reVertexArray[5] = x;
+        reVertexArray[5] = x;*/
+
+        /*int jV =0 , jI = 0;
+        for(auto e : scan_data->keys())  {
+            if (e%2)    {
+                for (auto i=0; i < scan_data->value(e).count(); i++) {
+                    float r = r0 + (*scan_data)[e][i];
+                    float fi = (float(e) + float(i)/_N)* (2 * M_PI / sectorsCount);
+                    reVertexArray[jV] = r * cos(fi);
+                    reVertexArray[jV+1] = r * sin(fi);
+                    reVertexArray[jV+2] = 0;
+                    jV+=3;
+
+                    reIndexArray[jI] =
+                }
+            }
+        }*/
 
         vertexBuffer = new Qt3DRender::QBuffer(Qt3DRender::QBuffer::VertexBuffer,meshGeometry);
         vertexBuffer->setUsage(Qt3DRender::QBuffer::DynamicDraw);
         vertexBuffer->setData(vertexArray);
+
+        indexBuffer = new Qt3DRender::QBuffer(Qt3DRender::QBuffer::IndexBuffer, meshGeometry);
+        indexBuffer->setUsage(Qt3DRender::QBuffer::DynamicDraw);
+        indexBuffer->setData(indexArray);
 
         // Attributes
         positionAttribute = new QAttribute(meshGeometry);
@@ -125,6 +151,15 @@ void Timeline3D::addPoint() {
         positionAttribute->setName(QAttribute::defaultPositionAttributeName());
 
         meshGeometry->addAttribute(positionAttribute);
+
+
+        indexAttribute = new QAttribute(meshGeometry);
+        indexAttribute->setAttributeType(QAttribute::IndexAttribute);
+        indexAttribute->setBuffer(indexBuffer);
+        indexAttribute->setDataType(QAttribute::UnsignedInt);
+        indexAttribute->setDataSize(1);
+
+
 
         m_geometryRenderer->setInstanceCount(1);
         m_geometryRenderer->setFirstVertex(0);

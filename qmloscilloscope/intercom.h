@@ -17,11 +17,25 @@ public:
     Q_INVOKABLE void setMyIP(QString ip);
     Q_INVOKABLE void setAccumulation(QString acc);
     Q_INVOKABLE void setSpeed(QString spd);
+    Q_INVOKABLE void setTimeout(int timeout);
     Q_INVOKABLE void setDataSource(DataSource *ds);
     Q_INVOKABLE void sendFix(QString distance);
     Q_INVOKABLE void sendScan();
+    Q_INVOKABLE void endScan();
+    Q_INVOKABLE void stopScanTimer();
     Q_INVOKABLE void sendTest();
+
+    Q_INVOKABLE int getTimeout();
+
+    Q_INVOKABLE void sendShift(int value);
 private:
+    bool m_running {true};
+
+    bool continueScan {true};
+    QTime dataReceiveTime;
+    QTimer *timer {nullptr};
+    int dataReceiveTimeElapsed {0};
+    int timeout;
     bool connected {false};
 
     QQuickItem  *object {nullptr};
@@ -31,7 +45,7 @@ private:
     DataSource *_dataSource {nullptr};
 
     //number of ip's in system
-    int ips_count {2};
+    int ips_count {5};
 
 
     int src_port {1024};
@@ -39,10 +53,14 @@ private:
     int listen_port {1024};
     double distance {30.6};
 
+    int packNum {1};
+
     void reCreateSender();    
 signals:
-
+    void finished();
 public slots:
+    void run();
+    void setRunning(bool running);
     void processDatagram();
 };
 
