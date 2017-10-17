@@ -1,4 +1,4 @@
-QT += charts qml quick quickcontrols2 network 3dcore 3drender 3dinput 3dquick 3dextras datavisualization
+QT += charts qml quickcontrols2 network 3dcore 3drender 3dinput 3dquick 3dextras datavisualization
 
 HEADERS += \
     datasource.h \

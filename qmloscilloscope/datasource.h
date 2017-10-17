@@ -104,6 +104,7 @@ public slots:
     void showFromBuffer(int b_index, int block);
     void readData(int buffer_part, QByteArray *buffer, QHostAddress sender);
     void update(QAbstractSeries *series);
+    void updateAllWaveforms(QAbstractSeries *series, int set);
     void updateDistances(QAbstractSeries *series, int set);
     void updateSurface3D(QtDataVisualization::QAbstract3DSeries *series);
 
@@ -140,13 +141,19 @@ public slots:
     Q_INVOKABLE void selectRow(QString v);
 
     Q_INVOKABLE void saveAsScanData0();
+
+    Q_INVOKABLE void calcDistances();
+
+    Q_INVOKABLE int getCurrentDistance();
 private:
 
     int currentUnitIndex {0};
     QString ipNum {"1"}, emitterNum {"0"}, rowNum {"0"};
 
+    QVector<QMap<int, QVector<unsigned short>>> history_scan_data;
     QMap<int, QVector<unsigned short>> scan_data;
     QMap<int, QVector<unsigned short>> scan_data_0;
+    QMap<int, QVector<int>> distance_data;
     bool use_scan_data_0 {true};
     QVector<bool> channel_data_received;
 
@@ -176,6 +183,7 @@ private:
     QReadWriteLock mtx;
     QReadWriteLock dst_lock;
     QReadWriteLock surface_data_lock;
+    //QReadWriteLock surface_data_lock;
 
     QFile *datafile {nullptr}, *markupfile {nullptr}, *pointfile {nullptr}, *zerofile {nullptr};
 
@@ -230,6 +238,8 @@ private:
     void compareToData(int channel);
 
     double corr(double *X, double *Y, int N);
+
+
 };
 
 #endif // DATASOURCE_H

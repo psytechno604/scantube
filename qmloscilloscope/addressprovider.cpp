@@ -33,8 +33,8 @@ void AddressProvider::Init()
     address_table.push_back(QHostAddress("192.168.0.127")); //synchronizer
     address_table.push_back(QHostAddress("192.168.0.121"));
     address_table.push_back(QHostAddress("192.168.0.122"));
-    address_table.push_back(QHostAddress("192.168.0.124"));
     address_table.push_back(QHostAddress("192.168.0.123"));
+    address_table.push_back(QHostAddress("192.168.0.124"));
 
     pseudo_index_table.insert(100, 0);
     pseudo_index_table.insert(171, 1);

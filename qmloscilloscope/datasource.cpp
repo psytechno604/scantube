@@ -86,6 +86,7 @@ DataSource::DataSource(QQuickView *appViewer, QObject *parent) :
     for(auto i=0; i<nchannels; i++) {
         scan_data.insert(i, *(new QVector<unsigned short>(buffer_size)));
         scan_data_0.insert(i, *(new QVector<unsigned short>(buffer_size)));
+        distance_data.insert(i, *(new QVector<int>(1)));
     }
 
     //generateData(0, 5, 1024);
@@ -188,7 +189,7 @@ void DataSource::showFromBuffer(int b_index, int block)
     }
     //markupfile->write(QByteArray("\n"));
 
-    if (b_index == 0) {
+    /*if (b_index == 0) {
         QMetaObject::invokeMethod((QObject*)object, "changeText5", Q_ARG(QVariant, QString::number(myDistance)));
         //QMetaObject::invokeMethod((QObject*)object, "changeText1", Q_ARG(QVariant, QString::number(object_position)));
         //QMetaObject::invokeMethod((QObject*)object, "changeText2", Q_ARG(QVariant, QString::number(s[b_index](object_position))));
@@ -197,7 +198,7 @@ void DataSource::showFromBuffer(int b_index, int block)
         QMetaObject::invokeMethod((QObject*)object, "changeText6", Q_ARG(QVariant, QString::number(myDistance)));
         //QMetaObject::invokeMethod((QObject*)object, "changeText3", Q_ARG(QVariant, QString::number(object_position)));
         //QMetaObject::invokeMethod((QObject*)object, "changeText4", Q_ARG(QVariant, QString::number(s[b_index](object_position))));
-    }
+    }*/
 
     m_data[block * nchannels + b_index] = points;
     //m_data[nchannels + b_index] = pointsS;
@@ -243,7 +244,7 @@ void DataSource::update(QAbstractSeries *series)
     }
     mtx.unlock();
 }
-void DataSource::updateDistances(QAbstractSeries *series, int set)
+void DataSource::updateAllWaveforms(QAbstractSeries *series, int set)
 {
     mtx.lockForRead();
 
@@ -290,6 +291,26 @@ void DataSource::updateDistances(QAbstractSeries *series, int set)
     dss->replace(points);
 
     mtx.unlock();
+}
+
+void DataSource::updateDistances(QAbstractSeries *series, int set)
+{
+
+
+    dst_lock.lockForRead();
+
+
+    auto dss = static_cast<QSplineSeries *>(series);
+    QVector<QPointF> points;
+
+    for(auto e : distance_data.keys())  {
+        if ((e%2) == set)    {
+            if (distance_data[e].length()>0)
+                points.append(QPointF(e, distance_data[e][0]));
+        }
+    }
+    dss->replace(points);
+    dst_lock.unlock();
 }
 
 void DataSource::updateSurface3D(QtDataVisualization::QAbstract3DSeries *series)
@@ -1064,4 +1085,49 @@ void DataSource::compareToData(int channel)
 double DataSource::corr(double *X, double *Y, int N)
 {
     return 0;
+}
+
+void DataSource::calcDistances()
+{
+    // 0 - simplest method, moving average
+    mtx.lockForRead();
+    dst_lock.lockForWrite();
+
+    auto method_index = 0;
+
+    auto window_size = 16;
+
+    double avg, avgabs, maxavgabs;
+    int i_maxavgabs;
+    for(auto e : scan_data.keys())  {
+        avg = 0.0;
+        for (auto i=0; i < scan_data.value(e).count(); i++) {            
+            avg = avg + (double(scan_data[e][i]) - (use_scan_data_0?double(scan_data_0[e][i]):0.0));
+        }
+        avg = avg / scan_data.value(e).count();        
+        maxavgabs = 0.0;
+        for (auto i=window_size-1; i < scan_data.value(e).count(); i++) {
+            avgabs = 0.0;
+            for(auto j=i-window_size+1; j<=i; j++)  {
+                avgabs = avgabs + fabs((double(scan_data[e][i]) - (use_scan_data_0?double(scan_data_0[e][i]):0.0)) - avg);
+            }
+            avgabs = avgabs / window_size;
+            if (avgabs > maxavgabs) {
+                maxavgabs = avgabs;
+                i_maxavgabs = i;
+            }
+        }
+        //distance_data[e].resize(method_index + 1);
+        distance_data[e][method_index] = i_maxavgabs;
+    }
+
+
+    dst_lock.unlock();
+    mtx.unlock();
+}
+
+int DataSource::getCurrentDistance()
+{
+    if (distance_data.keys().contains(currentUnitIndex) && distance_data[currentUnitIndex].length()>0)
+        return distance_data[currentUnitIndex][0];
 }

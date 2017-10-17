@@ -9,6 +9,7 @@
 intercom::intercom(QQuickView *appViewer, QObject *parent) : QObject(parent), m_appViewer(appViewer)
 {
     dataReceiveTime.start();
+    packets_received.resize(AddressProvider::getReceiverCount());
 }
 
 void intercom::on()
@@ -113,13 +114,19 @@ void intercom::sendFix(QString distance)
 
 void intercom::sendScan()
 {
+    qDebug() << "sendScan, scan_counter=" << scan_counter;
+
     if (!_sender)
         return;
 
     dataReceiveTime.restart();
 
+    packets_received.fill(0);
+
     _sender->writeDatagram(QByteArray::fromHex("4453"), AddressProvider::getAddress(0), dst_port);
+    scan_counter++;
     packNum = 0;
+
 
 
     if (!timer) {
@@ -132,13 +139,26 @@ void intercom::sendScan()
 void intercom::endScan()
 {
     try {
-    if (!object)
-        object = m_appViewer->rootObject();
-    QMetaObject::invokeMethod((QObject*)object, "setDataReceiveTimeElapsed", Q_ARG(QVariant, dataReceiveTimeElapsed));
-    QMetaObject::invokeMethod((QObject*)object, "updateDistances");
+        qDebug() << "endScan";
+        if (!object)
+            object = m_appViewer->rootObject();
 
-    if (continueScan)
-        sendScan();
+        QMetaObject::invokeMethod((QObject*)object, "setDataReceiveTimeElapsed", Q_ARG(QVariant, dataReceiveTimeElapsed));
+        if (_dataSource)
+            _dataSource->calcDistances();
+        QMetaObject::invokeMethod((QObject*)object, "updateDistances");
+        QMetaObject::invokeMethod((QObject*)object, "updateAllWaveforms");
+
+        if (packets_received.length()>=4)
+            QMetaObject::invokeMethod((QObject*)object, "setPacketsReceived"
+                                      , Q_ARG(QVariant, packets_received[0])
+                    , Q_ARG(QVariant, packets_received[1])
+                    , Q_ARG(QVariant, packets_received[2])
+                    , Q_ARG(QVariant, packets_received[3]));
+
+
+        if (continueScan)
+            sendScan();
     }
     catch (...) {
         qDebug() << "endScan exception... (?)";
@@ -147,6 +167,7 @@ void intercom::endScan()
 
 void intercom::stopScanTimer()
 {
+    qDebug() << "stopScanTimer";
     if (timer)
         timer->stop();
 }
@@ -182,6 +203,33 @@ void intercom::sendShift(int value)
            // QThread::msleep(100);
         }
     }
+}
+
+void intercom::sendShift(int value, int ipnum)
+{
+    if (_sender) {
+        auto command = AddressProvider::getShiftCommand(value);
+        _sender->writeDatagram(QByteArray::fromHex(command.toUtf8()), AddressProvider::getAddress(ipnum), dst_port);
+    }
+}
+
+void intercom::sendShift(int value1, int value2, int value3, int value4)
+{
+    if (_sender) {
+        auto command = AddressProvider::getShiftCommand(value1);
+        _sender->writeDatagram(QByteArray::fromHex(command.toUtf8()), AddressProvider::getAddress(1), dst_port);
+        command = AddressProvider::getShiftCommand(value2);
+        _sender->writeDatagram(QByteArray::fromHex(command.toUtf8()), AddressProvider::getAddress(2), dst_port);
+        command = AddressProvider::getShiftCommand(value3);
+        _sender->writeDatagram(QByteArray::fromHex(command.toUtf8()), AddressProvider::getAddress(3), dst_port);
+        command = AddressProvider::getShiftCommand(value4);
+        _sender->writeDatagram(QByteArray::fromHex(command.toUtf8()), AddressProvider::getAddress(4), dst_port);
+    }
+}
+
+void intercom::setContinueScan(bool continueScan)
+{
+    this->continueScan = continueScan;
 }
 
 void intercom::reCreateSender()
@@ -257,6 +305,8 @@ void intercom::processDatagram() {
     }
 
     if (_dataSource && s >= MIN_DATA_PACKET_SIZE) {
+        auto ipnum = AddressProvider::getIndex(sender);
+        packets_received[ipnum-1]++;
         //qDebug() << "processDatagram, packNum=" << packNum;
         packNum ++;
         _dataSource->readData(0, &buffer, sender);

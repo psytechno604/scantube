@@ -32,7 +32,7 @@ import QtQuick.Layouts 1.0
 import QtQuick.Controls 2.2
 import IPsListModel 1.0
 import QtQuick.Extras 1.4
-import QtQuick.Controls.Universal 2.0
+//import QtQuick.Controls.Universal 2.0
 import QtQuick.Window 2.3
 import QtQuick.Dialogs.qml 1.0
 import QtQuick.Templates 2.2

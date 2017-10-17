@@ -28,7 +28,12 @@ public:
     Q_INVOKABLE int getTimeout();
 
     Q_INVOKABLE void sendShift(int value);
+    Q_INVOKABLE void sendShift(int value, int ipnum);
+    Q_INVOKABLE void sendShift(int value1, int value2, int value3, int value4);
+    Q_INVOKABLE void setContinueScan(bool continueScan);
 private:
+    int scan_counter {0};
+    QVector<int> packets_received;
     bool m_running {true};
 
     bool continueScan {true};
