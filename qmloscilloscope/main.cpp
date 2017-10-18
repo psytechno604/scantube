@@ -137,11 +137,11 @@ int main(int argc, char *argv[])
     viewer.setColor(QColor("#404040"));
     viewer.show();
 
-    /*QThread thread_1;
-    QObject::connect(&thread_1, &QThread::started, _intercom, &intercom::run);
-    QObject::connect(_intercom, &intercom::finished, &thread_1, &QThread::terminate);
-    _intercom->moveToThread(&thread_1);
-    thread_1.start();*/
+    /*QThread *networkThread = new QThread;
+    _intercom->moveToThread(networkThread);
+    QObject::connect(networkThread, &QThread::started, _intercom, &intercom::run);
+    QObject::connect(_intercom, &intercom::finished, networkThread, &QThread::terminate);
+    networkThread->start();*/
 
     auto ret = app.exec();
     _intercom->off();    

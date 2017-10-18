@@ -41,6 +41,7 @@ ChartView {
     property alias yMin: axisY.min
     property alias y2Max: axisY2.max
     property alias y2Min: axisY2.min
+    property alias lineSeries1: lineSeries1
     onOpenGLChanged: {
         if (openGLSupported) {
             series("signal 1").useOpenGL = openGL;
@@ -73,7 +74,7 @@ ChartView {
     ValueAxis {
         id: axisX
         min: 0
-        max: 363
+        max: 3500
     }
 
     LineSeries {
@@ -124,7 +125,7 @@ ChartView {
     Timer {
         id: refreshTimer
         interval: 1 / 60 * 1000 // 60 Hz
-        running: true
+        running: false
         repeat: true
         onTriggered: {
             dataSource.update(chartView.series(0));

@@ -80,14 +80,24 @@ DataSource::DataSource(QQuickView *appViewer, QObject *parent) :
 
     m_data.resize(nchannels * 3);
 
+    receiver_levels.resize(AddressProvider::getReceiverCount());
 
-
+    history_scan_data.resize(history_depth);
 
     for(auto i=0; i<nchannels; i++) {
-        scan_data.insert(i, *(new QVector<unsigned short>(buffer_size)));
-        scan_data_0.insert(i, *(new QVector<unsigned short>(buffer_size)));
-        distance_data.insert(i, *(new QVector<int>(1)));
+        scan_data.append(*(new QVector<unsigned short>()));
+        scan_data_0.append(*(new QVector<unsigned short>()));
+
+        distance_data.append(*(new QVector<double>(3)));
+        distance_data[i].fill(0.0);
+
+        avg_values.insert(i, 0);
     }
+   scan_index.resize(nchannels);
+
+   for(auto i=0; i<buffer_size; i+= _step)  {
+       _points.append(QPointF(i, 0));
+   }
 
     //generateData(0, 5, 1024);
 
@@ -209,6 +219,7 @@ void DataSource::showFromBuffer(int b_index, int block)
 
 void DataSource::update(QAbstractSeries *series)
 {
+    qDebug() << "DataSource::update" << QThread::currentThreadId();
     mtx.lockForRead();
 
     /*if(series) {
@@ -219,21 +230,25 @@ void DataSource::update(QAbstractSeries *series)
             points[i] =
         }
     }*/
+    //auto step = 4;
+    QVector<QPointF> points;
     try {
-        if (series && m_data.size()>0) {
+        if (series) {
             QXYSeries *xySeries = static_cast<QXYSeries *>(series);
-            if (m_index > 0) {
-                m_index = 0;
-            }
-            //qDebug() << m_index;
-            if (m_index == 0 && currentUnitIndex >= 0)    {
+
+            if (currentUnitIndex >= 0)    {
                 //qDebug() << "update m_index=" << m_index;
-                QVector<QPointF> points = m_data.at(currentUnitIndex);
+                auto j=0;
+                for (auto i=0; i<scan_data[currentUnitIndex].length(); i+=_step) {
+                    //_points.append(QPointF(i, (double(scan_data[currentUnitIndex][i]) - (use_scan_data_0?double(scan_data_0[currentUnitIndex][i]):0.0)) - avg_values[currentUnitIndex]));
+                    _points[j].setY((double(scan_data[currentUnitIndex][i]) - (use_scan_data_0?double(scan_data_0[currentUnitIndex][i]):0.0)) - avg_values[currentUnitIndex]);
+                    j++;
+                }
+
                 // if (m_index == 0)
-                xySeries->replace(points);
+                xySeries->replace(_points);
 
             }
-            m_index++;
             // Use replace instead of clear + append, it's optimized for performance
 
         }
@@ -246,6 +261,7 @@ void DataSource::update(QAbstractSeries *series)
 }
 void DataSource::updateAllWaveforms(QAbstractSeries *series, int set)
 {
+    qDebug() << "DataSource::updateAllWaveforms" << QThread::currentThreadId();
     mtx.lockForRead();
 
 
@@ -259,12 +275,12 @@ void DataSource::updateAllWaveforms(QAbstractSeries *series, int set)
 
     unsigned short med = 0x8000;
 
-    int step = 2;
+    int step = 32;
 
-    for(auto e : scan_data.keys())  {
+    for(auto e=0; e < scan_data.length(); e++)  {
         if ((e%2) == set)    {
             double avg = 0, maxabs = 0;
-            for (auto i=0; i < scan_data.value(e).count(); i+=step) {
+            for (auto i=0; i < scan_data.value(e).count(); i++) {
                 double tmp = use_scan_data_0?(scan_data[e][i] - scan_data_0[e][i]):(scan_data[e][i]);
                 avg += tmp;
                 if (abs(tmp) > maxabs)
@@ -276,7 +292,7 @@ void DataSource::updateAllWaveforms(QAbstractSeries *series, int set)
                 if (abs(tmp) > maxabs)
                     maxabs = abs(tmp);
             }*/
-            avg = avg / scan_data.value(e).count() * step;
+            avg = avg / scan_data.value(e).count();
             for (auto i=0; i < scan_data.value(e).count(); i+=step) {
                 float v = 2000+(float(use_scan_data_0?(scan_data[e][i] - scan_data_0[e][i]):(scan_data[e][i])) - avg);
                 if (v != 2000) {
@@ -302,13 +318,31 @@ void DataSource::updateDistances(QAbstractSeries *series, int set)
 
     auto dss = static_cast<QSplineSeries *>(series);
     QVector<QPointF> points;
-
-    for(auto e : distance_data.keys())  {
-        if ((e%2) == set)    {
-            if (distance_data[e].length()>0)
-                points.append(QPointF(e, distance_data[e][0]));
+    int j=0;
+    if (set == 0 || set ==1) {
+        points.append(QPointF(-0.5, distance_data[distance_data.length()-set-1][0]));
+        for(auto e=set; e < distance_data.length(); e+=2)  {
+            if (distance_data[e].length()>0) {
+                points.append(QPointF(j+0.5, distance_data[e][0]));
+                j++;
+            }
         }
+        points.append(QPointF(j+0.5, distance_data[0][0]));
     }
+    if (set == 2)   {
+        points.append(QPointF(-0.5, (distance_data[distance_data.length()-1][0] + distance_data[distance_data.length()-2][0])/2.0));
+        for(auto e=0; e < distance_data.length()-1; e+=2)  {
+
+            if (distance_data[e].length()>0) {
+                points.append(QPointF(j+0.5, (distance_data[e][0] + distance_data[e+1][0])/2.0));
+                j++;
+            }
+
+        }
+        points.append(QPointF(j+0.5, (distance_data[0][0] + distance_data[1][0])/2.0));
+    }
+
+    points.append(QPointF(-0.5, distance_data[0][0]));
     dss->replace(points);
     dst_lock.unlock();
 }
@@ -700,10 +734,17 @@ void DataSource::showByIndex(int index)
 void DataSource::readData(int buffer_part, QByteArray *buffer, QHostAddress sender)
 {
     //qDebug() << "readData...";
+   //scan_index += buffer_size;
+
+
 
    mtx.lockForWrite();
 
    int ch_num = getUnitIndex(buffer_part, buffer, sender);
+
+   if (scan_index[ch_num] >= scan_data[ch_num].length())  {
+       scan_data[ch_num].resize(scan_data[ch_num].length() + buffer_size);
+   }
 
    if (ch_num==0)   {
        auto dummy = 0;
@@ -766,23 +807,23 @@ void DataSource::readData(int buffer_part, QByteArray *buffer, QHostAddress send
 
         int x = j;
 
-        scan_data[ch_num][x] = b;
-
-        buffer_in[x] = use_scan_data_0?(b - scan_data_0[ch_num][x]):(b - med);
+        scan_data[ch_num][scan_index[ch_num]] = b;
+        scan_index[ch_num] ++;
+//        buffer_in[x] = use_scan_data_0?(b - scan_data_0[ch_num][x]):(b - med);
 
         //scan_data[ch_num][x] = b - use_scan_data_0?scan_data_0[ch_num][x]:0;
 
-        signal_sum += buffer_in[x];
+//        signal_sum += buffer_in[x];
         //pointsS.append(QPointF(x, 0));
     }   
-    signal_sum = signal_sum / buffer_size;
-    for (auto i=0; i<buffer_size; i++) {
-        buffer_in[i] -= signal_sum/* + ((subtractZeroSignal)?(zero_signal[ch_num][i]):(0.0))*/;
-    }
-    buffer_in[0] = 0;
+//    signal_sum = signal_sum / buffer_size;
+//    for (auto i=0; i<buffer_size; i++) {
+//        buffer_in[i] -= signal_sum/* + ((subtractZeroSignal)?(zero_signal[ch_num][i]):(0.0))*/;
+//    }
+//    buffer_in[0] = 0;
     //calc_correlate_func(points, pointsS, signal, kt_dt, N / 2 - 1);
 
-    showFromBuffer(ch_num, 0);
+    //showFromBuffer(ch_num, 0);
 
     mtx.unlock();
 }
@@ -1008,7 +1049,7 @@ int DataSource::getMaxCorrelationShift(QVector<double> a, QVector<double> b)
     return ret;
 }
 
-QMap<int, QVector<unsigned short> > *DataSource::getScanData()
+QVector<QVector<unsigned short> > *DataSource::getScanData()
 {
     return &scan_data;
 }
@@ -1037,7 +1078,7 @@ void DataSource::selectRow(QString v)
 void DataSource::saveAsScanData0()
 {
     mtx.lockForRead();
-    for(auto e : scan_data.keys())  {
+    for(auto e=0; e < scan_data.length(); e++)  {
         for (auto i=0; i < scan_data.value(e).count(); i++) {
             scan_data_0[e][i] = scan_data[e][i];
         }
@@ -1093,19 +1134,46 @@ void DataSource::calcDistances()
     mtx.lockForRead();
     dst_lock.lockForWrite();
 
-    auto method_index = 0;
+
 
     auto window_size = 16;
 
     double avg, avgabs, maxavgabs;
     int i_maxavgabs;
-    for(auto e : scan_data.keys())  {
+    receiver_levels.fill(0);
+
+    for(auto e=0; e < scan_data.length(); e++)  {
         avg = 0.0;
-        for (auto i=0; i < scan_data.value(e).count(); i++) {            
-            avg = avg + (double(scan_data[e][i]) - (use_scan_data_0?double(scan_data_0[e][i]):0.0));
+        auto receiver = AddressProvider::getReceiver(e);
+
+        for (auto i=0; i < scan_data[e].length(); i++) {
+            auto val = double(scan_data[e][i]) - (use_scan_data_0?double(scan_data_0[e][i]):0.0);
+            avg += val;            
         }
-        avg = avg / scan_data.value(e).count();        
-        maxavgabs = 0.0;
+
+        avg = avg / scan_data[e].length();
+        for (auto i=0; i < scan_data[e].length(); i++) {
+            auto val = double(scan_data[e][i]) - (use_scan_data_0?double(scan_data_0[e][i]):0.0) - avg;
+            receiver_levels[receiver] += fabs(val);
+            distance_data[e][raw_level_index] += fabs(val);
+        }
+        avg_values[e] = avg;
+        distance_data[e][raw_level_index] *= receiver_multiplier;
+
+        if (save_level_0) {
+            distance_data[e][saved_level_index] = distance_data[e][raw_level_index];
+        }
+
+        if (distance_data[e][raw_level_index] != 0) {
+            if (distance_data[e][saved_level_index] != 0)   {
+                distance_data[e][distance_index] = sqrt(1 / (distance_data[e][raw_level_index] * pow((sqrt(1/distance_data[e][saved_level_index])/zero_distance), 2)));
+            }
+            else {
+                distance_data[e][distance_index] = sqrt(1 / distance_data[e][raw_level_index]);
+            }
+
+        }
+        /*maxavgabs = 0.0;
         for (auto i=window_size-1; i < scan_data.value(e).count(); i++) {
             avgabs = 0.0;
             for(auto j=i-window_size+1; j<=i; j++)  {
@@ -1118,16 +1186,43 @@ void DataSource::calcDistances()
             }
         }
         //distance_data[e].resize(method_index + 1);
-        distance_data[e][method_index] = i_maxavgabs;
+        distance_data[e][method_index] = i_maxavgabs;*/
     }
 
+    receiver_levels[0] =  receiver_levels[0] * receiver_multiplier;
+    receiver_levels[1] =  receiver_levels[1] * receiver_multiplier;
+    receiver_levels[2] =  receiver_levels[2] * receiver_multiplier;
+    receiver_levels[3] =  receiver_levels[3] * receiver_multiplier;
+
+    save_level_0 = false;
 
     dst_lock.unlock();
     mtx.unlock();
 }
 
-int DataSource::getCurrentDistance()
+double DataSource::getCurrentDistance()
 {
-    if (distance_data.keys().contains(currentUnitIndex) && distance_data[currentUnitIndex].length()>0)
+    if (currentUnitIndex < distance_data.length() && distance_data[currentUnitIndex].length()>0)
         return distance_data[currentUnitIndex][0];
 }
+
+double DataSource::getReceiverLevel(int receiver)
+{
+    return receiver_levels[receiver];
+}
+
+void DataSource::setSaveDistance0(bool val)
+{
+    save_level_0 = val;
+}
+
+int DataSource::getBufferSize()
+{
+    return buffer_size;
+}
+
+void DataSource::resetScanIndex()
+{
+    scan_index.fill(0);
+}
+

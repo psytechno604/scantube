@@ -24,6 +24,7 @@ public:
     Q_INVOKABLE void endScan();
     Q_INVOKABLE void stopScanTimer();
     Q_INVOKABLE void sendTest();
+    Q_INVOKABLE void scanRange();
 
     Q_INVOKABLE int getTimeout();
 
@@ -32,12 +33,23 @@ public:
     Q_INVOKABLE void sendShift(int value1, int value2, int value3, int value4);
     Q_INVOKABLE void setContinueScan(bool continueScan);
 private:
+    //bool waiting_for_shift
+    bool fullscan_mode_on {false};
+    bool fullscan_mode_complete {false};
+    int current_shift{0};
+
     int scan_counter {0};
     QVector<int> packets_received;
     bool m_running {true};
 
-    bool continueScan {true};
+    bool continueScan {false};
     QTime dataReceiveTime;
+    QTime betweenScansTime;
+    QTime invocationShitTime;
+
+    QTime readDataTime;
+    int readDataTimeElapsed;
+
     QTimer *timer {nullptr};
     int dataReceiveTimeElapsed {0};
     int timeout;

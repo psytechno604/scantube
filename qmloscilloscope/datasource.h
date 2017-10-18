@@ -134,7 +134,7 @@ public slots:
 
     int getMaxCorrelationShift(QVector<double> a, QVector<double> b);
 
-    QMap<int, QVector<unsigned short> > *getScanData();
+    QVector<QVector<unsigned short> > *getScanData();
 
     Q_INVOKABLE void selectIP(QString v);
     Q_INVOKABLE void selectEmitter(QString v);
@@ -144,16 +144,52 @@ public slots:
 
     Q_INVOKABLE void calcDistances();
 
-    Q_INVOKABLE int getCurrentDistance();
+    Q_INVOKABLE double getCurrentDistance();
+    Q_INVOKABLE double getReceiverLevel(int receiver);
+
+    Q_INVOKABLE void setSaveDistance0(bool val);
+
+    Q_INVOKABLE int getBufferSize();
+
+    Q_INVOKABLE void resetScanIndex();
+    //Q_INVOKABLE void newScan();
 private:
+    QVector<double> receiver_levels;
+
+
+    int _step {4};
+    QVector<QPointF> _points;
 
     int currentUnitIndex {0};
     QString ipNum {"1"}, emitterNum {"0"}, rowNum {"0"};
 
-    QVector<QMap<int, QVector<unsigned short>>> history_scan_data;
-    QMap<int, QVector<unsigned short>> scan_data;
-    QMap<int, QVector<unsigned short>> scan_data_0;
-    QMap<int, QVector<int>> distance_data;
+    QVector<QVector<QVector<unsigned short>>> history_scan_data;
+    int history_depth {8};
+
+    //QVector<QMap<int, QVector<unsigned short>>> full_scan_data;
+
+    QVector<int> scan_index;
+    QVector<QVector<unsigned short>> scan_data;
+    QVector<QVector<unsigned short>> scan_data_0;
+
+    QVector<QVector<double>> distance_data;
+    // 0 - distance from raw data
+    // 1 - distance saved as 0
+    bool save_level_0 {false};
+
+    double zero_distance {0.1};
+
+    double receiver_multiplier {0.04};
+
+    int distance_index {0};
+    int saved_level_index {1};
+    int raw_level_index {2};
+
+
+    QVector<double> avg_values;
+
+    QVector<double> zero_receiver_levels;
+
     bool use_scan_data_0 {true};
     QVector<bool> channel_data_received;
 

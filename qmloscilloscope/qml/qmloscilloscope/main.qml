@@ -27,7 +27,7 @@
 **
 ****************************************************************************/
 
-import QtQuick 2.1
+import QtQuick 2.2
 import QtQuick.Dialogs 1.0
 
 //![1]
@@ -56,8 +56,8 @@ Item {
     property alias checkBox_subtractZeroSignal: checkBox_subtractZeroSignal
     //property alias column: column
 
-
-
+    //color: "#ffffff"
+    z:-1
 
     Row {
         id: row
@@ -133,8 +133,8 @@ Item {
                 id: text_dataReceiveTimeElapsed
                 x: 71
                 y: 126
-                width: 26
-                height: 14
+                width: 53
+                height: 27
                 color: "#ffffff"
                 text: qsTr("0")
                 font.pixelSize: 24
@@ -142,22 +142,35 @@ Item {
 
             Text {
                 id: text9
-                x: 103
-                y: 126
+                x: 130
+                y: 128
                 text: qsTr("ms.")
                 font.pixelSize: 12
             }
 
-
             Text {
-                id: text_packetsReceived1
-                x: 71
-                y: 223
-                width: 26
-                height: 14
-                color: "#ffffff"
-                text: qsTr("0")
-                font.pixelSize: 24
+                id: text10
+                x: 8
+                y: 159
+                text: qsTr("Timeout:")
+                font.pixelSize: 12
+            }
+
+
+
+
+            SpinBox {
+                id: spinBox_dataReceiveTimeout
+                x: 67
+                y: 159
+                width: 109
+                height: 40
+                value: appSettings.dataReceiveTimeout
+                from: 10
+                to: 1000
+                /*editable: true
+                valueFromText: function(text, locale) { return Number.fromLocaleString(locale, text); }*/
+                onValueChanged: _intercom.setTimeout(value);
             }
 
             Text {
@@ -168,71 +181,107 @@ Item {
                 font.pixelSize: 12
             }
 
+
+
             Text {
                 id: text11
                 x: 8
-                y: 223
+                y: 219
                 text: qsTr("ip 1:")
                 font.pixelSize: 12
             }
 
             Text {
-                id: text_packetsReceived2
-                x: 71
-                y: 243
+                id: text_packetsReceived1
+                x: 8
+                y: 239
                 width: 26
-                height: 14
+                height: 25
+                color: "#ffffff"
+                text: qsTr("0")
+                font.pixelSize: 24
+            }
+
+
+
+
+
+
+
+            Text {
+                id: text12
+                x: 39
+                y: 219
+                width: 25
+                height: 0
+                text: qsTr("ip 2:")
+                font.pixelSize: 12
+            }
+
+            Text {
+                id: text_packetsReceived2
+                x: 39
+                y: 239
+                width: 26
+                height: 27
                 color: "#ffffff"
                 text: qsTr("0")
                 font.pixelSize: 24
 
             }
 
+
+
+
+
+
             Text {
-                id: text12
-                x: 8
-                y: 243
-                text: qsTr("ip 2:")
+                id: text13
+                x: 72
+                y: 219
+                text: qsTr("ip 3:")
                 font.pixelSize: 12
             }
 
             Text {
                 id: text_packetsReceived3
                 x: 71
-                y: 263
+                y: 239
                 width: 26
-                height: 14
+                height: 25
                 color: "#ffffff"
                 text: qsTr("0")
                 font.pixelSize: 24
             }
 
+
+
+
+
+
             Text {
-                id: text13
-                x: 8
-                y: 263
-                text: qsTr("ip 3:")
+                id: text14
+                x: 103
+                y: 219
+                text: qsTr("ip 4:")
                 font.pixelSize: 12
             }
 
             Text {
                 id: text_packetsReceived4
-                x: 71
-                y: 283
+                x: 103
+                y: 239
                 width: 26
-                height: 14
+                height: 30
                 color: "#ffffff"
                 text: qsTr("0")
                 font.pixelSize: 24
             }
 
-            Text {
-                id: text14
-                x: 8
-                y: 283
-                text: qsTr("ip 4:")
-                font.pixelSize: 12
-            }
+
+
+
+
 
             Button {
                 id: button2
@@ -253,20 +302,25 @@ Item {
                 onClicked: fileDialog.open();
             }
 
+
+
             CheckBox {
                 id: checkBox_subtractZeroSignal
-                x: 71
-                y: 378
-                width: 74
+                x: 91
+                y: 336
+                width: 65
                 height: 40
                 checked: dataSource.getSubtractZeroSignal();
-                text: qsTr("use 0")
+                text: qsTr("use")
+                autoExclusive: false
                 spacing: 5
                 font.weight: Font.Normal
                 onCheckedChanged: {
                     dataSource.setSubtractZeroSignal(checked);
                 }               
             }
+
+
 
             CheckBox {
                 id: checkBoxUseFile
@@ -279,6 +333,8 @@ Item {
                     _interfaceHelper.setValue("checkBoxUseFile", checked * 1);
                 }
             }
+
+
 
             TextField {
                 id: textField3
@@ -301,6 +357,8 @@ Item {
                     dataSource.showByIndex(text*1.0);
                 }
             }
+
+
 
             ListView {
                 id: listView
@@ -357,6 +415,8 @@ Item {
 
             }
 
+
+
             Button {
                 id: button3
                 x: 67
@@ -378,6 +438,8 @@ Item {
                 }
             }
 
+
+
             Button {
                 id: button4
                 x: 138
@@ -391,18 +453,22 @@ Item {
                 onClicked: _intercom.sendTest();
             }
 
+
+
             Button {
                 id: button5
                 x: 8
-                y: 378
-                width: 53
+                y: 336
+                width: 82
                 height: 40
-                text: qsTr("Save 0")
+                text: qsTr("Save signal 0")
                 checkable: false
                 checked: false
                 font.pointSize: 8
                 onClicked: dataSource.saveAsScanData0();
             }
+
+
 
             Button {
                 id: button6
@@ -420,18 +486,12 @@ Item {
                 }
             }
 
-            Text {
-                id: text10
-                x: 13
-                y: 159
-                text: qsTr("Timeout:")
-                font.pixelSize: 12
-            }
+
 
             Button {
                 id: button7
-                x: 146
-                y: 378
+                x: 148
+                y: 336
                 width: 45
                 height: 40
                 text: qsTr("Reset")
@@ -440,18 +500,59 @@ Item {
                 font.pointSize: 8
             }
 
-            SpinBox {
-                id: spinBox_dataReceiveTimeout
-                x: 67
-                y: 159
-                width: 109
+
+            Text {
+                id: text_betweenScansTimeElapsed
+                x: 92
+                y: 275
+                width: 53
+                height: 27
+                color: "#ffffff"
+                text: qsTr("0")
+                font.pixelSize: 24
+            }
+
+            Text {
+                id: text15
+                x: 8
+                y: 272
+                text: qsTr("between scans:")
+                font.pixelSize: 12
+            }
+
+            Text {
+                id: text16
+                x: 8
+                y: 308
+                text: qsTr("readData:")
+                font.pixelSize: 12
+            }
+
+            Text {
+                id: text_readDataTimeElapsed
+                x: 92
+                y: 308
+                width: 53
+                height: 27
+                color: "#ffffff"
+                text: qsTr("0")
+                font.pixelSize: 24
+            }
+
+            Button {
+                id: button_saveDistance0
+                x: 8
+                y: 392
+                width: 184
                 height: 40
-                value: appSettings.dataReceiveTimeout
-                from: 10
-                to: 1000
-                /*editable: true
-                valueFromText: function(text, locale) { return Number.fromLocaleString(locale, text); }*/
-                onValueChanged: _intercom.setTimeout(value);
+                text: qsTr("Save distance 0")
+                checkable: false
+                checked: false
+                font.pointSize: 8
+                onClicked: {
+                    dataSource.setSaveDistance0(true);
+
+                }
             }
 
         }
@@ -478,7 +579,7 @@ Item {
                     TabBar {
                         id: tabBar
                         width: parent.width
-                        currentIndex: 0
+                        currentIndex: 2
                         TabButton {
                             text: qsTr("Single waveform")
                         }
@@ -623,7 +724,7 @@ Item {
                                     ValueAxis {
                                         id: axisAngular_0_0
                                         min: 0
-                                        max: 32 * 363 / 2
+                                        max: 32 * 363 / 32
                                         tickCount: 33
                                         labelsVisible: false;
                                     }
@@ -641,8 +742,11 @@ Item {
                                         axisRadial: axisRadial_0_0
                                         pointsVisible: false
                                         pointLabelsVisible: false
-                                        width: 0.5
+                                        width: 2
                                         color: "red"
+                                        onPointsReplaced: {
+
+                                        }
                                     }
                                 }
                                 PolarChartView {
@@ -652,7 +756,7 @@ Item {
                                     ValueAxis {
                                         id: axisAngular_0_1
                                         min: 0
-                                        max: 32 * 363 / 2
+                                        max: 32 * 363 / 32
                                         tickCount: 33
                                         labelsVisible: false;
                                     }
@@ -670,7 +774,7 @@ Item {
                                         axisRadial: axisRadial_0_1
                                         pointsVisible: false
                                         pointLabelsVisible: false
-                                        width: 0.5
+                                        width: 2
                                         color: "blue"
                                     }
                                 }
@@ -700,7 +804,7 @@ Item {
                                     ValueAxis {
                                         id: axisRadial_1_0
                                         min: 0
-                                        max: 363
+                                        max: 0.12
                                         labelsVisible: false;
                                     }
                                     SplineSeries {
@@ -708,20 +812,33 @@ Item {
                                         id: series_1_0
                                         axisAngular: axisAngular_1_0
                                         axisRadial: axisRadial_1_0
-                                        pointsVisible: false
+                                        pointsVisible: true
                                         pointLabelsVisible: false
-                                        width: 0.5
+                                        width: 2
                                         color: "red"
+                                        opacity: 0.1
                                     }
                                     SplineSeries {
                                         name: "Set 1"
                                         id: series_1_1
                                         axisAngular: axisAngular_1_0
                                         axisRadial: axisRadial_1_0
-                                        pointsVisible: false
+                                        pointsVisible: true
                                         pointLabelsVisible: false
-                                        width: 0.5
+                                        width: 2
                                         color: "blue"
+                                        opacity: 0.1
+                                    }
+                                    SplineSeries {
+                                        name: "Average"
+                                        id: series_1_2
+                                        axisAngular: axisAngular_1_0
+                                        axisRadial: axisRadial_1_0
+                                        pointsVisible: true
+                                        pointLabelsVisible: false
+                                        width: 2
+                                        color: "green"
+                                        opacity: 0.75
                                     }
                                 }
                             }
@@ -795,7 +912,7 @@ Item {
                     id: slider1
                     x: 0
                     y: 0
-                    width: parent.width - 100
+                    width: parent.width - 250
                     height: 36
                     stepSize: 1
                     to: 3100
@@ -834,7 +951,7 @@ Item {
                     id: slider2
                     x: 0
                     y: slider1.y + slider1.height
-                    width: parent.width - 100
+                    width: slider1.width
                     height: 36
                     from: 0
                     to: 3100
@@ -869,7 +986,7 @@ Item {
                     id: slider3
                     x: 0
                     y: slider2.y + slider2.height
-                    width: parent.width - 100
+                    width: slider1.width
                     height: 36
                     from: 0
                     to: 3100
@@ -904,7 +1021,7 @@ Item {
                     id: slider4
                     x: 0
                     y: slider3.y + slider3.height
-                    width: parent.width - 100
+                    width: slider1.width
                     height: 36
                     from: 0
                     to: 3100
@@ -944,9 +1061,92 @@ Item {
                     checked: false
                     checkable: false
                     font.pointSize: 8
-                    onClicked: _intercom.sendScan(slider1.value, slider2.value, slider3.value, slider4.value);
+                    onClicked: _intercom.sendShift(slider1.value, slider2.value, slider3.value, slider4.value);
                 }
 
+                TextField {
+                    id: textField_slider1_level
+                    x: textField_slider1.x + textField_slider1.width + 10
+                    y: textField_slider1.y
+                    width: 82
+                    height: 36
+                    selectByMouse: true
+                    MouseArea {
+                        anchors.topMargin: 0
+                        anchors.fill: parent
+                        anchors.rightMargin: 0
+                        cursorShape: Qt.IBeamCursor
+                        acceptedButtons: Qt.NoButton
+                        anchors.bottomMargin: 0
+                        anchors.leftMargin: 0
+                    }
+                }
+                TextField {
+                    id: textField_slider2_level
+                    x: textField_slider2.x + textField_slider2.width + 10
+                    y: textField_slider2.y
+                    width: 82
+                    height: 36
+                    selectByMouse: true
+                    MouseArea {
+                        anchors.topMargin: 0
+                        anchors.fill: parent
+                        anchors.rightMargin: 0
+                        cursorShape: Qt.IBeamCursor
+                        acceptedButtons: Qt.NoButton
+                        anchors.bottomMargin: 0
+                        anchors.leftMargin: 0
+                    }
+                }
+                TextField {
+                    id: textField_slider3_level
+                    x: textField_slider3.x + textField_slider3.width + 10
+                    y: textField_slider3.y
+                    width: 82
+                    height: 36
+                    selectByMouse: true
+                    MouseArea {
+                        anchors.topMargin: 0
+                        anchors.fill: parent
+                        anchors.rightMargin: 0
+                        cursorShape: Qt.IBeamCursor
+                        acceptedButtons: Qt.NoButton
+                        anchors.bottomMargin: 0
+                        anchors.leftMargin: 0
+                    }
+                }
+                TextField {
+                    id: textField_slider4_level
+                    x: textField_slider4.x + textField_slider4.width + 10
+                    y: textField_slider4.y
+                    width: 82
+                    height: 36
+                    selectByMouse: true
+                    MouseArea {
+                        anchors.topMargin: 0
+                        anchors.fill: parent
+                        anchors.rightMargin: 0
+                        cursorShape: Qt.IBeamCursor
+                        acceptedButtons: Qt.NoButton
+                        anchors.bottomMargin: 0
+                        anchors.leftMargin: 0
+                    }
+                }
+
+                Button {
+                    id: button_scanRange
+                    x: textField_slider4_level.x
+                    y: button_sendShifts.y
+                    width: 55
+                    height: 40
+                    text: qsTr("Scan range")
+                    checked: false
+                    checkable: false
+                    font.pointSize: 8
+                    onClicked: {
+                        _intercom.scanRange();
+                    }
+                }
             }
 
         }
@@ -1000,12 +1200,22 @@ function setSingleWaveformDistanceText (distance) {
         single_waveform_distance.text = "Distance = " + distance;
 }
     function updateAllWaveforms (){
-        dataSource.updateAllWaveforms(series_0_0, 0);
-        dataSource.updateAllWaveforms(series_0_1, 1);
+        //dataSource.updateAllWaveforms(series_0_0, 0);
+        //dataSource.updateAllWaveforms(series_0_1, 1);
     }
     function updateDistances (){
-        dataSource.updateDistances(series_1_0, 0);
+        /*dataSource.updateDistances(series_1_0, 0);
         dataSource.updateDistances(series_1_1, 1);
+        dataSource.updateDistances(series_1_2, 2);*/
+        var fix = 8;
+        textField_slider1_level.text = dataSource.getReceiverLevel(0).toFixed(0);
+        textField_slider2_level.text = dataSource.getReceiverLevel(1).toFixed(0);
+        textField_slider3_level.text = dataSource.getReceiverLevel(2).toFixed(0);
+        textField_slider4_level.text = dataSource.getReceiverLevel(3).toFixed(0);
+    }
+
+    function updateSingleWaveform() {
+        dataSource.update(scopeView.lineSeries1);
     }
 
     function clearListElements(){
@@ -1029,11 +1239,21 @@ function setSingleWaveformDistanceText (distance) {
         text_packetsReceived3.text = v3===0?"":v3;
         text_packetsReceived4.text = v4===0?"":v4;
     }
-
+    /*function setReceiverLevels(l1, l2, l3, l4) {
+        textField_slider1_level.text = l1;
+        textField_slider2_level.text = l2;
+        textField_slider3_level.text = l3;
+        textField_slider4_level.text = l4;
+    }*/
     function setDataReceiveTimeElapsed(elapsed) {
         text_dataReceiveTimeElapsed.text = elapsed;
     }
-
+    function setBetweenScansTimeElapsed(elapsed) {
+        text_betweenScansTimeElapsed.text = elapsed;
+    }
+    function setReadDataTimeElapsed(elapsed) {
+        text_readDataTimeElapsed.text = elapsed;
+    }
     function changeProgressBar(v) {
         pbValue = v*1
         return

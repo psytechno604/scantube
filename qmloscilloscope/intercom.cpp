@@ -9,6 +9,7 @@
 intercom::intercom(QQuickView *appViewer, QObject *parent) : QObject(parent), m_appViewer(appViewer)
 {
     dataReceiveTime.start();
+    betweenScansTime.start();
     packets_received.resize(AddressProvider::getReceiverCount());
 }
 
@@ -90,6 +91,7 @@ void intercom::setSpeed(QString spd)
     }
     QString accHexValue = "570D8" + spd;
 
+
     _sender->writeDatagram(QByteArray::fromHex(accHexValue.toUtf8()), AddressProvider::getAddress(1), dst_port);
 }
 
@@ -114,15 +116,29 @@ void intercom::sendFix(QString distance)
 
 void intercom::sendScan()
 {
-    qDebug() << "sendScan, scan_counter=" << scan_counter;
+    //qDebug() << "sendScan, scan_counter=" << scan_counter;
 
     if (!_sender)
         return;
 
     dataReceiveTime.restart();
+    //betweenScansTime.restart();
 
     packets_received.fill(0);
 
+    if (fullscan_mode_on && current_shift<=3100) {
+        sendShift(current_shift, current_shift, current_shift, current_shift);
+        current_shift += _dataSource->getBufferSize();
+        QThread::msleep(100);
+    }
+    if (current_shift>3100) {
+        fullscan_mode_on = false;
+        fullscan_mode_complete = true;
+    }
+
+    if (_dataSource)    {
+        _dataSource->resetScanIndex();
+    }
     _sender->writeDatagram(QByteArray::fromHex("4453"), AddressProvider::getAddress(0), dst_port);
     scan_counter++;
     packNum = 0;
@@ -132,22 +148,46 @@ void intercom::sendScan()
     if (!timer) {
         timer = new QTimer();
         QObject::connect(timer, &QTimer::timeout, this, &intercom::endScan);
-        timer->start(timeout);
     }
+    timer->start(timeout);
 }
 
 void intercom::endScan()
 {
     try {
+        if (timer)
+            timer->stop();
+
         qDebug() << "endScan";
         if (!object)
             object = m_appViewer->rootObject();
 
         QMetaObject::invokeMethod((QObject*)object, "setDataReceiveTimeElapsed", Q_ARG(QVariant, dataReceiveTimeElapsed));
-        if (_dataSource)
+
+        QMetaObject::invokeMethod((QObject*)object, "setBetweenScansTimeElapsed", Q_ARG(QVariant, betweenScansTime.elapsed()));
+        betweenScansTime.restart();
+
+
+
+        QMetaObject::invokeMethod((QObject*)object, "setReadDataTimeElapsed", Q_ARG(QVariant, readDataTimeElapsed));
+        readDataTimeElapsed = 0;
+
+
+
+        if (_dataSource && fullscan_mode_complete && packets_received.length()>=4
+                    && packets_received[0] == 8
+                    && packets_received[1] == 8
+                    && packets_received[2] == 8
+                    && packets_received[3] == 8)
+        {
             _dataSource->calcDistances();
-        QMetaObject::invokeMethod((QObject*)object, "updateDistances");
-        QMetaObject::invokeMethod((QObject*)object, "updateAllWaveforms");
+            QMetaObject::invokeMethod((QObject*)object, "updateDistances");
+            QMetaObject::invokeMethod((QObject*)object, "updateAllWaveforms");
+            QMetaObject::invokeMethod((QObject*)object, "updateSingleWaveform");
+            fullscan_mode_complete = false;
+        }
+
+
 
         if (packets_received.length()>=4)
             QMetaObject::invokeMethod((QObject*)object, "setPacketsReceived"
@@ -156,9 +196,14 @@ void intercom::endScan()
                     , Q_ARG(QVariant, packets_received[2])
                     , Q_ARG(QVariant, packets_received[3]));
 
+//setReceiverLevels
 
-        if (continueScan)
+
+        if (continueScan || fullscan_mode_on) {
+            QThread::msleep(100);
             sendScan();
+        }       
+
     }
     catch (...) {
         qDebug() << "endScan exception... (?)";
@@ -167,7 +212,9 @@ void intercom::endScan()
 
 void intercom::stopScanTimer()
 {
-    qDebug() << "stopScanTimer";
+    // this method is against crashing on exit (stop the fucking timers!):
+
+    //qDebug() << "stopScanTimer";
     if (timer)
         timer->stop();
 }
@@ -187,6 +234,14 @@ void intercom::sendTest()
     _sender->writeDatagram(QByteArray::fromHex("06267bdf7be27bdf7be17be67bdd7bdf7bdd7be17be17bdc7bdc7bdf7bdd7bdd7bdd7be07be37bdc7bdb7bdd7bdd7bde7bdf7be27bde7bdd7bdf7bdc7be07bda7bdc7bdc7bde7bde7bdf7be07bdd7be07bdf7bdc7be47bde7bdf7bdf7bde7bdd7bdc7bdf7bdf7bdd7bdb7bdc7bde7bda7bdc7bdd7be27bdb7bdf7bdf7be47bdb7be07bde7bde7bda7bdc7bdf7bdf7bdb7bd97bdd7be07bd97bde7bdf7bd57bde7be57bdd7bdb7bd97bde7bdb7be17bdc7bdc7bdd7be07be47be47bdf7be07bdf7be07bdd7bdf7bde7bd87bdf7be07bde7bdf7bdd7bdb7bde7bde7bdc7bdf7be17bdb7bdc7be17bdf7be07bde7bde7bdf7be07bdf7be37bdd7be27be07bda7bdd7bde7bdc7be07bdb7bde7bdc7be47bdc7bdc7be17be27be07bde7be47be17be07be27bde7bdd7bdf7bdf7be27bdc7bdf7be07be47be27be07bdb7be37be07be27bdf7be17be27be37bdf7be37be07bdd7be27bdf7be57bde7be47be17be27be07be07be37be17bdf7bdf7bdf7be47be27be27bdf7bdf7bdd7be07be07bda7bdf7be07be17be07be07bde7be57bdf7bdf7bdb7bdb7be57be57bdf7bdd7be07be47be57bde7bdf7be37bdd7bd87bdd7be27bdd7bdc7be47be37be17be37bdc7be27be57be17be37be17be47be27be27be17be47bdf7bdf7bdd7be47be17be57be57be47be27be67be47be37be67be37be37be37bde7be57bdc7bdf7be87be67be97be47be57be77be87be47be87be47bea7be17be47be57be47be17be97beb7be57be67be87be77be47be87be17be77be97bee7be87be67be37be57be57be57bed7be47be87be77be87bea7bee7be97be67be77be47be67be87bea7be57be87be87bea7be77be87be87bea7be37be77be77be67beb7be57be57be57beb7be77be87be67be97be57bea7be77be77be57bea7be77be77be77beb7beb7be87bee7be57be97be87be97be57be37be37be37be37be77beb7be27bea7be07be17be77be77be77be77be47be57bdb7be47be57be17be57be17be87bde7be480d980d880d980dc80d780d780dd80db80da80e080db80d980db80df80de80dc80db80db80dc80db80de80df80dc80e380df80df80d780da80dd80e380de80db80e080dd80e080db80de80db80de80dd80db80d980df80dd80da80dc80e080df80d880dd80dc80de80db80dc80de80dd80d880dd80db80db80e180da80da80db80df80dc80df80de80da80d980d980e180dc80de80dd80dd80db80d880dd80d880d880dc80dc80df80da80db80d780d680df80dd80d980d880da80da80d980d980d980d880d980db80d780d780db80df80dd80db80e080e080dc80d980db80d980d880e080d980d980d980dd80d980e080dc80d680da80df80dd80d880da80da80db80d680dc80e180da80dc80d980da80da80d880d880d880d880d980dc80da80db80dc80d980dd80d980dd80e180d880d780d880de80dd80da80d580d780d980dc80dc80d980db80da80d980d480da80d980d980dd80d880d680d680d680d880dd80d980d480db80dd80d780d580d480d980dd80d380d180d680d480d280d780d080d380d380d380cf80d280d480cc80d580d880d080d380d180d180d080cf80cb80d280ce80d280cf80cf80d280ca80cd80d180c780cd80cc80ca80cb80cf80cf80ce80ce80c880cc80cd80cd80ca80cc80ce80c880c780cf80cd80cd80cb80c680c680c780c780cc80c880c780c580c580c180c680c880c680cb80c680c680c180c680c680c480c380c480c580c880c380c480ca80c980c580c480c780c580c480c780bf80c180c480bf80c580c080c980c680c480c180c780c780c680c980c780c380c380c980c680bf80c880c480c080c280c180c380c280c580ca80c280c580c280c180bf80c180c880c980c380c680c480c880c780c380c480c280c780c680c480c180c380c680c180c780bf80c780c580c680c680c580c780c780c680c480c480c880c780ca80c680c680c980c880c880c580c780c980c680c180c580c380cb80c580c580c180c680be80c980cc80c480c5"), *myIP, src_port);
     _sender->writeDatagram(QByteArray::fromHex("06277be37be37be27be17be27be37be17be37be17be27be17be37bdd7be67be87bde7bdf7be17be27be47be47be67be27be77be37be47be17be37be27be47be47be37be27be07be37be37be37be77bdf7bdf7be07be97be37be47be57be77be17bde7be47be07bdf7be37beb7be47bdf7be07be37be47be57be87be37be17be17bdf7be47be07be77be17be17be57bdf7bdf7be47be57be37be37be57be37be37be17be17bdc7be47bde7bdf7be77be77be47be07be07be17be57be17be67bdd7be17be47be07be27be37be47be17be67be27bde7bdf7be47bdd7be27be87be47bdd7be37bdb7be37be07be27be17bdf7be77be37be27be37be87be17be37be77be07be47be87be17be57be67be17be37be67be27be27be47be47be47be67be07bde7bde7be17bdf7bdf7be07be17be17be47be07be27be37be37be17be27be17be37be47be37be57be17be17be27be77bdf7be27be47be57be27be07be87bde7be27be57be47be57be27be07be27be47be17bdd7bde7be27be37be17bde7be27be77bdf7be07be27bdd7be47bd97be47be47be37be67be57be37be37be17be47bdf7be37be37be27be67be07be07be77be17be07be27be27be47be27be47be77be67bea7be47be27be27be67be37be77be57be47be47be27be27bea7be47be47be67be77be67be97be27be17be37be27be67be77be97be37be87be47be97be67be97be77be47be37be87be57be47be97be87beb7be77bea7beb7beb7be67be87be97bec7beb7be37be77bec7bea7be57be67bec7be77be97be47bed7be67be77bed7beb7be87bed7be97beb7bee7bea7be97bea7be47bed7beb7be67bef7be67beb7bec7bea7bea7beb7be87bed7bea7bea7bea7bed7bed7be87bea7be67bec7beb7bea7be97be67bea7be97bec7be47be37be77bed7be67bed7be77be57be17be67be17bec7be77be27bea7bea7be37bea7bea7bef7be67be27beb7be97be67be47be57be77be57be27bea7bed7be97be67be67be77be17be680d880d880d380d580d980d580d980d980d580d980d880d580d480d780da80d980d880dc80d980e580da80d380db80dc80d980dc80de80da80dc80d580da80d680d580db80d480d780d480db80d780d580da80d980db80d880da80da80de80db80de80db80d980da80d380da80d980dc80d880d480d780d780d980d880d680da80db80dc80d780d780d680db80d980d880dd80d880dd80d980da80d980d680d580dd80d680d280d180d380da80d880ce80d680d480d780da80d280dd80d880d380dc80d880dd80d580d880dd80da80d780dc80d680d980d780d980d480dc80d880d480d580d980d380d280d680d780d480d880d380d480d680da80db80dd80d480d980db80dd80da80d780db80d980da80d880d580d880d780df80d780d680d580d880d480dc80d480d780d680d880d480d780d580d280d780d780d980d780dd80d680d480d580d680d480d580d580d580d980d180de80d280d880d680d880d880d480d180d480d080d580d280d380d280d680d780d580d480d180d580ca80ce80d580d080d480d480ce80cf80d380ce80d780cf80d080d080d880cf80cd80d280cb80cb80cc80d080d080cb80ce80c980cf80c880c880cb80c580cc80c680c680d180c680c580c980c880cd80c680c580c680cc80c680c680c880c680c680c380c680c780c580c480c580ca80c280c380c380c180c380c480c980bd80bf80c580c780c180c680c480c280c680c280bd80c580c180c180c080bf80c180c280bc80bd80c080be80c280be80c580c580c280c180c480bc80c580c080ca80c680c080c780bf80c480c080c080c080be80bf80bf80c280ba80c280c180c080bf80bc80be80c180c480c280c180c180bc80c280c180c380c080c280c380c580c080bc80c280c380be80c280c080c780c380c080bd80c280c080be80c380c180be80c280c580c280c580c480c180c380c580c180c380c280c580c380c480c280c480c480c380c480c580c480c880c480c680c080c180c680c5"), *myIP, src_port);
 
+}
+
+void intercom::scanRange()
+{
+    fullscan_mode_on = true;
+    fullscan_mode_complete = false;
+    current_shift = 0;
+    sendScan();
 }
 
 int intercom::getTimeout()
@@ -267,7 +322,7 @@ void intercom::processDatagram() {
     if (!_sender) {
         return;
     }
-    //qDebug() << "intercom::processDatagram";
+    //qDebug() << "intercom::processDatagram" << QThread::currentThreadId();
     //return;
     QByteArray buffer;
     buffer.resize(_sender->pendingDatagramSize());
@@ -309,12 +364,23 @@ void intercom::processDatagram() {
         packets_received[ipnum-1]++;
         //qDebug() << "processDatagram, packNum=" << packNum;
         packNum ++;
+
+        readDataTime.restart();
         _dataSource->readData(0, &buffer, sender);
         _dataSource->readData(1, &buffer, sender);
+        readDataTimeElapsed += readDataTime.elapsed();
+
         dataReceiveTimeElapsed = dataReceiveTime.elapsed();
 
-        if (timer)
-            timer->setInterval(timeout);
+        if (packets_received.length()>=4
+                && packets_received[0] == 8
+                && packets_received[1] == 8
+                && packets_received[2] == 8
+                && packets_received[3] == 8)
+            endScan();
+        else
+            if (timer)
+                timer->start(timeout);
     }
 
 }
