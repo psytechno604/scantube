@@ -180,9 +180,9 @@ void intercom::endScan()
                     && packets_received[2] == 8
                     && packets_received[3] == 8)
         {
-            _dataSource->calcDistances();
-            QMetaObject::invokeMethod((QObject*)object, "updateDistances");
-            QMetaObject::invokeMethod((QObject*)object, "updateAllWaveforms");
+            //_dataSource->calcDistances();
+            //QMetaObject::invokeMethod((QObject*)object, "updateDistances");
+            //QMetaObject::invokeMethod((QObject*)object, "updateAllWaveforms");
             QMetaObject::invokeMethod((QObject*)object, "updateSingleWaveform");
             fullscan_mode_complete = false;
         }

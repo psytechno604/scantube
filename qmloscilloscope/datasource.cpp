@@ -95,9 +95,9 @@ DataSource::DataSource(QQuickView *appViewer, QObject *parent) :
     }
    scan_index.resize(nchannels);
 
-   for(auto i=0; i<buffer_size; i+= _step)  {
-       _points.append(QPointF(i, 0));
-   }
+//   for(auto i=0; i<buffer_size; i+= _step)  {
+//       _points.append(QPointF(i, 0));
+//   }
 
     //generateData(0, 5, 1024);
 
@@ -231,7 +231,7 @@ void DataSource::update(QAbstractSeries *series)
         }
     }*/
     //auto step = 4;
-    QVector<QPointF> points;
+    //QVector<QPointF> points;
     try {
         if (series) {
             QXYSeries *xySeries = static_cast<QXYSeries *>(series);
@@ -744,6 +744,7 @@ void DataSource::readData(int buffer_part, QByteArray *buffer, QHostAddress send
 
    if (scan_index[ch_num] >= scan_data[ch_num].length())  {
        scan_data[ch_num].resize(scan_data[ch_num].length() + buffer_size);
+       _points.resize(_points.length() + buffer_size);
    }
 
    if (ch_num==0)   {
