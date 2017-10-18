@@ -74,7 +74,7 @@ ChartView {
     ValueAxis {
         id: axisX
         min: 0
-        max: 3500
+        max: 363*10/4
     }
 
     LineSeries {

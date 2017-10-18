@@ -91,9 +91,12 @@ DataSource::DataSource(QQuickView *appViewer, QObject *parent) :
         distance_data.append(*(new QVector<double>(3)));
         distance_data[i].fill(0.0);
 
-        avg_values.insert(i, 0);
+        if (!(i % _step))   {
+            _points.append(QPointF(i / _step, 0));
+        }
     }
-   scan_index.resize(nchannels);
+   sum_of_values.resize(nchannels); sum_of_values.fill(0);
+   scan_index.resize(nchannels); scan_index.fill(0);
 
 //   for(auto i=0; i<buffer_size; i+= _step)  {
 //       _points.append(QPointF(i, 0));
@@ -241,7 +244,8 @@ void DataSource::update(QAbstractSeries *series)
                 auto j=0;
                 for (auto i=0; i<scan_data[currentUnitIndex].length(); i+=_step) {
                     //_points.append(QPointF(i, (double(scan_data[currentUnitIndex][i]) - (use_scan_data_0?double(scan_data_0[currentUnitIndex][i]):0.0)) - avg_values[currentUnitIndex]));
-                    _points[j].setY((double(scan_data[currentUnitIndex][i]) - (use_scan_data_0?double(scan_data_0[currentUnitIndex][i]):0.0)) - avg_values[currentUnitIndex]);
+                    if (j < _points.length())
+                        _points[j].setY((double(scan_data[currentUnitIndex][i]) - (use_scan_data_0?double(scan_data_0[currentUnitIndex][i]):0.0)) - sum_of_values[currentUnitIndex]/scan_data[currentUnitIndex].length());
                     j++;
                 }
 
@@ -744,23 +748,24 @@ void DataSource::readData(int buffer_part, QByteArray *buffer, QHostAddress send
 
    if (scan_index[ch_num] >= scan_data[ch_num].length())  {
        scan_data[ch_num].resize(scan_data[ch_num].length() + buffer_size);
-       _points.resize(_points.length() + buffer_size);
+       scan_data_0[ch_num].resize(scan_data_0[ch_num].length() + buffer_size);
+       //_points.resize(_points.length() + buffer_size);
    }
 
-   if (ch_num==0)   {
-       auto dummy = 0;
-       dummy ++;
-   }
+//   if (ch_num==0)   {
+//       auto dummy = 0;
+//       dummy ++;
+//   }
 
-    ch_num = getUnitIndex(buffer_part, buffer, sender);
+    //ch_num = getUnitIndex(buffer_part, buffer, sender);
 
     if (!object)
         object = m_appViewer->rootObject();
 
 
 
-    if (datafile)
-        datafile->write(*buffer);
+    /*if (datafile)
+        datafile->write(*buffer);*/
 
     int b_shift = buffer_part * (buffer_size + 1) * 2;
 
@@ -797,7 +802,7 @@ void DataSource::readData(int buffer_part, QByteArray *buffer, QHostAddress send
         unsigned char b1 = (unsigned char)(*buffer)[b_shift + (j+1)*2+1];
         unsigned short b = (b0 << 8) + b1;
         //unsigned short p = ((*buffer)[i] << 8) + (*buffer)[i+1];
-        double p = b - med /*+ shY[b_index] - ((subtractZeroSignal)?(zero_signal[b_index][j]):(0.0))*/;
+        //double p = b - med /*+ shY[b_index] - ((subtractZeroSignal)?(zero_signal[b_index][j]):(0.0))*/;
         //QString s;
         //s.sprintf("%02X", p);
         //markupfile->write(s.toUtf8());
@@ -806,10 +811,15 @@ void DataSource::readData(int buffer_part, QByteArray *buffer, QHostAddress send
         //markupfile->write(QByteArray(";"));
 
 
-        int x = j;
+        //int x = j;
 
         scan_data[ch_num][scan_index[ch_num]] = b;
+        sum_of_values[ch_num] += b;
+//        if (!(scan_index[ch_num] % _step)) {
+//            _points[]
+//        }
         scan_index[ch_num] ++;
+
 //        buffer_in[x] = use_scan_data_0?(b - scan_data_0[ch_num][x]):(b - med);
 
         //scan_data[ch_num][x] = b - use_scan_data_0?scan_data_0[ch_num][x]:0;
@@ -1080,7 +1090,7 @@ void DataSource::saveAsScanData0()
 {
     mtx.lockForRead();
     for(auto e=0; e < scan_data.length(); e++)  {
-        for (auto i=0; i < scan_data.value(e).count(); i++) {
+        for (auto i=0; i < scan_data[e].length(); i++) {
             scan_data_0[e][i] = scan_data[e][i];
         }
     }
@@ -1152,13 +1162,13 @@ void DataSource::calcDistances()
             avg += val;            
         }
 
-        avg = avg / scan_data[e].length();
+        //avg = avg / scan_data[e].length();
         for (auto i=0; i < scan_data[e].length(); i++) {
             auto val = double(scan_data[e][i]) - (use_scan_data_0?double(scan_data_0[e][i]):0.0) - avg;
             receiver_levels[receiver] += fabs(val);
             distance_data[e][raw_level_index] += fabs(val);
         }
-        avg_values[e] = avg;
+
         distance_data[e][raw_level_index] *= receiver_multiplier;
 
         if (save_level_0) {

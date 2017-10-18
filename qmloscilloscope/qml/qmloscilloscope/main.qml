@@ -481,8 +481,9 @@ Item {
                 checkable: false
                 font.pointSize: 8
                 onClicked: {
-                    dataSource.updateAllWaveforms(series_0_0, 0);
-                    dataSource.updateAllWaveforms(series_0_1, 1);
+                    //dataSource.updateAllWaveforms(series_0_0, 0);
+                    //dataSource.updateAllWaveforms(series_0_1, 1);
+                    updateSingleWaveform();
                 }
             }
 

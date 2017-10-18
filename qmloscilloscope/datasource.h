@@ -186,7 +186,7 @@ private:
     int raw_level_index {2};
 
 
-    QVector<double> avg_values;
+    QVector<double> sum_of_values;
 
     QVector<double> zero_receiver_levels;
 
