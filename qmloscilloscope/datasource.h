@@ -104,8 +104,11 @@ public slots:
     void showFromBuffer(int b_index, int block);
     void readData(int buffer_part, QByteArray *buffer, QHostAddress sender);
     void update(QAbstractSeries *series);
+    void update();
     void updateAllWaveforms(QAbstractSeries *series, int set);
-    void updateDistances(QAbstractSeries *series, int set);
+    void updateAllWaveforms();
+    void updateDistances(QAbstractSeries *series, int i, int set);
+    void updateDistances();
     void updateSurface3D(QtDataVisualization::QAbstract3DSeries *series);
 
     void initCorrelationParameters(float  sigTau, float Fdskr);
@@ -134,7 +137,7 @@ public slots:
 
     int getMaxCorrelationShift(QVector<double> a, QVector<double> b);
 
-    QVector<QVector<unsigned short> > *getScanData();
+    QVector<QVector<double> > *getScanData();
 
     Q_INVOKABLE void selectIP(QString v);
     Q_INVOKABLE void selectEmitter(QString v);
@@ -152,13 +155,22 @@ public slots:
     Q_INVOKABLE int getBufferSize();
 
     Q_INVOKABLE void resetScanIndex();
+    Q_INVOKABLE void setScanIndex();
+    Q_INVOKABLE void setAllWaveformsSeries(QAbstractSeries *series, int set);
+    Q_INVOKABLE void setSeries(QAbstractSeries *series);
+    Q_INVOKABLE void setDistanceSeries(QAbstractSeries *series, int i);
     //Q_INVOKABLE void newScan();
 private:
+    int findMaxLess(QVector<double> &v, QVector<double> &v1, double cutoff, int margin_left, int margin_right);
+    QAbstractSeries* series {nullptr};
+    QVector<QAbstractSeries*> distanceSeries {nullptr};
+    QVector<QAbstractSeries *> allWaveformsSeries;
+
     QVector<double> receiver_levels;
 
 
     int _step {4};
-    QVector<QPointF> _points;
+    QVector<QVector<QPointF>> _points;
 
     int currentUnitIndex {0};
     QString ipNum {"1"}, emitterNum {"0"}, rowNum {"0"};
@@ -168,14 +180,21 @@ private:
 
     //QVector<QMap<int, QVector<unsigned short>>> full_scan_data;
 
+    int max_scan_index {buffer_size * 8};
+
     QVector<int> scan_index;
-    QVector<QVector<unsigned short>> scan_data;
-    QVector<QVector<unsigned short>> scan_data_0;
+    QVector<QVector<double>> max_index_stat;
+    QVector<QVector<double>> scan_data;
+    QVector<QVector<double>> scan_data_0;
+
+    int max_change {2000};
+    QVector<double> last_good_value;
 
     QVector<QVector<double>> distance_data;
+    QVector<QVector<double>> distance_data_0;
     // 0 - distance from raw data
     // 1 - distance saved as 0
-    bool save_level_0 {false};
+    bool use_distance_0 {false};
 
     double zero_distance {0.1};
 
@@ -185,12 +204,11 @@ private:
     int saved_level_index {1};
     int raw_level_index {2};
 
-
     QVector<double> sum_of_values;
 
     QVector<double> zero_receiver_levels;
 
-    bool use_scan_data_0 {true};
+    bool use_scan_data_0 {false};
     QVector<bool> channel_data_received;
 
     //QVector<QVector<double>> X, Y;
@@ -254,13 +272,14 @@ private:
 
     QVector<double *> zero_signal;
     int saveAsZeroSignal {0};
-    int subtractZeroSignal {1};
+    int subtractZeroSignal {0};
     int useFilter {1};
 
     bool IsPowerOfTwo(ulong x);
     void calcCorrelationFunc(QVector <double> &in, QVector <double>&out, float *corrfunct, int n__corr, int numsmpl);
     void MakeHPButterworthFilter(vectorc& H, double Td, double fc, unsigned short ford);
     void MakeLPButterworthFilter(vectorc& H, double Td, double fc, unsigned short ford);
+    void Make_BP_ButterworthFilter(vectorc& H, double fc, double deltaf, unsigned short ford, double Td);
     void cfft(vectorc& a);
     void icfft(vectorc& a);
 

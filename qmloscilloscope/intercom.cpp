@@ -126,9 +126,15 @@ void intercom::sendScan()
 
     packets_received.fill(0);
 
+    QMetaObject::invokeMethod((QObject*)object, "setSliders"
+                              , Q_ARG(QVariant, current_shift)
+            , Q_ARG(QVariant, current_shift)
+            , Q_ARG(QVariant, current_shift)
+            , Q_ARG(QVariant, current_shift));
+
     if (fullscan_mode_on && current_shift<=3100) {
         sendShift(current_shift, current_shift, current_shift, current_shift);
-        current_shift += _dataSource->getBufferSize();
+        current_shift += (_dataSource->getBufferSize() - 1);
         QThread::msleep(100);
     }
     if (current_shift>3100) {
@@ -137,8 +143,11 @@ void intercom::sendScan()
     }
 
     if (_dataSource)    {
-        _dataSource->resetScanIndex();
+        _dataSource->setScanIndex();
     }
+
+
+
     _sender->writeDatagram(QByteArray::fromHex("4453"), AddressProvider::getAddress(0), dst_port);
     scan_counter++;
     packNum = 0;
@@ -183,8 +192,20 @@ void intercom::endScan()
             //_dataSource->calcDistances();
             //QMetaObject::invokeMethod((QObject*)object, "updateDistances");
             //QMetaObject::invokeMethod((QObject*)object, "updateAllWaveforms");
-            QMetaObject::invokeMethod((QObject*)object, "updateSingleWaveform");
+            //QMetaObject::invokeMethod((QObject*)object, "updateSingleWaveform");
+
+            _dataSource->update();
+            _dataSource->calcDistances();
+            _dataSource->updateDistances();
+            _dataSource->updateAllWaveforms();
+
+
+
+            if (continueScan) {
+                beforeScanRange();
+            }
             fullscan_mode_complete = false;
+            QThread::msleep(1000);
         }
 
 
@@ -199,7 +220,7 @@ void intercom::endScan()
 //setReceiverLevels
 
 
-        if (continueScan || fullscan_mode_on) {
+        if (fullscan_mode_on) {
             QThread::msleep(100);
             sendScan();
         }       
@@ -238,9 +259,7 @@ void intercom::sendTest()
 
 void intercom::scanRange()
 {
-    fullscan_mode_on = true;
-    fullscan_mode_complete = false;
-    current_shift = 0;
+    beforeScanRange();
     sendScan();
 }
 
@@ -383,4 +402,14 @@ void intercom::processDatagram() {
                 timer->start(timeout);
     }
 
+}
+
+void intercom::beforeScanRange()
+{
+    fullscan_mode_on = true;
+    fullscan_mode_complete = false;
+    current_shift = 0;
+    if (_dataSource)    {
+        _dataSource->resetScanIndex();
+    }
 }

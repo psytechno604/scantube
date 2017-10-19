@@ -52,7 +52,7 @@ private:
 
     void addPoint();
 
-    QVector<QVector<unsigned short> > *scan_data {nullptr};
+    QVector<QVector<double> > *scan_data {nullptr};
 };
 
 #endif // TIMELINE3D_H

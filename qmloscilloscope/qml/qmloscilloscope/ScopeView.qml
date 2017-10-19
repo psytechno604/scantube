@@ -57,24 +57,25 @@ ChartView {
             openGLSupported = false
             openGL = false
         }
+        dataSource.setSeries(lineSeries1);
     }
 
     ValueAxis {
         id: axisY
-        min: -300
-        max: 300
+        min: -1024
+        max: 1024
     }
     ValueAxis {
         id: axisY2
-        min: -300
-        max: 300
+        min: -1024
+        max: 1024
     }
 
 
     ValueAxis {
         id: axisX
         min: 0
-        max: 363*10/4
+        max: 720
     }
 
     LineSeries {

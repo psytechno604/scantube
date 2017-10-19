@@ -79,6 +79,8 @@ public slots:
     void run();
     void setRunning(bool running);
     void processDatagram();
+
+    void beforeScanRange();
 };
 
 #endif // INTERCOM_H

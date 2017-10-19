@@ -317,6 +317,7 @@ Item {
                 font.weight: Font.Normal
                 onCheckedChanged: {
                     dataSource.setSubtractZeroSignal(checked);
+                    updateSingleWaveform();
                 }               
             }
 
@@ -430,7 +431,7 @@ Item {
                 onClicked: {
                     if (checked)    {
                         _intercom.setContinueScan(true);
-                        _intercom.sendScan();
+                        //_intercom.sendScan();
                     }
                     else {
                         _intercom.setContinueScan(false);
@@ -481,8 +482,8 @@ Item {
                 checkable: false
                 font.pointSize: 8
                 onClicked: {
-                    //dataSource.updateAllWaveforms(series_0_0, 0);
-                    //dataSource.updateAllWaveforms(series_0_1, 1);
+                    dataSource.updateAllWaveforms(series_0_0, 0);
+                    dataSource.updateAllWaveforms(series_0_1, 1);
                     updateSingleWaveform();
                 }
             }
@@ -580,7 +581,7 @@ Item {
                     TabBar {
                         id: tabBar
                         width: parent.width
-                        currentIndex: 2
+                        currentIndex: 0
                         TabButton {
                             text: qsTr("Single waveform")
                         }
@@ -612,18 +613,35 @@ Item {
                                     ComboBox {
                                         id: comboBox_selectIP
                                         model: ["1", "2", "3", "4"]
-                                        onActivated: dataSource.selectIP(currentText);
+                                        onActivated: {
+                                            dataSource.selectIP(currentText);
+                                            updateSingleWaveform();
+                                        }
                                     }
                                     ComboBox {
                                         id: comboBox_selectEmitter
                                         model: ["0", "1", "2", "3", "4", "5", "6", "7"]
-                                        onActivated: dataSource.selectEmitter(currentText);
+                                        onActivated: {
+                                            dataSource.selectEmitter(currentText);
+                                            updateSingleWaveform();
+                                        }
                                     }
                                     ComboBox {
                                         id: comboBox_selectRow
                                         model: ["0", "1"]
-                                        onActivated: dataSource.selectRow(currentText);
+                                        onActivated: {
+                                            dataSource.selectRow(currentText);
+                                            updateSingleWaveform();
+                                        }
                                     }
+                                    Button {
+                                        id: button_selectOnCircle
+                                        text: qsTr("Select...")
+                                        onClicked: {
+                                            rect_circleSelector.visible = true;
+                                        }
+                                    }
+
                                     Text {
                                         id: single_waveform_distance
                                         text: qsTr("---")
@@ -725,7 +743,7 @@ Item {
                                     ValueAxis {
                                         id: axisAngular_0_0
                                         min: 0
-                                        max: 32 * 363 / 32
+                                        max: 32 * 20
                                         tickCount: 33
                                         labelsVisible: false;
                                     }
@@ -749,47 +767,18 @@ Item {
 
                                         }
                                     }
-                                }
-                                PolarChartView {
-                                    height: parent.height
-                                    width: parent.width / 2
-                                    antialiasing: true
-                                    ValueAxis {
-                                        id: axisAngular_0_1
-                                        min: 0
-                                        max: 32 * 363 / 32
-                                        tickCount: 33
-                                        labelsVisible: false;
-                                    }
 
-                                    ValueAxis {
-                                        id: axisRadial_0_1
-                                        min: 0
-                                        max: 2500
-                                        labelsVisible: false;
-                                    }
                                     SplineSeries {
                                         name: "Set 1"
                                         id: series_0_1
-                                        axisAngular: axisAngular_0_1
-                                        axisRadial: axisRadial_0_1
+                                        axisAngular: axisAngular_0_0
+                                        axisRadial: axisRadial_0_0
                                         pointsVisible: false
                                         pointLabelsVisible: false
                                         width: 2
                                         color: "blue"
                                     }
                                 }
-
-                           }
-
-                        }
-                        Item {
-                            id: distances_diagram
-                            width: parent.width
-                            height: parent.height
-                            Row {
-                                width: parent.width
-                                height: parent.height
                                 PolarChartView {
                                     height: parent.height
                                     width: parent.width / 2
@@ -805,43 +794,98 @@ Item {
                                     ValueAxis {
                                         id: axisRadial_1_0
                                         min: 0
-                                        max: 0.12
+                                        max: 2500
                                         labelsVisible: false;
                                     }
                                     SplineSeries {
-                                        name: "Set 0"
+                                        name: "1st"
                                         id: series_1_0
                                         axisAngular: axisAngular_1_0
                                         axisRadial: axisRadial_1_0
                                         pointsVisible: true
                                         pointLabelsVisible: false
+
                                         width: 2
                                         color: "red"
-                                        opacity: 0.1
+                                        opacity: 0.5
                                     }
                                     SplineSeries {
-                                        name: "Set 1"
+                                        name: "2nd"
                                         id: series_1_1
                                         axisAngular: axisAngular_1_0
                                         axisRadial: axisRadial_1_0
                                         pointsVisible: true
-                                        pointLabelsVisible: false
+                                        pointLabelsVisible: false                                        
                                         width: 2
-                                        color: "blue"
-                                        opacity: 0.1
+                                        color: "red"
+                                        opacity: 0.25
                                     }
                                     SplineSeries {
-                                        name: "Average"
+                                        name: "3rd"
                                         id: series_1_2
                                         axisAngular: axisAngular_1_0
                                         axisRadial: axisRadial_1_0
                                         pointsVisible: true
                                         pointLabelsVisible: false
                                         width: 2
-                                        color: "green"
-                                        opacity: 0.75
+                                        color: "red"
+                                        opacity: 0.15
+                                    }
+
+                                    SplineSeries {
+                                        name: "1st"
+                                        id: series_1_3
+                                        axisAngular: axisAngular_1_0
+                                        axisRadial: axisRadial_1_0
+                                        pointsVisible: true
+                                        pointLabelsVisible: false
+                                        width: 2
+                                        color: "blue"
+                                        opacity: 0.5
+                                    }
+                                    SplineSeries {
+                                        name: "2nd"
+                                        id: series_1_4
+                                        axisAngular: axisAngular_1_0
+                                        axisRadial: axisRadial_1_0
+                                        pointsVisible: true
+                                        pointLabelsVisible: false
+                                        width: 2
+                                        color: "blue"
+                                        opacity: 0.25
+                                    }
+                                    SplineSeries {
+                                        name: "3rd"
+                                        id: series_1_5
+                                        axisAngular: axisAngular_1_0
+                                        axisRadial: axisRadial_1_0
+                                        pointsVisible: true
+                                        pointLabelsVisible: false
+                                        width: 2
+                                        color: "blue"
+                                        opacity: 0.15
+                                    }
+                                    Component.onCompleted: {
+                                        dataSource.setDistanceSeries(series_1_0, 0);
+                                        dataSource.setDistanceSeries(series_1_1, 1);
+                                        dataSource.setDistanceSeries(series_1_2, 2);
+
+                                        dataSource.setDistanceSeries(series_1_3, 3);
+                                        dataSource.setDistanceSeries(series_1_4, 4);
+                                        dataSource.setDistanceSeries(series_1_5, 5);
                                     }
                                 }
+                           }
+
+                        }
+                        Item {
+                            id: distances_diagram
+                            width: parent.width
+                            height: parent.height
+                            Row {
+                                width: parent.width
+                                height: parent.height
+
                             }
                         }
 
@@ -896,6 +940,9 @@ Item {
 
                                 Component.onCompleted: {
                                     dataSource.updateSurface3D(surfaceSeries);
+                                    dataSource.setAllWaveformsSeries(series_0_0, 0);
+                                    dataSource.setAllWaveformsSeries(series_0_1, 1);
+
                                 }
                             }
                         }
@@ -1283,7 +1330,861 @@ function setSingleWaveformDistanceText (distance) {
         property alias slider3_value: slider3.value
         property alias slider4_value: slider4.value
     }
+    Rectangle {
+        id: rect_circleSelector
+        x: parent.width/2 - width/2
+        y: parent.height/2 - height/2
+        width: 768
+        height: 768
+        visible: false
+        z: 100
+
+        Button {
+            id: "btn100"
+            text: qsTr("100")
+            width: 40
+            height: 40
+            x: getBtnX(parent.width/2 - width/2, 0.8 * parent.width/2, 20)
+            y: getBtnY(parent.height/2 - height/2, 0.8 * parent.height/2, 20)
+            onClicked: {
+                buttonOnCircleClicked("1", "0", "0");
+            }
+        }
+        Button {
+            id: "btn200"
+            text: qsTr("200")
+            width: 40
+            height: 40
+            x: getBtnX(parent.width/2 - width/2, 0.8 * parent.width/2, 21)
+            y: getBtnY(parent.height/2 - height/2, 0.8 * parent.height/2, 21)
+            onClicked: {
+                buttonOnCircleClicked("2", "0", "0");
+            }
+        }
+        Button {
+            id: "btn300"
+            text: qsTr("300")
+            width: 40
+            height: 40
+            x: getBtnX(parent.width/2 - width/2, 0.8 * parent.width/2, 22)
+            y: getBtnY(parent.height/2 - height/2, 0.8 * parent.height/2, 22)
+            onClicked: {
+                buttonOnCircleClicked("3", "0", "0");
+            }
+        }
+        Button {
+            id: "btn400"
+            text: qsTr("400")
+            width: 40
+            height: 40
+            x: getBtnX(parent.width/2 - width/2, 0.8 * parent.width/2, 23)
+            y: getBtnY(parent.height/2 - height/2, 0.8 * parent.height/2, 23)
+            onClicked: {
+                buttonOnCircleClicked("4", "0", "0");
+            }
+        }
+        Button {
+            id: "btn101"
+            text: qsTr("101")
+            width: 40
+            height: 40
+            x: getBtnX(parent.width/2 - width/2, 0.8 * parent.width/2, 24)
+            y: getBtnY(parent.height/2 - height/2, 0.8 * parent.height/2, 24)
+            onClicked: {
+                buttonOnCircleClicked("1", "0", "1");
+            }
+        }
+        Button {
+            id: "btn201"
+            text: qsTr("201")
+            width: 40
+            height: 40
+            x: getBtnX(parent.width/2 - width/2, 0.8 * parent.width/2, 25)
+            y: getBtnY(parent.height/2 - height/2, 0.8 * parent.height/2, 25)
+            onClicked: {
+                buttonOnCircleClicked("2", "0", "1");
+            }
+        }
+        Button {
+            id: "btn301"
+            text: qsTr("301")
+            width: 40
+            height: 40
+            x: getBtnX(parent.width/2 - width/2, 0.8 * parent.width/2, 26)
+            y: getBtnY(parent.height/2 - height/2, 0.8 * parent.height/2, 26)
+            onClicked: {
+                buttonOnCircleClicked("3", "0", "1");
+            }
+        }
+        Button {
+            id: "btn401"
+            text: qsTr("401")
+            width: 40
+            height: 40
+            x: getBtnX(parent.width/2 - width/2, 0.8 * parent.width/2, 27)
+            y: getBtnY(parent.height/2 - height/2, 0.8 * parent.height/2, 27)
+            onClicked: {
+                buttonOnCircleClicked("4", "0", "1");
+            }
+        }
 
 
+
+
+        Button {
+            id: "btn120"
+            text: qsTr("120")
+            width: 40
+            height: 40
+            x: getBtnX(parent.width/2 - width/2, 0.8 * parent.width/2, 28)
+            y: getBtnY(parent.height/2 - height/2, 0.8 * parent.height/2, 28)
+            onClicked: {
+                buttonOnCircleClicked("1", "2", "0");
+            }
+            background: Rectangle {
+                color: parent.down ? "#808080" : "#a0a0a0"
+            }
+        }
+        Button {
+            id: "btn220"
+            text: qsTr("220")
+            width: 40
+            height: 40
+            x: getBtnX(parent.width/2 - width/2, 0.8 * parent.width/2, 29)
+            y: getBtnY(parent.height/2 - height/2, 0.8 * parent.height/2, 29)
+            onClicked: {
+                buttonOnCircleClicked("2", "2", "0");
+            }
+            background: Rectangle {
+                color: parent.down ? "#808080" : "#a0a0a0"
+            }
+        }
+        Button {
+            id: "btn320"
+            text: qsTr("320")
+            width: 40
+            height: 40
+            x: getBtnX(parent.width/2 - width/2, 0.8 * parent.width/2, 30)
+            y: getBtnY(parent.height/2 - height/2, 0.8 * parent.height/2, 30)
+            onClicked: {
+                buttonOnCircleClicked("3", "2", "0");
+            }
+            background: Rectangle {
+                color: parent.down ? "#808080" : "#a0a0a0"
+            }
+        }
+        Button {
+            id: "btn420"
+            text: qsTr("420")
+            width: 40
+            height: 40
+            x: getBtnX(parent.width/2 - width/2, 0.8 * parent.width/2, 31)
+            y: getBtnY(parent.height/2 - height/2, 0.8 * parent.height/2, 31)
+            onClicked: {
+                buttonOnCircleClicked("4", "2", "0");
+            }
+            background: Rectangle {
+                color: parent.down ? "#808080" : "#a0a0a0"
+            }
+        }
+        Button {
+            id: "btn121"
+            text: qsTr("121")
+            width: 40
+            height: 40
+            x: getBtnX(parent.width/2 - width/2, 0.8 * parent.width/2, 0)
+            y: getBtnY(parent.height/2 - height/2, 0.8 * parent.height/2, 0)
+            onClicked: {
+                buttonOnCircleClicked("1", "2", "1");
+            }
+            background: Rectangle {
+                color: parent.down ? "#808080" : "#a0a0a0"
+            }
+        }
+        Button {
+            id: "btn221"
+            text: qsTr("221")
+            width: 40
+            height: 40
+            x: getBtnX(parent.width/2 - width/2, 0.8 * parent.width/2, 1)
+            y: getBtnY(parent.height/2 - height/2, 0.8 * parent.height/2, 1)
+            onClicked: {
+                buttonOnCircleClicked("2", "2", "1");
+            }
+            background: Rectangle {
+                color: parent.down ? "#808080" : "#a0a0a0"
+            }
+        }
+        Button {
+            id: "btn321"
+            text: qsTr("321")
+            width: 40
+            height: 40
+            x: getBtnX(parent.width/2 - width/2, 0.8 * parent.width/2, 2)
+            y: getBtnY(parent.height/2 - height/2, 0.8 * parent.height/2, 2)
+            onClicked: {
+                buttonOnCircleClicked("3", "2", "1");
+            }
+            background: Rectangle {
+                color: parent.down ? "#808080" : "#a0a0a0"
+            }
+        }
+        Button {
+            id: "btn421"
+            text: qsTr("421")
+            width: 40
+            height: 40
+            x: getBtnX(parent.width/2 - width/2, 0.8 * parent.width/2, 3)
+            y: getBtnY(parent.height/2 - height/2, 0.8 * parent.height/2, 3)
+            onClicked: {
+                buttonOnCircleClicked("4", "2", "1");
+            }
+            background: Rectangle {
+                color: parent.down ? "#808080" : "#a0a0a0"
+            }
+        }
+
+
+        Button {
+            id: "btn140"
+            text: qsTr("140")
+            width: 40
+            height: 40
+            x: getBtnX(parent.width/2 - width/2, 0.8 * parent.width/2, 4)
+            y: getBtnY(parent.height/2 - height/2, 0.8 * parent.height/2, 4)
+            onClicked: {
+                buttonOnCircleClicked("1", "4", "0");
+            }
+        }
+        Button {
+            id: "btn240"
+            text: qsTr("240")
+            width: 40
+            height: 40
+            x: getBtnX(parent.width/2 - width/2, 0.8 * parent.width/2, 5)
+            y: getBtnY(parent.height/2 - height/2, 0.8 * parent.height/2, 5)
+            onClicked: {
+                buttonOnCircleClicked("2", "4", "0");
+            }
+        }
+        Button {
+            id: "btn340"
+            text: qsTr("340")
+            width: 40
+            height: 40
+            x: getBtnX(parent.width/2 - width/2, 0.8 * parent.width/2, 6)
+            y: getBtnY(parent.height/2 - height/2, 0.8 * parent.height/2, 6)
+            onClicked: {
+                buttonOnCircleClicked("3", "4", "0");
+            }
+        }
+        Button {
+            id: "btn440"
+            text: qsTr("440")
+            width: 40
+            height: 40
+            x: getBtnX(parent.width/2 - width/2, 0.8 * parent.width/2, 7)
+            y: getBtnY(parent.height/2 - height/2, 0.8 * parent.height/2, 7)
+            onClicked: {
+                buttonOnCircleClicked("4", "4", "0");
+            }
+        }
+        Button {
+            id: "btn141"
+            text: qsTr("141")
+            width: 40
+            height: 40
+            x: getBtnX(parent.width/2 - width/2, 0.8 * parent.width/2, 8)
+            y: getBtnY(parent.height/2 - height/2, 0.8 * parent.height/2, 8)
+            onClicked: {
+                buttonOnCircleClicked("1", "4", "1");
+            }
+        }
+        Button {
+            id: "btn241"
+            text: qsTr("241")
+            width: 40
+            height: 40
+            x: getBtnX(parent.width/2 - width/2, 0.8 * parent.width/2, 9)
+            y: getBtnY(parent.height/2 - height/2, 0.8 * parent.height/2, 9)
+            onClicked: {
+                buttonOnCircleClicked("2", "4", "1");
+            }
+        }
+        Button {
+            id: "btn341"
+            text: qsTr("341")
+            width: 40
+            height: 40
+            x: getBtnX(parent.width/2 - width/2, 0.8 * parent.width/2, 10)
+            y: getBtnY(parent.height/2 - height/2, 0.8 * parent.height/2, 10)
+            onClicked: {
+                buttonOnCircleClicked("3", "4", "1");
+            }
+        }
+        Button {
+            id: "btn441"
+            text: qsTr("441")
+            width: 40
+            height: 40
+            x: getBtnX(parent.width/2 - width/2, 0.8 * parent.width/2, 11)
+            y: getBtnY(parent.height/2 - height/2, 0.8 * parent.height/2, 11)
+            onClicked: {
+                buttonOnCircleClicked("4", "4", "1");
+            }
+        }
+
+
+        Button {
+            id: "btn160"
+            text: qsTr("160")
+            width: 40
+            height: 40
+            x: getBtnX(parent.width/2 - width/2, 0.8 * parent.width/2, 12)
+            y: getBtnY(parent.height/2 - height/2, 0.8 * parent.height/2, 12)
+            onClicked: {
+                buttonOnCircleClicked("1", "6", "0");
+            }
+            background: Rectangle {
+                color: parent.down ? "#808080" : "#a0a0a0"
+            }
+        }
+        Button {
+            id: "btn260"
+            text: qsTr("260")
+            width: 40
+            height: 40
+            x: getBtnX(parent.width/2 - width/2, 0.8 * parent.width/2, 13)
+            y: getBtnY(parent.height/2 - height/2, 0.8 * parent.height/2, 13)
+            onClicked: {
+                buttonOnCircleClicked("2", "6", "0");
+            }
+            background: Rectangle {
+                color: parent.down ? "#808080" : "#a0a0a0"
+            }
+        }
+        Button {
+            id: "btn360"
+            text: qsTr("360")
+            width: 40
+            height: 40
+            x: getBtnX(parent.width/2 - width/2, 0.8 * parent.width/2, 14)
+            y: getBtnY(parent.height/2 - height/2, 0.8 * parent.height/2, 14)
+            onClicked: {
+                buttonOnCircleClicked("3", "6", "0");
+            }
+            background: Rectangle {
+                color: parent.down ? "#808080" : "#a0a0a0"
+            }
+        }
+        Button {
+            id: "btn460"
+            text: qsTr("460")
+            width: 40
+            height: 40
+            x: getBtnX(parent.width/2 - width/2, 0.8 * parent.width/2, 15)
+            y: getBtnY(parent.height/2 - height/2, 0.8 * parent.height/2, 15)
+            onClicked: {
+                buttonOnCircleClicked("4", "6", "0");
+            }
+            background: Rectangle {
+                color: parent.down ? "#808080" : "#a0a0a0"
+            }
+        }
+        Button {
+            id: "btn161"
+            text: qsTr("161")
+            width: 40
+            height: 40
+            x: getBtnX(parent.width/2 - width/2, 0.8 * parent.width/2, 16)
+            y: getBtnY(parent.height/2 - height/2, 0.8 * parent.height/2, 16)
+            onClicked: {
+                buttonOnCircleClicked("1", "6", "1");
+            }
+            background: Rectangle {
+                color: parent.down ? "#808080" : "#a0a0a0"
+            }
+        }
+        Button {
+            id: "btn261"
+            text: qsTr("261")
+            width: 40
+            height: 40
+            x: getBtnX(parent.width/2 - width/2, 0.8 * parent.width/2, 17)
+            y: getBtnY(parent.height/2 - height/2, 0.8 * parent.height/2, 17)
+            onClicked: {
+                buttonOnCircleClicked("2", "6", "1");
+            }
+            background: Rectangle {
+                color: parent.down ? "#808080" : "#a0a0a0"
+            }
+        }
+        Button {
+            id: "btn361"
+            text: qsTr("361")
+            width: 40
+            height: 40
+            x: getBtnX(parent.width/2 - width/2, 0.8 * parent.width/2, 18)
+            y: getBtnY(parent.height/2 - height/2, 0.8 * parent.height/2, 18)
+            onClicked: {
+                buttonOnCircleClicked("3", "6", "1");
+            }
+            background: Rectangle {
+                color: parent.down ? "#808080" : "#a0a0a0"
+            }
+        }
+        Button {
+            id: "btn461"
+            text: qsTr("461")
+            width: 40
+            height: 40
+            x: getBtnX(parent.width/2 - width/2, 0.8 * parent.width/2, 19)
+            y: getBtnY(parent.height/2 - height/2, 0.8 * parent.height/2, 19)
+            onClicked: {
+                buttonOnCircleClicked("4", "6", "1");
+            }
+            background: Rectangle {
+                color: parent.down ? "#808080" : "#a0a0a0"
+            }
+        }
+
+
+
+
+
+
+
+
+
+        Button {
+            id: "btn110"
+            text: qsTr("110")
+            width: 40
+            height: 40
+            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 24)
+            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 24)
+            onClicked: {
+                buttonOnCircleClicked("1", "1", "0");
+            }
+        }
+        Button {
+            id: "btn210"
+            text: qsTr("210")
+            width: 40
+            height: 40
+            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 25)
+            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 25)
+            onClicked: {
+                buttonOnCircleClicked("2", "1", "0");
+            }
+        }
+        Button {
+            id: "btn310"
+            text: qsTr("310")
+            width: 40
+            height: 40
+            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 26)
+            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 26)
+            onClicked: {
+                buttonOnCircleClicked("3", "1", "0");
+            }
+        }
+        Button {
+            id: "btn410"
+            text: qsTr("410")
+            width: 40
+            height: 40
+            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 27)
+            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 27)
+            onClicked: {
+                buttonOnCircleClicked("4", "1", "0");
+            }
+        }
+        Button {
+            id: "btn111"
+            text: qsTr("111")
+            width: 40
+            height: 40
+            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 28)
+            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 28)
+            onClicked: {
+                buttonOnCircleClicked("1", "1", "1");
+            }
+        }
+        Button {
+            id: "btn211"
+            text: qsTr("211")
+            width: 40
+            height: 40
+            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 29)
+            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 29)
+            onClicked: {
+                buttonOnCircleClicked("2", "1", "1");
+            }
+        }
+        Button {
+            id: "btn311"
+            text: qsTr("311")
+            width: 40
+            height: 40
+            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 30)
+            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 30)
+            onClicked: {
+                buttonOnCircleClicked("3", "1", "1");
+            }
+        }
+        Button {
+            id: "btn411"
+            text: qsTr("411")
+            width: 40
+            height: 40
+            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 31)
+            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 31)
+            onClicked: {
+                buttonOnCircleClicked("4", "1", "1");
+            }
+        }
+
+
+        Button {
+            id: "btn130"
+            text: qsTr("130")
+            width: 40
+            height: 40
+            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 0)
+            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 0)
+            onClicked: {
+                buttonOnCircleClicked("1", "3", "0");
+            }
+            background: Rectangle {
+                color: parent.down ? "#808080" : "#a0a0a0"
+            }
+        }
+        Button {
+            id: "btn230"
+            text: qsTr("230")
+            width: 40
+            height: 40
+            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 1)
+            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 1)
+            onClicked: {
+                buttonOnCircleClicked("2", "3", "0");
+            }
+            background: Rectangle {
+                color: parent.down ? "#808080" : "#a0a0a0"
+            }
+        }
+        Button {
+            id: "btn330"
+            text: qsTr("330")
+            width: 40
+            height: 40
+            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 2)
+            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 2)
+            onClicked: {
+                buttonOnCircleClicked("3", "3", "0");
+            }
+            background: Rectangle {
+                color: parent.down ? "#808080" : "#a0a0a0"
+            }
+        }
+        Button {
+            id: "btn430"
+            text: qsTr("430")
+            width: 40
+            height: 40
+            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 3)
+            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 3)
+            onClicked: {
+                buttonOnCircleClicked("4", "3", "0");
+            }
+            background: Rectangle {
+                color: parent.down ? "#808080" : "#a0a0a0"
+            }
+        }
+        Button {
+            id: "btn131"
+            text: qsTr("131")
+            width: 40
+            height: 40
+            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 4)
+            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 4)
+            onClicked: {
+                buttonOnCircleClicked("1", "3", "1");
+            }
+            background: Rectangle {
+                color: parent.down ? "#808080" : "#a0a0a0"
+            }
+        }
+        Button {
+            id: "btn231"
+            text: qsTr("231")
+            width: 40
+            height: 40
+            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 5)
+            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 5)
+            onClicked: {
+                buttonOnCircleClicked("2", "3", "1");
+            }
+            background: Rectangle {
+                color: parent.down ? "#808080" : "#a0a0a0"
+            }
+        }
+        Button {
+            id: "btn331"
+            text: qsTr("331")
+            width: 40
+            height: 40
+            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 6)
+            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 6)
+            onClicked: {
+                buttonOnCircleClicked("3", "3", "1");
+            }
+            background: Rectangle {
+                color: parent.down ? "#808080" : "#a0a0a0"
+            }
+        }
+        Button {
+            id: "btn431"
+            text: qsTr("431")
+            width: 40
+            height: 40
+            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 7)
+            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 7)
+            onClicked: {
+                buttonOnCircleClicked("4", "3", "1");
+            }
+            background: Rectangle {
+                color: parent.down ? "#808080" : "#a0a0a0"
+            }
+        }
+
+
+        Button {
+            id: "btn150"
+            text: qsTr("150")
+            width: 40
+            height: 40
+            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 8)
+            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 8)
+            onClicked: {
+                buttonOnCircleClicked("1", "5", "0");
+            }
+        }
+        Button {
+            id: "btn250"
+            text: qsTr("250")
+            width: 40
+            height: 40
+            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 9)
+            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 9)
+            onClicked: {
+                buttonOnCircleClicked("2", "5", "0");
+            }
+        }
+        Button {
+            id: "btn350"
+            text: qsTr("350")
+            width: 40
+            height: 40
+            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 10)
+            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 10)
+            onClicked: {
+                buttonOnCircleClicked("3", "5", "0");
+            }
+        }
+        Button {
+            id: "btn450"
+            text: qsTr("450")
+            width: 40
+            height: 40
+            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 11)
+            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 11)
+            onClicked: {
+                buttonOnCircleClicked("4", "5", "0");
+            }
+        }
+        Button {
+            id: "btn151"
+            text: qsTr("151")
+            width: 40
+            height: 40
+            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 12)
+            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 12)
+            onClicked: {
+                buttonOnCircleClicked("1", "5", "1");
+            }
+        }
+        Button {
+            id: "btn251"
+            text: qsTr("251")
+            width: 40
+            height: 40
+            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 13)
+            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 13)
+            onClicked: {
+                buttonOnCircleClicked("2", "5", "1");
+            }
+        }
+        Button {
+            id: "btn351"
+            text: qsTr("351")
+            width: 40
+            height: 40
+            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 14)
+            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 14)
+            onClicked: {
+                buttonOnCircleClicked("3", "5", "1");
+            }
+        }
+        Button {
+            id: "btn451"
+            text: qsTr("451")
+            width: 40
+            height: 40
+            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 15)
+            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 15)
+            onClicked: {
+                buttonOnCircleClicked("4", "5", "1");
+            }
+        }
+
+
+        Button {
+            id: "btn170"
+            text: qsTr("170")
+            width: 40
+            height: 40
+            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 16)
+            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 16)
+            onClicked: {
+                buttonOnCircleClicked("1", "7", "0");
+            }
+            background: Rectangle {
+                color: parent.down ? "#808080" : "#a0a0a0"
+            }
+        }
+        Button {
+            id: "btn270"
+            text: qsTr("270")
+            width: 40
+            height: 40
+            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 17)
+            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 17)
+            onClicked: {
+                buttonOnCircleClicked("2", "7", "0");
+            }
+            background: Rectangle {
+                color: parent.down ? "#808080" : "#a0a0a0"
+            }
+        }
+        Button {
+            id: "btn370"
+            text: qsTr("370")
+            width: 40
+            height: 40
+            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 18)
+            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 18)
+            onClicked: {
+                buttonOnCircleClicked("3", "7", "0");
+            }
+            background: Rectangle {
+                color: parent.down ? "#808080" : "#a0a0a0"
+            }
+        }
+        Button {
+            id: "btn470"
+            text: qsTr("470")
+            width: 40
+            height: 40
+            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 19)
+            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 19)
+            onClicked: {
+                buttonOnCircleClicked("4", "7", "0");
+            }
+            background: Rectangle {
+                color: parent.down ? "#808080" : "#a0a0a0"
+            }
+        }
+        Button {
+            id: "btn171"
+            text: qsTr("171")
+            width: 40
+            height: 40
+            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 20)
+            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 20)
+            onClicked: {
+                buttonOnCircleClicked("1", "7", "1");
+            }
+            background: Rectangle {
+                color: parent.down ? "#808080" : "#a0a0a0"
+            }
+        }
+        Button {
+            id: "btn271"
+            text: qsTr("271")
+            width: 40
+            height: 40
+            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 21)
+            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 21)
+            onClicked: {
+                buttonOnCircleClicked("2", "7", "1");
+            }
+            background: Rectangle {
+                color: parent.down ? "#808080" : "#a0a0a0"
+            }
+        }
+        Button {
+            id: "btn371"
+            text: qsTr("371")
+            width: 40
+            height: 40
+            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 22)
+            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 22)
+            onClicked: {
+                buttonOnCircleClicked("3", "7", "1");
+            }
+            background: Rectangle {
+                color: parent.down ? "#808080" : "#a0a0a0"
+            }
+        }
+        Button {
+            id: "btn471"
+            text: qsTr("471")
+            width: 40
+            height: 40
+            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 23)
+            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 23)
+            onClicked: {
+                buttonOnCircleClicked("4", "7", "1");
+            }
+            background: Rectangle {
+                color: parent.down ? "#808080" : "#a0a0a0"
+            }
+        }
+    }
+    function buttonOnCircleClicked(ip, emitter, row) {
+        rect_circleSelector.visible = false;
+        comboBox_selectIP.currentIndex = comboBox_selectIP.model.indexOf(ip);
+        dataSource.selectIP(ip);
+        comboBox_selectEmitter.currentIndex = comboBox_selectEmitter.model.indexOf(emitter);
+        dataSource.selectEmitter(emitter);
+        comboBox_selectRow.currentIndex = comboBox_selectRow.model.indexOf(row);
+        dataSource.selectRow(row);
+        updateSingleWaveform();
+    }
+    function getBtnX(x0, R, N) {
+        return x0 + R * Math.sin(Math.PI / 32 + N * Math.PI / 16);
+    }
+    function getBtnY(y0, R, N) {
+        return y0 - R * Math.cos(Math.PI / 32 + N * Math.PI / 16);
+    }
+
+    function setSliders(v1, v2, v3, v4) {
+        slider1.value = v1;
+        slider2.value = v2;
+        slider3.value = v3;
+        slider4.value = v4;
+    }
 }
 
