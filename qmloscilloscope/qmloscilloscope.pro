@@ -35,5 +35,6 @@ RESOURCES += \
     resources.qrc
 
 DISTFILES += \
-    qml/qmloscilloscope/*
+    qml/qmloscilloscope/* \
+    qml/qmloscilloscope/STReceiverWidget.qml
 

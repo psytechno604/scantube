@@ -38,9 +38,9 @@ import QtQuick.Layouts 1.3
 import QtCharts 2.2
 import QtDataVisualization 1.2
 
-import Qt3D.Core 2.0
-import Qt3D.Render 2.0
-import QtQuick.Scene3D 2.0
+//import Qt3D.Core 2.0
+//import Qt3D.Render 2.0
+//import QtQuick.Scene3D 2.0
 
 import com.example.Timeline3D 1.0
 
@@ -54,6 +54,8 @@ Item {
     width: 1024
     height: 768
     property alias checkBox_subtractZeroSignal: checkBox_subtractZeroSignal
+
+    signal textChanged(string msg);
     //property alias column: column
 
     //color: "#ffffff"
@@ -318,7 +320,7 @@ Item {
                 onCheckedChanged: {
                     dataSource.setSubtractZeroSignal(checked);
                     updateSingleWaveform();
-                }               
+                }
             }
 
 
@@ -482,8 +484,9 @@ Item {
                 checkable: false
                 font.pointSize: 8
                 onClicked: {
-                    dataSource.updateAllWaveforms(series_0_0, 0);
-                    dataSource.updateAllWaveforms(series_0_1, 1);
+                   //dataSource.updateAllWaveforms(series_0_0, 0);
+                    //dataSource.updateAllWaveforms(series_0_1, 1);
+                    dataSource.calcDistances();
                     updateSingleWaveform();
                 }
             }
@@ -733,7 +736,7 @@ Item {
                             id: all_waveforms
                             width: parent.width
                             height: parent.height
-                           Row {
+                            Row {
                                 width: parent.width
                                 height: parent.height
                                 PolarChartView {
@@ -815,7 +818,7 @@ Item {
                                         axisAngular: axisAngular_1_0
                                         axisRadial: axisRadial_1_0
                                         pointsVisible: true
-                                        pointLabelsVisible: false                                        
+                                        pointLabelsVisible: false
                                         width: 2
                                         color: "red"
                                         opacity: 0.25
@@ -875,7 +878,7 @@ Item {
                                         dataSource.setDistanceSeries(series_1_5, 5);
                                     }
                                 }
-                           }
+                            }
 
                         }
                         Item {
@@ -903,20 +906,20 @@ Item {
                             Surface3D {
                                 id: timeline_3d_surface_object
                                 anchors.fill: parent
-//                                 axisX.min: 0.0
-//                            axisX.max: 100.0
-//                            axisX.title: "Scan"
-//                            axisX.titleVisible: true
+                                //                                 axisX.min: 0.0
+                                //                            axisX.max: 100.0
+                                //                            axisX.title: "Scan"
+                                //                            axisX.titleVisible: true
 
-//                            axisZ.min: 0.0
-//                            axisZ.max: 727.0
-//                            axisZ.title: "Distance"
-//                            axisZ.titleVisible: true
+                                //                            axisZ.min: 0.0
+                                //                            axisZ.max: 727.0
+                                //                            axisZ.title: "Distance"
+                                //                            axisZ.titleVisible: true
 
-//                            axisY.min: -1024
-//                            axisY.max: 1024
-//                            axisY.title: "Signal level"
-//                            axisY.titleVisible: true
+                                //                            axisY.min: -1024
+                                //                            axisY.max: 1024
+                                //                            axisY.title: "Signal level"
+                                //                            axisY.titleVisible: true
 
                                 horizontalAspectRatio: 2
 
@@ -960,7 +963,7 @@ Item {
                     id: slider1
                     x: 0
                     y: 0
-                    width: parent.width - 250
+                    width: parent.width - 500
                     height: 36
                     stepSize: 1
                     to: 3100
@@ -1195,6 +1198,63 @@ Item {
                         _intercom.scanRange();
                     }
                 }
+/*
+                double fc{1e+9};
+                double deltaf;
+                unsigned short ford {8};
+                double Td {1e-9};*/
+                TextField {
+                    id: textField_fc
+                    x: textField_slider4_level.x + textField_slider4_level.width + 10
+                    y: textField_slider1_level.y
+                    width: 83
+                    height: 40
+                    text: appSettings.fc
+                    selectByMouse: true
+
+                    onEditingFinished: {
+                        main.textChanged("fc="+textField_fc.text);
+                    }
+                }
+                TextField {
+                    id: textField_deltaf
+                    x: textField_fc.x
+                    y:  textField_slider2_level.y
+                    width: 83
+                    height: 40
+                    text: appSettings.deltaf
+                    selectByMouse: true
+
+                    onEditingFinished: {
+                        main.textChanged("deltaf="+textField_deltaf.text);
+                    }
+                }
+                TextField {
+                    id: textField_ford
+                    x: textField_fc.x
+                    y:  textField_slider3_level.y
+                    width: 83
+                    height: 40
+                    text: appSettings.ford
+                    selectByMouse: true
+                    onEditingFinished: {
+                        main.textChanged("ford="+textField_ford.text);
+                    }
+                }
+                TextField {
+                    id: textField_Td
+                    x: textField_fc.x
+                    y:  textField_slider4_level.y
+                    width: 83
+                    height: 40
+                    text: appSettings.td
+                    selectByMouse: true
+
+                    onEditingFinished: {
+                        main.textChanged("Td="+textField_Td.text);
+                    }
+                }
+
             }
 
         }
@@ -1220,33 +1280,33 @@ Item {
         //Component.onCompleted: visible = true
     }
 
-//    Timer {
-//        id: startPlotTimer
-//        interval: scanTimer.interval / 2.0
-//        triggeredOnStart: false
-//        running: false
-//        repeat: false
-//        onTriggered: {
-//            plotTimer.running = true;
-//        }
-//    }
+    //    Timer {
+    //        id: startPlotTimer
+    //        interval: scanTimer.interval / 2.0
+    //        triggeredOnStart: false
+    //        running: false
+    //        repeat: false
+    //        onTriggered: {
+    //            plotTimer.running = true;
+    //        }
+    //    }
 
-//    Timer {
-//        id: scanTimer
-//        interval: 500
-//        running: false
-//        repeat: true
-//        onTriggered: {
-//            _intercom.sendScan();
-//            startPlotTimer.running = true;
-//        }
-//    }
+    //    Timer {
+    //        id: scanTimer
+    //        interval: 500
+    //        running: false
+    //        repeat: true
+    //        onTriggered: {
+    //            _intercom.sendScan();
+    //            startPlotTimer.running = true;
+    //        }
+    //    }
 
 
 
-function setSingleWaveformDistanceText (distance) {
+    function setSingleWaveformDistanceText (distance) {
         single_waveform_distance.text = "Distance = " + distance;
-}
+    }
     function updateAllWaveforms (){
         //dataSource.updateAllWaveforms(series_0_0, 0);
         //dataSource.updateAllWaveforms(series_0_1, 1);
@@ -1314,6 +1374,12 @@ function setSingleWaveformDistanceText (distance) {
         checkBox_saveAsZeroSignal.checked = 0;
     }
 
+    function setFilterValues () {
+        main.textChanged("fc="+textField_fc.text);
+        main.textChanged("deltaf="+textField_deltaf.text);
+        main.textChanged("ford="+textField_ford.text);
+        main.textChanged("Td="+textField_Td.text);
+    }
 
     //![2]
     Component.onCompleted: {
@@ -1321,6 +1387,10 @@ function setSingleWaveformDistanceText (distance) {
         _intercom.setTimeout(spinBox_dataReceiveTimeout.value);
         setSingleWaveformDistanceText(0);
         setPacketsReceived(0, 0, 0, 0);
+
+
+
+
     }
     Settings {
         id: appSettings
@@ -1329,6 +1399,11 @@ function setSingleWaveformDistanceText (distance) {
         property alias slider2_value: slider2.value
         property alias slider3_value: slider3.value
         property alias slider4_value: slider4.value
+
+        property alias fc: textField_fc.text
+        property alias deltaf: textField_deltaf.text
+        property alias ford: textField_ford.text
+        property alias td: textField_Td.text
     }
     Rectangle {
         id: rect_circleSelector
@@ -1340,7 +1415,7 @@ function setSingleWaveformDistanceText (distance) {
         z: 100
 
         Button {
-            id: "btn100"
+            id: btn100
             text: qsTr("100")
             width: 40
             height: 40
@@ -1351,7 +1426,7 @@ function setSingleWaveformDistanceText (distance) {
             }
         }
         Button {
-            id: "btn200"
+            id: btn200
             text: qsTr("200")
             width: 40
             height: 40
@@ -1362,7 +1437,7 @@ function setSingleWaveformDistanceText (distance) {
             }
         }
         Button {
-            id: "btn300"
+            id: btn300
             text: qsTr("300")
             width: 40
             height: 40
@@ -1373,7 +1448,7 @@ function setSingleWaveformDistanceText (distance) {
             }
         }
         Button {
-            id: "btn400"
+            id: btn400
             text: qsTr("400")
             width: 40
             height: 40
@@ -1384,7 +1459,7 @@ function setSingleWaveformDistanceText (distance) {
             }
         }
         Button {
-            id: "btn101"
+            id: btn101
             text: qsTr("101")
             width: 40
             height: 40
@@ -1395,7 +1470,7 @@ function setSingleWaveformDistanceText (distance) {
             }
         }
         Button {
-            id: "btn201"
+            id: btn201
             text: qsTr("201")
             width: 40
             height: 40
@@ -1406,7 +1481,7 @@ function setSingleWaveformDistanceText (distance) {
             }
         }
         Button {
-            id: "btn301"
+            id: btn301
             text: qsTr("301")
             width: 40
             height: 40
@@ -1417,7 +1492,7 @@ function setSingleWaveformDistanceText (distance) {
             }
         }
         Button {
-            id: "btn401"
+            id: btn401
             text: qsTr("401")
             width: 40
             height: 40
@@ -1432,7 +1507,7 @@ function setSingleWaveformDistanceText (distance) {
 
 
         Button {
-            id: "btn120"
+            id: btn120
             text: qsTr("120")
             width: 40
             height: 40
@@ -1446,7 +1521,7 @@ function setSingleWaveformDistanceText (distance) {
             }
         }
         Button {
-            id: "btn220"
+            id: btn220
             text: qsTr("220")
             width: 40
             height: 40
@@ -1460,7 +1535,7 @@ function setSingleWaveformDistanceText (distance) {
             }
         }
         Button {
-            id: "btn320"
+            id: btn320
             text: qsTr("320")
             width: 40
             height: 40
@@ -1474,7 +1549,7 @@ function setSingleWaveformDistanceText (distance) {
             }
         }
         Button {
-            id: "btn420"
+            id: btn420
             text: qsTr("420")
             width: 40
             height: 40
@@ -1488,7 +1563,7 @@ function setSingleWaveformDistanceText (distance) {
             }
         }
         Button {
-            id: "btn121"
+            id: btn121
             text: qsTr("121")
             width: 40
             height: 40
@@ -1502,7 +1577,7 @@ function setSingleWaveformDistanceText (distance) {
             }
         }
         Button {
-            id: "btn221"
+            id: btn221
             text: qsTr("221")
             width: 40
             height: 40
@@ -1516,7 +1591,7 @@ function setSingleWaveformDistanceText (distance) {
             }
         }
         Button {
-            id: "btn321"
+            id: btn321
             text: qsTr("321")
             width: 40
             height: 40
@@ -1530,7 +1605,7 @@ function setSingleWaveformDistanceText (distance) {
             }
         }
         Button {
-            id: "btn421"
+            id: btn421
             text: qsTr("421")
             width: 40
             height: 40
@@ -1546,7 +1621,7 @@ function setSingleWaveformDistanceText (distance) {
 
 
         Button {
-            id: "btn140"
+            id: btn140
             text: qsTr("140")
             width: 40
             height: 40
@@ -1557,7 +1632,7 @@ function setSingleWaveformDistanceText (distance) {
             }
         }
         Button {
-            id: "btn240"
+            id: btn240
             text: qsTr("240")
             width: 40
             height: 40
@@ -1568,7 +1643,7 @@ function setSingleWaveformDistanceText (distance) {
             }
         }
         Button {
-            id: "btn340"
+            id: btn340
             text: qsTr("340")
             width: 40
             height: 40
@@ -1579,7 +1654,7 @@ function setSingleWaveformDistanceText (distance) {
             }
         }
         Button {
-            id: "btn440"
+            id: btn440
             text: qsTr("440")
             width: 40
             height: 40
@@ -1590,7 +1665,7 @@ function setSingleWaveformDistanceText (distance) {
             }
         }
         Button {
-            id: "btn141"
+            id: btn141
             text: qsTr("141")
             width: 40
             height: 40
@@ -1601,7 +1676,7 @@ function setSingleWaveformDistanceText (distance) {
             }
         }
         Button {
-            id: "btn241"
+            id: btn241
             text: qsTr("241")
             width: 40
             height: 40
@@ -1612,7 +1687,7 @@ function setSingleWaveformDistanceText (distance) {
             }
         }
         Button {
-            id: "btn341"
+            id: btn341
             text: qsTr("341")
             width: 40
             height: 40
@@ -1623,7 +1698,7 @@ function setSingleWaveformDistanceText (distance) {
             }
         }
         Button {
-            id: "btn441"
+            id: btn441
             text: qsTr("441")
             width: 40
             height: 40
@@ -1636,7 +1711,7 @@ function setSingleWaveformDistanceText (distance) {
 
 
         Button {
-            id: "btn160"
+            id: btn160
             text: qsTr("160")
             width: 40
             height: 40
@@ -1650,7 +1725,7 @@ function setSingleWaveformDistanceText (distance) {
             }
         }
         Button {
-            id: "btn260"
+            id: btn260
             text: qsTr("260")
             width: 40
             height: 40
@@ -1664,7 +1739,7 @@ function setSingleWaveformDistanceText (distance) {
             }
         }
         Button {
-            id: "btn360"
+            id: btn360
             text: qsTr("360")
             width: 40
             height: 40
@@ -1678,7 +1753,7 @@ function setSingleWaveformDistanceText (distance) {
             }
         }
         Button {
-            id: "btn460"
+            id: btn460
             text: qsTr("460")
             width: 40
             height: 40
@@ -1692,7 +1767,7 @@ function setSingleWaveformDistanceText (distance) {
             }
         }
         Button {
-            id: "btn161"
+            id: btn161
             text: qsTr("161")
             width: 40
             height: 40
@@ -1706,7 +1781,7 @@ function setSingleWaveformDistanceText (distance) {
             }
         }
         Button {
-            id: "btn261"
+            id: btn261
             text: qsTr("261")
             width: 40
             height: 40
@@ -1720,7 +1795,7 @@ function setSingleWaveformDistanceText (distance) {
             }
         }
         Button {
-            id: "btn361"
+            id: btn361
             text: qsTr("361")
             width: 40
             height: 40
@@ -1734,7 +1809,7 @@ function setSingleWaveformDistanceText (distance) {
             }
         }
         Button {
-            id: "btn461"
+            id: btn461
             text: qsTr("461")
             width: 40
             height: 40
@@ -1757,89 +1832,89 @@ function setSingleWaveformDistanceText (distance) {
 
 
         Button {
-            id: "btn110"
+            id: btn110
             text: qsTr("110")
-            width: 40
-            height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 24)
-            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 24)
-            onClicked: {
-                buttonOnCircleClicked("1", "1", "0");
-            }
-        }
-        Button {
-            id: "btn210"
-            text: qsTr("210")
-            width: 40
-            height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 25)
-            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 25)
-            onClicked: {
-                buttonOnCircleClicked("2", "1", "0");
-            }
-        }
-        Button {
-            id: "btn310"
-            text: qsTr("310")
-            width: 40
-            height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 26)
-            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 26)
-            onClicked: {
-                buttonOnCircleClicked("3", "1", "0");
-            }
-        }
-        Button {
-            id: "btn410"
-            text: qsTr("410")
-            width: 40
-            height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 27)
-            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 27)
-            onClicked: {
-                buttonOnCircleClicked("4", "1", "0");
-            }
-        }
-        Button {
-            id: "btn111"
-            text: qsTr("111")
             width: 40
             height: 40
             x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 28)
             y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 28)
             onClicked: {
-                buttonOnCircleClicked("1", "1", "1");
+                buttonOnCircleClicked("1", "1", "0");
             }
         }
         Button {
-            id: "btn211"
-            text: qsTr("211")
+            id: btn210
+            text: qsTr("210")
             width: 40
             height: 40
             x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 29)
             y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 29)
             onClicked: {
-                buttonOnCircleClicked("2", "1", "1");
+                buttonOnCircleClicked("2", "1", "0");
             }
         }
         Button {
-            id: "btn311"
-            text: qsTr("311")
+            id: btn310
+            text: qsTr("310")
             width: 40
             height: 40
             x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 30)
             y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 30)
             onClicked: {
-                buttonOnCircleClicked("3", "1", "1");
+                buttonOnCircleClicked("3", "1", "0");
             }
         }
         Button {
-            id: "btn411"
-            text: qsTr("411")
+            id: btn410
+            text: qsTr("410")
             width: 40
             height: 40
             x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 31)
             y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 31)
+            onClicked: {
+                buttonOnCircleClicked("4", "1", "0");
+            }
+        }
+        Button {
+            id: btn111
+            text: qsTr("111")
+            width: 40
+            height: 40
+            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 24)
+            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 24)
+            onClicked: {
+                buttonOnCircleClicked("1", "1", "1");
+            }
+        }
+        Button {
+            id: btn211
+            text: qsTr("211")
+            width: 40
+            height: 40
+            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 25)
+            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 25)
+            onClicked: {
+                buttonOnCircleClicked("2", "1", "1");
+            }
+        }
+        Button {
+            id: btn311
+            text: qsTr("311")
+            width: 40
+            height: 40
+            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 26)
+            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 26)
+            onClicked: {
+                buttonOnCircleClicked("3", "1", "1");
+            }
+        }
+        Button {
+            id: btn411
+            text: qsTr("411")
+            width: 40
+            height: 40
+            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 27)
+            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 27)
             onClicked: {
                 buttonOnCircleClicked("4", "1", "1");
             }
@@ -1847,12 +1922,12 @@ function setSingleWaveformDistanceText (distance) {
 
 
         Button {
-            id: "btn130"
+            id: btn130
             text: qsTr("130")
             width: 40
             height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 0)
-            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 0)
+            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 4)
+            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 4)
             onClicked: {
                 buttonOnCircleClicked("1", "3", "0");
             }
@@ -1861,12 +1936,12 @@ function setSingleWaveformDistanceText (distance) {
             }
         }
         Button {
-            id: "btn230"
+            id: btn230
             text: qsTr("230")
             width: 40
             height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 1)
-            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 1)
+            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 5)
+            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 5)
             onClicked: {
                 buttonOnCircleClicked("2", "3", "0");
             }
@@ -1875,12 +1950,12 @@ function setSingleWaveformDistanceText (distance) {
             }
         }
         Button {
-            id: "btn330"
+            id: btn330
             text: qsTr("330")
             width: 40
             height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 2)
-            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 2)
+            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 6)
+            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 6)
             onClicked: {
                 buttonOnCircleClicked("3", "3", "0");
             }
@@ -1889,12 +1964,12 @@ function setSingleWaveformDistanceText (distance) {
             }
         }
         Button {
-            id: "btn430"
+            id: btn430
             text: qsTr("430")
             width: 40
             height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 3)
-            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 3)
+            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 7)
+            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 7)
             onClicked: {
                 buttonOnCircleClicked("4", "3", "0");
             }
@@ -1903,12 +1978,12 @@ function setSingleWaveformDistanceText (distance) {
             }
         }
         Button {
-            id: "btn131"
+            id: btn131
             text: qsTr("131")
             width: 40
             height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 4)
-            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 4)
+            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 0)
+            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 0)
             onClicked: {
                 buttonOnCircleClicked("1", "3", "1");
             }
@@ -1917,12 +1992,12 @@ function setSingleWaveformDistanceText (distance) {
             }
         }
         Button {
-            id: "btn231"
+            id: btn231
             text: qsTr("231")
             width: 40
             height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 5)
-            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 5)
+            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 1)
+            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 1)
             onClicked: {
                 buttonOnCircleClicked("2", "3", "1");
             }
@@ -1931,12 +2006,12 @@ function setSingleWaveformDistanceText (distance) {
             }
         }
         Button {
-            id: "btn331"
+            id: btn331
             text: qsTr("331")
             width: 40
             height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 6)
-            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 6)
+            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 2)
+            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 2)
             onClicked: {
                 buttonOnCircleClicked("3", "3", "1");
             }
@@ -1945,12 +2020,12 @@ function setSingleWaveformDistanceText (distance) {
             }
         }
         Button {
-            id: "btn431"
+            id: btn431
             text: qsTr("431")
             width: 40
             height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 7)
-            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 7)
+            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 3)
+            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 3)
             onClicked: {
                 buttonOnCircleClicked("4", "3", "1");
             }
@@ -1961,89 +2036,89 @@ function setSingleWaveformDistanceText (distance) {
 
 
         Button {
-            id: "btn150"
+            id: btn150
             text: qsTr("150")
             width: 40
             height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 8)
-            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 8)
+            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 15)
+            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 15)
             onClicked: {
                 buttonOnCircleClicked("1", "5", "0");
             }
         }
         Button {
-            id: "btn250"
+            id: btn250
             text: qsTr("250")
             width: 40
             height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 9)
-            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 9)
+            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 16)
+            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 16)
             onClicked: {
                 buttonOnCircleClicked("2", "5", "0");
             }
         }
         Button {
-            id: "btn350"
+            id: btn350
             text: qsTr("350")
             width: 40
             height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 10)
-            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 10)
+            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 17)
+            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 17)
             onClicked: {
                 buttonOnCircleClicked("3", "5", "0");
             }
         }
         Button {
-            id: "btn450"
+            id: btn450
             text: qsTr("450")
             width: 40
             height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 11)
-            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 11)
+            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 18)
+            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 18)
             onClicked: {
                 buttonOnCircleClicked("4", "5", "0");
             }
         }
         Button {
-            id: "btn151"
+            id: btn151
             text: qsTr("151")
             width: 40
             height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 12)
-            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 12)
+            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 8)
+            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 8)
             onClicked: {
                 buttonOnCircleClicked("1", "5", "1");
             }
         }
         Button {
-            id: "btn251"
+            id: btn251
             text: qsTr("251")
             width: 40
             height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 13)
-            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 13)
+            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 9)
+            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 9)
             onClicked: {
                 buttonOnCircleClicked("2", "5", "1");
             }
         }
         Button {
-            id: "btn351"
+            id: btn351
             text: qsTr("351")
             width: 40
             height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 14)
-            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 14)
+            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 10)
+            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 10)
             onClicked: {
                 buttonOnCircleClicked("3", "5", "1");
             }
         }
         Button {
-            id: "btn451"
+            id: btn451
             text: qsTr("451")
             width: 40
             height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 15)
-            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 15)
+            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 11)
+            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 11)
             onClicked: {
                 buttonOnCircleClicked("4", "5", "1");
             }
@@ -2051,12 +2126,12 @@ function setSingleWaveformDistanceText (distance) {
 
 
         Button {
-            id: "btn170"
+            id: btn170
             text: qsTr("170")
             width: 40
             height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 16)
-            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 16)
+            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 20)
+            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 20)
             onClicked: {
                 buttonOnCircleClicked("1", "7", "0");
             }
@@ -2065,12 +2140,12 @@ function setSingleWaveformDistanceText (distance) {
             }
         }
         Button {
-            id: "btn270"
+            id: btn270
             text: qsTr("270")
             width: 40
             height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 17)
-            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 17)
+            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 21)
+            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 21)
             onClicked: {
                 buttonOnCircleClicked("2", "7", "0");
             }
@@ -2079,12 +2154,12 @@ function setSingleWaveformDistanceText (distance) {
             }
         }
         Button {
-            id: "btn370"
+            id: btn370
             text: qsTr("370")
             width: 40
             height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 18)
-            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 18)
+            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 22)
+            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 22)
             onClicked: {
                 buttonOnCircleClicked("3", "7", "0");
             }
@@ -2093,12 +2168,12 @@ function setSingleWaveformDistanceText (distance) {
             }
         }
         Button {
-            id: "btn470"
+            id: btn470
             text: qsTr("470")
             width: 40
             height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 19)
-            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 19)
+            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 23)
+            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 23)
             onClicked: {
                 buttonOnCircleClicked("4", "7", "0");
             }
@@ -2107,12 +2182,12 @@ function setSingleWaveformDistanceText (distance) {
             }
         }
         Button {
-            id: "btn171"
+            id: btn171
             text: qsTr("171")
             width: 40
             height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 20)
-            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 20)
+            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 16)
+            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 16)
             onClicked: {
                 buttonOnCircleClicked("1", "7", "1");
             }
@@ -2121,12 +2196,12 @@ function setSingleWaveformDistanceText (distance) {
             }
         }
         Button {
-            id: "btn271"
+            id: btn271
             text: qsTr("271")
             width: 40
             height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 21)
-            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 21)
+            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 17)
+            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 17)
             onClicked: {
                 buttonOnCircleClicked("2", "7", "1");
             }
@@ -2135,12 +2210,12 @@ function setSingleWaveformDistanceText (distance) {
             }
         }
         Button {
-            id: "btn371"
+            id: btn371
             text: qsTr("371")
             width: 40
             height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 22)
-            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 22)
+            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 18)
+            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 18)
             onClicked: {
                 buttonOnCircleClicked("3", "7", "1");
             }
@@ -2149,12 +2224,12 @@ function setSingleWaveformDistanceText (distance) {
             }
         }
         Button {
-            id: "btn471"
+            id: btn471
             text: qsTr("471")
             width: 40
             height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 23)
-            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 23)
+            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 19)
+            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 19)
             onClicked: {
                 buttonOnCircleClicked("4", "7", "1");
             }

@@ -12,6 +12,7 @@ public:
     int ScopeView_x0{0}, ScopeView_y0 {0}, ScopeView_ymax0 {0}, ScopeView_ymin0 {0}, ScopeView_y2max0 {0}, ScopeView_y2min0 {0}, ScopeView_axisNum {0};
     int ScopeView_LB{0}, ScopeView_RB{0};
     int checkbox_subtractZeroSignal_checked {1};
+
 signals:
 
 public slots:

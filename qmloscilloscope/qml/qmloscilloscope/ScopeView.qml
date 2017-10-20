@@ -53,11 +53,14 @@ ChartView {
         }
     }
     Component.onCompleted: {
-        if (!series("signal 1").useOpenGL) {
+        if (!series("original").useOpenGL) {
             openGLSupported = false
             openGL = false
         }
-        dataSource.setSeries(lineSeries1);
+        dataSource.setSeries(lineSeries1, 0);
+        dataSource.setSeries(scatter1, 1);
+        dataSource.setSeries(lineSeriesS1, 2);
+        dataSource.setSeries(scatter2, 3);
     }
 
     ValueAxis {
@@ -67,30 +70,48 @@ ChartView {
     }
     ValueAxis {
         id: axisY2
-        min: -1024
-        max: 1024
+        min:-100
+        max:100
     }
 
 
     ValueAxis {
         id: axisX
         min: 0
-        max: 720
+        max: 3000
     }
-
+    ScatterSeries {
+           id: scatter1
+           name: "Scatter1"
+           axisX: axisX
+                   axisY: axisY
+           XYPoint { x: 0; y: 0 }
+           XYPoint { x: 0; y: 0 }
+           XYPoint { x: 0; y: 0 }
+       }
+    ScatterSeries {
+           id: scatter2
+           name: "Scatter2"
+           axisX: axisX
+                   axisY: axisY
+           XYPoint { x: 0; y: 0 }
+           XYPoint { x: 0; y: 0 }
+           XYPoint { x: 0; y: 0 }
+       }
     LineSeries {
         id: lineSeries1
-        name: "signal 1"
+        name: "original"
         axisX: axisX
         axisY: axisY
         useOpenGL: chartView.openGL
     }
     LineSeries {
         id: lineSeriesS1
-        name: "signal 2"
+        name: "processed"
         axisX: axisX
-        axisY: axisY
+        axisY: axisY2
         useOpenGL: chartView.openGL
+        color: "red"
     }
     LineSeries {
         id: lineSeries2

@@ -184,18 +184,20 @@ void intercom::endScan()
 
 
         if (_dataSource && fullscan_mode_complete && packets_received.length()>=4
-                    && packets_received[0] == 8
+                    /*&& packets_received[0] == 8
                     && packets_received[1] == 8
                     && packets_received[2] == 8
-                    && packets_received[3] == 8)
+                    && packets_received[3] == 8*/)
         {
             //_dataSource->calcDistances();
             //QMetaObject::invokeMethod((QObject*)object, "updateDistances");
             //QMetaObject::invokeMethod((QObject*)object, "updateAllWaveforms");
             //QMetaObject::invokeMethod((QObject*)object, "updateSingleWaveform");
 
-            _dataSource->update();
             _dataSource->calcDistances();
+            //_dataSource->startRecording("test.dat");
+            _dataSource->update();
+
             _dataSource->updateDistances();
             _dataSource->updateAllWaveforms();
 

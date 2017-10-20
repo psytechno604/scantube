@@ -106,6 +106,7 @@ int main(int argc, char *argv[])
 
     DataSource dataSource(&viewer);
 
+
     intercom *_intercom = new intercom(&viewer);
     viewer.setIntercom(_intercom);
 
@@ -135,6 +136,9 @@ int main(int argc, char *argv[])
     viewer.setSource(QUrl("qrc:/qml/qmloscilloscope/main.qml"));
     viewer.setResizeMode(QQuickView::SizeRootObjectToView);
     viewer.setColor(QColor("#404040"));
+
+    QObject::connect((QObject *)viewer.rootObject(), SIGNAL(textChanged(QString)), &dataSource, SLOT(textChanged(QString)));
+
     viewer.show();
 
     /*QThread *networkThread = new QThread;
@@ -142,6 +146,8 @@ int main(int argc, char *argv[])
     QObject::connect(networkThread, &QThread::started, _intercom, &intercom::run);
     QObject::connect(_intercom, &intercom::finished, networkThread, &QThread::terminate);
     networkThread->start();*/
+
+    QMetaObject::invokeMethod((QObject*)viewer.rootObject(), "setFilterValues");
 
     auto ret = app.exec();
     _intercom->off();    

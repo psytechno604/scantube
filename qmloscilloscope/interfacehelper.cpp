@@ -6,6 +6,8 @@ InterfaceHelper::InterfaceHelper(QObject *parent) : QObject(parent)
 
 }
 
+
+
 int InterfaceHelper::getIntValue(QString id)
 {
     return jsonData[id].toInt();

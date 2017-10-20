@@ -103,7 +103,7 @@ signals:
 public slots:
     void showFromBuffer(int b_index, int block);
     void readData(int buffer_part, QByteArray *buffer, QHostAddress sender);
-    void update(QAbstractSeries *series);
+    void update(QAbstractSeries *series, QAbstractSeries *scatter);
     void update();
     void updateAllWaveforms(QAbstractSeries *series, int set);
     void updateAllWaveforms();
@@ -113,7 +113,8 @@ public slots:
 
     void initCorrelationParameters(float  sigTau, float Fdskr);
 
-    void processSignal(QVector <double> &in, QVector <double> &out, int *StartPosIndex, int *ObjectPosIndex, int numadc);
+    void processSignal(QVector <double> &in, QVector <double> &out);
+    void processSignal();
 
     void savePoint(double distance, int nf, int saveAsZeroSignal);
     void startRecording(QString fbasename);
@@ -157,12 +158,21 @@ public slots:
     Q_INVOKABLE void resetScanIndex();
     Q_INVOKABLE void setScanIndex();
     Q_INVOKABLE void setAllWaveformsSeries(QAbstractSeries *series, int set);
-    Q_INVOKABLE void setSeries(QAbstractSeries *series);
+    Q_INVOKABLE void setSeries(QAbstractSeries *series, int i);
     Q_INVOKABLE void setDistanceSeries(QAbstractSeries *series, int i);
+
+    Q_INVOKABLE double getScanValue(int e, int i, bool use_0 = false, bool use_abs = false);
+
+    Q_INVOKABLE void textChanged(QString text);
     //Q_INVOKABLE void newScan();
 private:
-    int findMaxLess(QVector<double> &v, QVector<double> &v1, double cutoff, int margin_left, int margin_right);
-    QAbstractSeries* series {nullptr};
+    double fc{1e+9};
+    double deltaf;
+    unsigned short ford {8};
+    double Td {1e-9};
+
+    int findMaxLess(int e, double cutoff, int margin_left, int margin_right, bool use_stat = false);
+    QVector<QAbstractSeries*> series {nullptr};
     QVector<QAbstractSeries*> distanceSeries {nullptr};
     QVector<QAbstractSeries *> allWaveformsSeries;
 
@@ -186,6 +196,11 @@ private:
     QVector<QVector<double>> max_index_stat;
     QVector<QVector<double>> scan_data;
     QVector<QVector<double>> scan_data_0;
+    QVector<QVector<double>> processed_data;
+
+    QVector<QVector<double>> *current_set {nullptr};
+    QVector<QVector<double>> *current_set_0 {nullptr};
+
 
     int max_change {2000};
     QVector<double> last_good_value;
@@ -258,7 +273,7 @@ private:
 
     float sigTau;
     float Fdskr;
-    float Td;
+    //float Td;
     float kt_dt;
     float Fc;
     float* signal {nullptr};

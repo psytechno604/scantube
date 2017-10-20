@@ -56,6 +56,7 @@ DataSource::DataSource(QQuickView *appViewer, QObject *parent) :
     QObject(parent),
     m_appViewer(appViewer)
 {
+    series.resize(4);
     allWaveformsSeries.resize(2);
     distanceSeries.resize(6);
 
@@ -91,8 +92,9 @@ DataSource::DataSource(QQuickView *appViewer, QObject *parent) :
     scan_data.resize(nchannels);
     scan_data_0.resize(nchannels);
     distance_data.resize(nchannels);
-distance_data_0.resize(nchannels);
+    distance_data_0.resize(nchannels);
     last_good_value.resize(nchannels);
+    processed_data.resize(nchannels);
 
     //for(auto i=0; i<nchannels; i++) {
         //scan_data.append(*(new QVector<unsigned short>()));
@@ -232,8 +234,11 @@ void DataSource::showFromBuffer(int b_index, int block)
 
 }
 
-void DataSource::update(QAbstractSeries *series)
+void DataSource::update(QAbstractSeries *series, QAbstractSeries *scatter)
 {
+    if (!current_set && (use_scan_data_0 && !current_set_0)) {
+        return ;
+    }
     qDebug() << "DataSource::update" << QThread::currentThreadId();
     mtx.lockForRead();
 
@@ -250,22 +255,28 @@ void DataSource::update(QAbstractSeries *series)
     try {
         if (series) {
             QXYSeries *xySeries = static_cast<QXYSeries *>(series);
-
+            QXYSeries *xySeriesScatter = static_cast<QXYSeries *>(scatter);
             if (currentUnitIndex >= 0)    {
                 //qDebug() << "update m_index=" << m_index;
                 auto j=0;
                 //auto avg = sum_of_values[currentUnitIndex]/scan_data[currentUnitIndex].length();
-                for (auto i=0; i<scan_data[currentUnitIndex].length(); i+=_step) {
+                for (auto i=0; i<(*current_set)[currentUnitIndex].length(); i+=_step) {
                     //_points.append(QPointF(i, (double(scan_data[currentUnitIndex][i]) - (use_scan_data_0?double(scan_data_0[currentUnitIndex][i]):0.0)) - avg_values[currentUnitIndex]));
                     if (j < _points[currentUnitIndex].length()) {
-                        _points[currentUnitIndex][j].setX(j);
-                        _points[currentUnitIndex][j].setY(fabs(double(scan_data[currentUnitIndex][i]) - (use_scan_data_0?double(scan_data_0[currentUnitIndex][i]):0)));
+                        _points[currentUnitIndex][j].setX(i);
+                        _points[currentUnitIndex][j].setY(double((*current_set)[currentUnitIndex][i]) - (use_scan_data_0?double((*current_set_0)[currentUnitIndex][i]):0));
                         j++;
                     }
                 }
 
                 // if (m_index == 0)
                 xySeries->replace(_points[currentUnitIndex]);
+
+                QVector<QPointF> pointsScatter;
+                for (auto k=0; k<distance_data[currentUnitIndex].length(); k++) {
+                    pointsScatter.append(QPointF(distance_data[currentUnitIndex][k], getScanValue(currentUnitIndex, distance_data[currentUnitIndex][k], use_scan_data_0, true)));
+                }
+                xySeriesScatter->replace(pointsScatter);
 
             }
             // Use replace instead of clear + append, it's optimized for performance
@@ -281,8 +292,12 @@ void DataSource::update(QAbstractSeries *series)
 
 void DataSource::update()
 {
-    if (series)
-        update(series);
+    current_set = &scan_data;
+    current_set_0 = &scan_data_0;
+    update(series[0], series[1]);
+
+    current_set = &processed_data;
+    update(series[2], series[3]);
 }
 void DataSource::updateAllWaveforms(QAbstractSeries *series, int set)
 {
@@ -470,165 +485,111 @@ bool DataSource::IsPowerOfTwo(ulong x)
 {
     return (x != 0) && ((x & (x - 1)) == 0);
 }
-void DataSource::processSignal(QVector <double> &in, QVector <double> &out, int *StartPosIndex, int *ObjectPosIndex, int numadc)
+void DataSource::processSignal(QVector <double> &in, QVector <double> &out)
 {
     int i,j,x;
 
-      vectorc dblbubl;
-      vectorc H;
-      int ndaln2=numadc;
+    vectorc dblbubl;
+    vectorc H;
+    int ndaln2=in.length();
 
-      while(!IsPowerOfTwo(ndaln2)) ndaln2++;
-      ndaln2 = ndaln2*1;
-      H.resize(ndaln2);
-      dblbubl.resize(ndaln2);
-      Fc = 1000 * 1E6;
+    if (out.length()<in.length()) {
+        out.resize(in.length());
+    }
 
+    while(!IsPowerOfTwo(ndaln2)) ndaln2++;
+    ndaln2 = ndaln2*1;
+    H.resize(ndaln2);
+    dblbubl.resize(ndaln2);
+    Fc = 1000 * 1E6;
 
-
-      //__normalize_m1p1_signal(InputDecodedSig, numadc);
-      /*if(0)
-      {
-        for(i = 0; i < numadc; i++) ProcessedSig[i] = InputDecodedSig[i];
-      }
-      else */
-      if (useFilter)
-        calcCorrelationFunc( in, out, signal, kt_dt, numadc );
-      else {
-          for (auto i=0; i<buffer_size; i++)    {
-              out[i] = in[i];
-          }
-      }
+    for (auto i=0; i<in.length(); i++)    {
+        out[i] = in[i];
+    }
 
 
-      //---- фильтр НЧ (для убирания шумов лишних в ВЧ обл.)
-      if(1)
-      {
-        MakeLPButterworthFilter(H, _LP0_Td,_LP0_fc, _LP0_ford);
-        //Make_LP_ChebyshevFilter(H, 200*1E6, 0.3,2, 1.0/(100.0*1E9));
+
+    if(1)
+    {
+        //MakeLPButterworthFilter(H, _LP0_Td,_LP0_fc, _LP0_ford);
+
+        Make_BP_ButterworthFilter(H, fc, deltaf, ford, Td);
 
         for(j=0;j<ndaln2;j++) dblbubl[j]=complexd(0,0);
-        for(j=0;j<numadc;j++) dblbubl[j] = complexd( out[j],0 );
+        for(j=0;j<in.length();j++) dblbubl[j] = complexd( out[j],0 );
 
         cfft(dblbubl);
         for(x=0;x<ndaln2;x++) dblbubl[x] *= H[x];
-        //reverse(dblbubl.begin(),dblbubl.end());
-        //for(x=0;x<ndaln2;x++) dblbubl[x] *= H[x];
-        //reverse(dblbubl.begin(),dblbubl.end());
         icfft(dblbubl);
 
-        //Series2->Clear();
         for(x=0;x<ndaln2;x++)
         {
-          if(x<numadc) out[x] = 1 * dblbubl[x].real();
-          //double Tdr = 1.0/(100.0*1E9);
-          //Series2->AddXY((((M_PI*x)/(16384*Tdr))/(M_PI*2))/1E6,abs(H[x]),"",clTeeColor);
-          //Series2->AddXY(x,abs(H[x]),"",clTeeColor);
+            if(x<in.length()) out[x] = 1 * dblbubl[x].real();
         }
+    }
+    //----
 
-      }
-      //----
-
-      //---- фильтр ВЧ (для убирания пост. составл. в сигнале)
-      if(1)
-      {
+    //---- фильтр ВЧ (для убирания пост. составл. в сигнале)
+    if(0)
+    {
         MakeHPButterworthFilter(H, _HP0_Td,_HP0_fc, _HP0_ford);
 
         for(j=0;j<ndaln2;j++) dblbubl[j]=complexd(0,0);
-        for(j=0;j<numadc;j++) dblbubl[j] = complexd( out[j],0 );
+        for(j=0;j<in.length();j++) dblbubl[j] = complexd( out[j],0 );
 
         cfft(dblbubl);
         for(x=0;x<ndaln2;x++) dblbubl[x] *= H[x];
-        //reverse(dblbubl.begin(),dblbubl.end());
-        //for(x=0;x<ndaln2;x++) dblbubl[x] *= H[x];
-        //reverse(dblbubl.begin(),dblbubl.end());
         icfft(dblbubl);
 
-        for(x=0;x<numadc;x++)
+        for(x=0;x<in.length();x++)
         {
-          out[x] = 1 * dblbubl[x].real();
+            out[x] = 1 * dblbubl[x].real();
         }
-      }
-      //----
-      //---- включим "диод" (вычислим модуль сигнала
-      if(0)
-      {
-        for(j=0;j<numadc;j++) out[j] = fabs(out[j]);
-      }
-      //----
-      //---- фильтр НЧ для огибающей
-      if(1)
-      {
-        MakeLPButterworthFilter(H, _LP1_Td,_LP1_fc, _LP1_ford);
+    }
+    //----
+    //---- включим "диод" (вычислим модуль сигнала
+    if(1)
+    {
+        for(j=0;j<out.length();j++) out[j] = fabs(out[j]);
+    }
+    //----
+//    //---- фильтр НЧ для огибающей
+//    if(0)
+//    {
+//        MakeLPButterworthFilter(H, _LP1_Td,_LP1_fc, _LP1_ford);
 
-        for(j=0;j<ndaln2;j++) dblbubl[j]=complexd(0,0);
-        for(j=0;j<numadc;j++) dblbubl[j] = complexd( out[j],0 );
+//        for(j=0;j<ndaln2;j++) dblbubl[j]=complexd(0,0);
+//        for(j=0;j<in.length();j++) dblbubl[j] = complexd( out[j],0 );
 
-        cfft(dblbubl);
-        for(x=0;x<ndaln2;x++) dblbubl[x] *= H[x];
-        reverse(dblbubl.begin(),dblbubl.end());
-        for(x=0;x<ndaln2;x++) dblbubl[x] *= H[x];
-        reverse(dblbubl.begin(),dblbubl.end());
-        icfft(dblbubl);
+//        cfft(dblbubl);
+//        for(x=0;x<ndaln2;x++) dblbubl[x] *= H[x];
+//        reverse(dblbubl.begin(),dblbubl.end());
+//        for(x=0;x<ndaln2;x++) dblbubl[x] *= H[x];
+//        reverse(dblbubl.begin(),dblbubl.end());
+//        icfft(dblbubl);
 
-        for(x=0;x<numadc;x++)
-        {
-          out[x] = 1 * dblbubl[x].real();
-        }
-      }
-      int prolaz_position;
-      int prolaz_hibound = 345;//numadc/2
-      prolaz_position = _FindMaxValueInRangeOFArray(out, numadc, 50, prolaz_hibound);
-      *StartPosIndex = prolaz_position;
+//        for(x=0;x<in.length();x++)
+//        {
+//            out[x] = 1 * dblbubl[x].real();
+//        }
+//    }
+}
 
-      //--- и наконец ищем где объект перед антенной
-      int delta = numadc/32;
-      int lobound_for_objpos;
-      //lobound_for_objpos = prolaz_position+1+delta;
-      lobound_for_objpos = 370;
-
-      int obj_position;
-      obj_position =
-              _FindMaxValueInRangeOFArray(out, numadc,
-                                          lobound_for_objpos,
-                                          numadc-numadc/5);
-      *ObjectPosIndex = obj_position;
+void DataSource::processSignal()
+{
+    for (auto e=0; e<scan_data.length(); e++) {
+        processSignal(scan_data[e], processed_data[e]);
+    }
 }
 
 void DataSource::savePoint(double distance, int nframes, int saveAsZeroSignal)
 {
-    if (this->is_measured)
-        return;
 
-    this->distance = distance;
-    for (auto c=0; c<nchannels; c++)    {
-        for (auto i=0; i<buffer_size; i++) {
-            raw_acc[c][i] = 0.0;
-            processed_acc[c][i] = 0.0;
-            if (saveAsZeroSignal)
-                zero_signal[c][i] = 0.0;
-        }
-        fcount[c] = nframes;
-    }
-
-    this->nframes = nframes;
-
-    this->is_measured = nchannels;
-    this->saveAsZeroSignal = saveAsZeroSignal * nchannels;
     if (pointfile && pointfile->open(QIODevice::WriteOnly | QIODevice::Append)) {
         QDataStream out(pointfile);
         out.setVersion(QDataStream::Qt_5_9);
         out << distance;
         pointfile->close();
-    }
-    if (saveAsZeroSignal)   {
-        zerofilename = "zerofile.dat";
-        if (zerofile)
-            delete zerofile;
-        zerofile =new QFile(zerofilename);
-        if (zerofile && zerofile->open(QIODevice::WriteOnly/* | QIODevice::Append*/)) {
-            zerofile->close();
-        }
     }
 
 }
@@ -784,6 +745,7 @@ void DataSource::readData(int buffer_part, QByteArray *buffer, QHostAddress send
        scan_data[ch_num].resize(scan_data[ch_num].length() + buffer_size - small_block);
        scan_data_0[ch_num].resize(scan_data_0[ch_num].length() + buffer_size - small_block);
        max_index_stat[ch_num].resize(max_index_stat[ch_num].length() + buffer_size - small_block);
+       processed_data[ch_num].resize(processed_data[ch_num].length() + buffer_size - small_block);
        _points[ch_num].resize(_points[ch_num].length() + (buffer_size - small_block)/_step);
    }
 
@@ -798,7 +760,7 @@ void DataSource::readData(int buffer_part, QByteArray *buffer, QHostAddress send
         scan_index[ch_num]--;
         this_buffer_size--;
     }
-    unsigned short block_value_shift = 0;
+    //unsigned short block_value_shift = 0;
     for(auto j=0; j<buffer_size; j++) {
         unsigned char b0 = (unsigned char)(*buffer)[b_shift + (j+1)*2];
         unsigned char b1 = (unsigned char)(*buffer)[b_shift + (j+1)*2+1];
@@ -808,13 +770,13 @@ void DataSource::readData(int buffer_part, QByteArray *buffer, QHostAddress send
 //            block_value_shift = b - scan_data[ch_num][scan_index[ch_num]];
         }
         else {
-            b = b - block_value_shift;
-            if (scan_index[ch_num]>0 && abs(b - last_good_value[ch_num]) > max_change)  {
-                b = last_good_value[ch_num];
-            }
-            else {
-                last_good_value[ch_num] = b;
-            }
+            //b = b - block_value_shift;
+//            if (scan_index[ch_num]>0 && abs(b - last_good_value[ch_num]) > max_change)  {
+//                b = last_good_value[ch_num];
+//            }
+//            else {
+//                last_good_value[ch_num] = b;
+//            }
             scan_data[ch_num][scan_index[ch_num]] = b;
             sum_of_values[ch_num] += b;
         }
@@ -893,8 +855,7 @@ void DataSource::MakeLPButterworthFilter(vectorc& H, double Td, double fc, unsig
     H[x] = (K == complexd(0,0)) ? complexd(0,0) : G0 / K;
   }
 }
-void DataSource::Make_BP_ButterworthFilter(vectorc& H, double fc, double deltaf,
-                                unsigned short ford, double Td)
+void DataSource::Make_BP_ButterworthFilter(vectorc& H, double fc, double deltaf, unsigned short ford, double Td)
 {
   QVector<complexd> Poles(ford); // полюса аналогового фильтра прототипа
   complexd Z, p1, G0 = complexd(1,0), K;
@@ -1171,24 +1132,26 @@ void DataSource::calcDistances()
 
 
 
-    auto window_size = 100;
+    auto window_size = 25;
 
-    double avg, avgabs, maxavgabs;
-    int i_maxavgabs;
+    /*double avg, avgabs, maxavgabs;
+    int i_maxavgabs;*/
     receiver_levels.fill(0);
 
     //int window_size = 100;
+    processSignal();
+    current_set = &processed_data;
 
-    for(auto e=0; e < scan_data.length(); e++)  {
+    for(auto e=0; e < current_set->length(); e++)  {
         distance_data[e].resize(3);
         distance_data_0[e].resize(3);
-        for (auto i=0; i < scan_data[e].length(); i++) {
+        for (auto i=0; i < (*current_set)[e].length(); i++) {
             auto k_start = std::max(0, i-window_size);
             auto k = 0;
             auto max_index = k_start;
-            auto max_value = fabs(double(scan_data[e][max_index]) - (use_scan_data_0?double(scan_data_0[e][max_index]):0));
-            while (k < window_size && k_start + k < scan_data[e].length()) {
-                auto value = fabs(double(scan_data[e][k_start + k]) - (use_scan_data_0?double(scan_data_0[e][k_start + k]):0));
+            auto max_value = fabs(double((*current_set)[e][max_index]));
+            while (k < window_size && k_start + k < (*current_set)[e].length()) {
+                auto value = fabs(double((*current_set)[e][k_start + k]));
                 if (value > max_value) {
                     max_index = k_start+k;
                     max_value = value;
@@ -1197,14 +1160,14 @@ void DataSource::calcDistances()
             }
             max_index_stat[e][max_index]++;
         }
-        auto i0 = findMaxLess(scan_data[e], max_index_stat[e], 65536, 200, 500);
-        auto v0 = scan_data[e][i0];
+        auto i0 = findMaxLess(e, 65536, 0, 500, true);
+        auto v0 =fabs((*current_set)[e][i0] * (max_index_stat[e][i0]?1:0));
 
-        auto i1 = findMaxLess(scan_data[e], max_index_stat[e], v0, 200, 500);
-        auto v1 = scan_data[e][i1];
+        auto i1 = findMaxLess(e, v0, 0, 500, true);
+        auto v1 = fabs((*current_set)[e][i1] * (max_index_stat[e][i1]?1:0));
 
-        auto i2 = findMaxLess(scan_data[e], max_index_stat[e], v1, 200, 500);
-        auto v2 = scan_data[e][i2];
+        auto i2 = findMaxLess(e, v1, 0, 500, true);
+        auto v2 = fabs((*current_set)[e][i2] * (max_index_stat[e][i2]?1:0));
 
         if (i0<=i1 && i1<=i2) {
             distance_data[e][0] = i0;
@@ -1361,9 +1324,9 @@ void DataSource::setAllWaveformsSeries(QAbstractSeries *series, int set)
     allWaveformsSeries[set] = series;
 }
 
-void DataSource::setSeries(QAbstractSeries *series)
+void DataSource::setSeries(QAbstractSeries *series, int i)
 {
-    this->series = series;
+    this->series[i] = series;
 }
 
 void DataSource::setDistanceSeries(QAbstractSeries *series, int i)
@@ -1371,16 +1334,51 @@ void DataSource::setDistanceSeries(QAbstractSeries *series, int i)
     this->distanceSeries[i] = series;
 }
 
-int DataSource::findMaxLess(QVector<double> &v, QVector<double> &v1, double cutoff, int margin_left, int margin_right)
+double DataSource::getScanValue(int e, int i, bool use_0, bool use_abs)
 {
-    auto maxv = v[0] * v1[0];
-    auto maxi = 0;
-    for (auto i=0 + margin_left; i<v.length() - margin_right; i++)   {
-        if (v[i]*v1[i]>maxv && v[i] < cutoff) {
+    if (!use_abs)
+        return double(scan_data[e][i]) - (use_0?double(scan_data_0[e][i]):0.0);
+    return fabs(double(scan_data[e][i]) - (use_0?double(scan_data_0[e][i]):0.0));
+}
+
+int DataSource::findMaxLess(int e, double cutoff, int margin_left, int margin_right, bool use_stat)
+{
+    if (e>scan_data.length() || e>max_index_stat.length()) {
+        return -1;
+    }
+
+    auto v1 = max_index_stat[e];
+
+    auto maxv = getScanValue(e, margin_left, use_scan_data_0, true) * (use_stat?(v1[margin_left]?1:0):1);
+    auto maxi = margin_left;
+    for (auto i=margin_left; i<scan_data[e].length() - margin_right; i++)   {
+        auto val = getScanValue(e, i, use_scan_data_0, true);
+        if (val*(use_stat?v1[i]:1.0) > maxv && val*(use_stat?(v1[i]?1:0):1) < cutoff) {
             maxi = i;
-            maxv = v[i] * v1[i];
+            maxv = val * (use_stat?(v1[i]?1:0):1);
         }
     }
     return maxi;
 }
 
+void DataSource::textChanged(QString text)
+{
+    qDebug() << text;
+
+    if (text.indexOf("fc=", 0, Qt::CaseSensitive) == 0){
+        fc =  text.right(text.length()-3).toDouble();
+    }
+    if (text.indexOf("deltaf=", 0, Qt::CaseSensitive) == 0){
+        deltaf =  text.right(text.length()-7).toDouble();
+    }
+    if (text.indexOf("ford=", 0, Qt::CaseSensitive) == 0){
+        ford =  text.right(text.length()-5).toDouble();
+    }
+    if (text.indexOf("Td=", 0, Qt::CaseSensitive) == 0){
+        Td =  text.right(text.length()-3).toDouble();
+    }
+
+    //calcDistances();
+    //_dataSource->startRecording("test.dat");
+   // update();
+}
