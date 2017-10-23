@@ -18,6 +18,7 @@ public:
     static QString getUnitName(int unitIndex);
     static QString getShiftCommand(int value);
     static int getReceiver(int unitIndex);
+    static int getPseudoIndex(int unitTndex);
 signals:
 
 public slots:

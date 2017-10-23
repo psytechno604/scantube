@@ -46,6 +46,7 @@
 #include "measurement.h"
 #include "scantube.h"
 #include "addressprovider.h"
+#include "peak.h"
 
 QT_CHARTS_USE_NAMESPACE
 
@@ -95,6 +96,7 @@ DataSource::DataSource(QQuickView *appViewer, QObject *parent) :
     distance_data_0.resize(nchannels);
     last_good_value.resize(nchannels);
     processed_data.resize(nchannels);
+    peak_data.resize(nchannels);
 
     //for(auto i=0; i<nchannels; i++) {
         //scan_data.append(*(new QVector<unsigned short>()));
@@ -236,7 +238,7 @@ void DataSource::showFromBuffer(int b_index, int block)
 
 void DataSource::update(QAbstractSeries *series, QAbstractSeries *scatter)
 {
-    if (!current_set && (use_scan_data_0 && !current_set_0)) {
+    if (!current_set || (use_scan_data_0 && !current_set_0) || !current_peak_data) {
         return ;
     }
     qDebug() << "DataSource::update" << QThread::currentThreadId();
@@ -264,7 +266,7 @@ void DataSource::update(QAbstractSeries *series, QAbstractSeries *scatter)
                     //_points.append(QPointF(i, (double(scan_data[currentUnitIndex][i]) - (use_scan_data_0?double(scan_data_0[currentUnitIndex][i]):0.0)) - avg_values[currentUnitIndex]));
                     if (j < _points[currentUnitIndex].length()) {
                         _points[currentUnitIndex][j].setX(i);
-                        _points[currentUnitIndex][j].setY(double((*current_set)[currentUnitIndex][i]) - (use_scan_data_0?double((*current_set_0)[currentUnitIndex][i]):0));
+                        _points[currentUnitIndex][j].setY(getScanValue(&((*current_set)[currentUnitIndex]), (use_scan_data_0?(&((*current_set_0)[currentUnitIndex])):nullptr), i, false));
                         j++;
                     }
                 }
@@ -273,8 +275,8 @@ void DataSource::update(QAbstractSeries *series, QAbstractSeries *scatter)
                 xySeries->replace(_points[currentUnitIndex]);
 
                 QVector<QPointF> pointsScatter;
-                for (auto k=0; k<distance_data[currentUnitIndex].length(); k++) {
-                    pointsScatter.append(QPointF(distance_data[currentUnitIndex][k], getScanValue(currentUnitIndex, distance_data[currentUnitIndex][k], use_scan_data_0, true)));
+                for (auto k=0; k<(*current_peak_data)[currentUnitIndex].length(); k++) {
+                    pointsScatter.append(QPointF((*current_peak_data)[currentUnitIndex][k].index, (*current_peak_data)[currentUnitIndex][k].value));
                 }
                 xySeriesScatter->replace(pointsScatter);
 
@@ -361,26 +363,24 @@ void DataSource::updateAllWaveforms()
 
 void DataSource::updateDistances(QAbstractSeries *series, int i, int set)
 {
-
+    if (!current_peak_data)
+        return;
 
     dst_lock.lockForRead();
 
-    auto seed = 2250;
-    auto spread = -500;
-    auto step = 150;
 
     auto dss = static_cast<QSplineSeries *>(series);
     QVector<QPointF> points;
     int j=0;
     if (set == 0 || set ==1) {
-        points.append(QPointF(-0.5, distance_data[distance_data.length()-set-1][i] - (use_distance_0?distance_data_0[distance_data.length()-set-1][i]:0.0) + (use_distance_0?(seed + set * spread + i * step):0.0)));
-        for(auto e=set; e < distance_data.length(); e+=2)  {
-            if (distance_data[e].length()>0) {
-                points.append(QPointF(j+0.5, distance_data[e][i]  - ((use_distance_0)?(distance_data_0[e][i]):(0.0)) + ((use_distance_0)?(seed + set * spread + i * step):(0.0))));
+
+        for(auto e=set; e < current_peak_data->length(); e+=2)  {
+            if ((*current_peak_data)[e].length()>0 && (*current_peak_data)[e][i].index>=0) {
+                points.append(QPointF(j+0.5, (*current_peak_data)[e][i].index));
                 j++;
             }
         }
-        points.append(QPointF(j+0.5, distance_data[set][0]  - (use_distance_0?distance_data_0[set][i]:0.0) + (use_distance_0?(seed + set * spread + i * step):0)));
+
     }
 
     //points.append(QPointF(-0.5, distance_data[set][i]));
@@ -400,8 +400,13 @@ void DataSource::updateDistances()
 
 void DataSource::updateSurface3D(QtDataVisualization::QAbstract3DSeries *series)
 {
-    auto sampleCountZ = 727;
-    auto sampleCountX = 101;
+    //auto sampleCountZ = 727;
+    //auto sampleCountX = 101;
+    //qDebug() << history_scan_data[0].length();
+
+    if (history_scan_data[0].length() == 0)   {
+        return;
+    }
 
     surface_data_lock.lockForRead();
 
@@ -413,18 +418,31 @@ void DataSource::updateSurface3D(QtDataVisualization::QAbstract3DSeries *series)
 
     auto dataArray = new QtDataVisualization::QSurfaceDataArray();
 
-    dataArray->reserve(sampleCountZ);
+    auto maxI = 0;
+    for (auto h=0; h<history_scan_data.length(); h++)   {
+        if (history_scan_data[h].length()>currentUnitIndex)    {
+            if (history_scan_data[h][currentUnitIndex].length() > maxI) {
+                maxI = history_scan_data[h][currentUnitIndex].length();
+            }
+        }
+    }
 
-    for (int i = 0 ; i < sampleCountZ ; i++) {
-        QtDataVisualization::QSurfaceDataRow *newRow = new QtDataVisualization::QSurfaceDataRow(sampleCountX);
+    dataArray->reserve(maxI);
+
+    for (int i = 0 ; i < maxI ; i++) {
+        QtDataVisualization::QSurfaceDataRow *newRow = new QtDataVisualization::QSurfaceDataRow(history_scan_data.length());
         // Keep values within range bounds, since just adding step can cause minor drift due
         // to the rounding errors.
         float z = i; //"Distance"
         int index = 0;
-        for (int j = 0; j < sampleCountX; j++) {
-            float x = j; // "Scan"
 
-            float y = i+j; // "Level"
+        for (int j = 0; j < history_scan_data.length(); j++) {
+            float x = j; // "Scan"
+            float y = 0;
+            if (history_scan_data[j].length() > currentUnitIndex && history_scan_data[j][currentUnitIndex].length()>i) {
+                y = history_scan_data[j][currentUnitIndex][i]; // "Level"
+            }
+
             (*newRow)[index++].setPosition(QVector3D(x, y, z));
         }
         *dataArray << newRow;
@@ -731,7 +749,7 @@ void DataSource::showByIndex(int index)
 
 void DataSource::readData(int buffer_part, QByteArray *buffer, QHostAddress sender)
 {
-
+    has_data = true;
 
 
    int ch_num = getUnitIndex(buffer_part, buffer, sender);
@@ -1126,13 +1144,14 @@ double DataSource::corr(double *X, double *Y, int N)
 
 void DataSource::calcDistances()
 {
+    qDebug() << "DataSource::calcDistances";
     // 0 - simplest method, moving average
     mtx.lockForRead();
     dst_lock.lockForWrite();
 
 
 
-    auto window_size = 25;
+    auto window_size = 5;
 
     /*double avg, avgabs, maxavgabs;
     int i_maxavgabs;*/
@@ -1140,7 +1159,11 @@ void DataSource::calcDistances()
 
     //int window_size = 100;
     processSignal();
-    current_set = &processed_data;
+    //current_set = &processed_data;
+    current_set = &scan_data;
+    current_max_index_stat = &max_index_stat;
+    current_peak_data = &peak_data;
+
 
     for(auto e=0; e < current_set->length(); e++)  {
         distance_data[e].resize(3);
@@ -1158,48 +1181,14 @@ void DataSource::calcDistances()
                 }
                 k++;
             }
-            max_index_stat[e][max_index]++;
+            (*current_max_index_stat)[e][max_index]++;
         }
-        auto i0 = findMaxLess(e, 65536, 0, 500, true);
-        auto v0 =fabs((*current_set)[e][i0] * (max_index_stat[e][i0]?1:0));
+        (*current_peak_data)[e].clear();
+        findMaxLess(&((*current_set)[e]), &((*current_max_index_stat)[e]), &((*current_peak_data)[e]), 100, 100);
+        findMaxLess(&((*current_set)[e]), &((*current_max_index_stat)[e]), &((*current_peak_data)[e]), 100, 100);
+        findMaxLess(&((*current_set)[e]), &((*current_max_index_stat)[e]), &((*current_peak_data)[e]), 100, 100);
 
-        auto i1 = findMaxLess(e, v0, 0, 500, true);
-        auto v1 = fabs((*current_set)[e][i1] * (max_index_stat[e][i1]?1:0));
-
-        auto i2 = findMaxLess(e, v1, 0, 500, true);
-        auto v2 = fabs((*current_set)[e][i2] * (max_index_stat[e][i2]?1:0));
-
-        if (i0<=i1 && i1<=i2) {
-            distance_data[e][0] = i0;
-            distance_data[e][1] = i1;
-            distance_data[e][2] = i2;
-        }
-        if (i2<=i1 && i1<=i0) {
-            distance_data[e][0] = i2;
-            distance_data[e][1] = i1;
-            distance_data[e][2] = i0;
-        }
-        if (i1<=i0 && i0 <=i2) {
-            distance_data[e][0] = i1;
-            distance_data[e][1] = i0;
-            distance_data[e][2] = i2;
-        }
-        if (i1<=i2 && i2<=i0) {
-            distance_data[e][0] = i1;
-            distance_data[e][1] = i2;
-            distance_data[e][2] = i0;
-        }
-        if (i0<=i2 && i2<=i1) {
-            distance_data[e][0] = i0;
-            distance_data[e][1] = i2;
-            distance_data[e][2] = i1;
-        }
-        if (i2<=i0 && i0<=i1) {
-            distance_data[e][0] = i2;
-            distance_data[e][1] = i0;
-            distance_data[e][2] = i1;
-        }
-
+        //qSort((*current_peak_data)[e].begin(), (*current_peak_data)[e].end(), [](const Peak& a, const Peak& b) { return a.index < b.index; });
     }
 
     /*
@@ -1314,6 +1303,7 @@ void DataSource::setScanIndex()
             _points[i].resize(_points[i].length() + (_points[i].length() - max_index) / _step);
             while (scan_index[i] < max_index)   {
                 scan_data[i][scan_index[i]] = fill_value;
+                scan_index[i]++;
             }
         }
     }
@@ -1334,31 +1324,80 @@ void DataSource::setDistanceSeries(QAbstractSeries *series, int i)
     this->distanceSeries[i] = series;
 }
 
-double DataSource::getScanValue(int e, int i, bool use_0, bool use_abs)
+double DataSource::getScanValue(QVector<double> *data, QVector<double> *data0, int i, bool use_abs)
 {
     if (!use_abs)
-        return double(scan_data[e][i]) - (use_0?double(scan_data_0[e][i]):0.0);
-    return fabs(double(scan_data[e][i]) - (use_0?double(scan_data_0[e][i]):0.0));
+        return double((*data)[i]) - (data0?double((*data0)[i]):0.0);
+    return fabs(double((*data)[i]) - (data0?double((*data0)[i]):0.0));
 }
 
-int DataSource::findMaxLess(int e, double cutoff, int margin_left, int margin_right, bool use_stat)
+void DataSource::findMaxLess(QVector<double> *data, QVector<double> *stat_data, QVector<Peak> *peak_data, int margin_left, int margin_right)
 {
-    if (e>scan_data.length() || e>max_index_stat.length()) {
-        return -1;
+    if (!data || !peak_data || margin_left < 0 || margin_right < 0 || margin_left > data->length()-1 || margin_right >data->length()-1) {
+        throw new QException();
     }
 
-    auto v1 = max_index_stat[e];
 
-    auto maxv = getScanValue(e, margin_left, use_scan_data_0, true) * (use_stat?(v1[margin_left]?1:0):1);
-    auto maxi = margin_left;
-    for (auto i=margin_left; i<scan_data[e].length() - margin_right; i++)   {
-        auto val = getScanValue(e, i, use_scan_data_0, true);
-        if (val*(use_stat?v1[i]:1.0) > maxv && val*(use_stat?(v1[i]?1:0):1) < cutoff) {
-            maxi = i;
-            maxv = val * (use_stat?(v1[i]?1:0):1);
+
+    double maxv = 0.0;
+    int maxi = -1;
+    double val =0.0;
+    bool passed = false;
+    for (auto i=0; i<data->length(); i++)   {
+
+        for (auto p=0; p<peak_data->length(); p++) {
+            if ((*peak_data)[p].index >= 0 && i >= (*peak_data)[p].index - (*peak_data)[p].margin_left && i <= (*peak_data)[p].index + (*peak_data)[p].margin_right) {
+                i = (*peak_data)[p].index + (*peak_data)[p].margin_right + 1;
+            }
+        }
+        if (i<data->length()) {
+            if (!passed) {
+                maxv = getScanValue(data, nullptr, i, true) * (stat_data?((*stat_data)[i]?1:0):1);
+                maxi = i;
+                passed = true;
+            }
+             val = getScanValue(data, nullptr, i, true)*(stat_data?((*stat_data)[i]?1:0):1);
+             if (val > maxv) {
+                 maxi = i;
+                 maxv = val;
+             }
+        }
+        else if (!passed)   {
+            maxi = -1;
+            maxv = 0.0;
         }
     }
-    return maxi;
+    peak_data->resize(peak_data->length()+1);
+    (*peak_data)[peak_data->length()-1].value = maxv;
+    (*peak_data)[peak_data->length()-1].index = maxi;
+    (*peak_data)[peak_data->length()-1].margin_left = margin_left;
+    (*peak_data)[peak_data->length()-1].margin_right = margin_right;
+
+}
+
+void DataSource::increaseHistoryIndex()
+{
+    if (history_index>=history_depth - 1)   {
+        history_index = 0;
+    }
+    else {
+        history_index ++;
+    }
+}
+
+void DataSource::copyToHistory()
+{
+    if (has_data)    {
+        if (history_scan_data.length() < history_index+1)   {
+            history_scan_data.resize(history_depth);
+        }
+        history_scan_data[history_index] = scan_data;
+
+        scan_data = *(new QVector<QVector<double>>(nchannels));
+        has_data = false;
+
+        increaseHistoryIndex();
+    }
 }
 
 void DataSource::textChanged(QString text)
@@ -1380,5 +1419,45 @@ void DataSource::textChanged(QString text)
 
     //calcDistances();
     //_dataSource->startRecording("test.dat");
-   // update();
+    // update();
+}
+
+QString DataSource::getReceiverName(int index)
+{
+    return QString::number(AddressProvider::getPseudoIndex(index));
+}
+
+QString DataSource::getIP(int index)
+{
+    return getReceiverName(index).left(1);
+}
+
+QString DataSource::getEmitter(int index)
+{
+    return getReceiverName(index).mid(1, 1);
+}
+
+QString DataSource::getRow(int index)
+{
+    return getReceiverName(index).right(1);
+}
+
+QString DataSource::getRow()
+{
+    return getRow(currentUnitIndex);
+}
+
+QString DataSource::getIP()
+{
+    return getIP(currentUnitIndex);
+}
+
+QString DataSource::getEmitter()
+{
+    return getEmitter(currentUnitIndex);
+}
+
+void DataSource::setUnitIndex(int index)
+{
+    this->currentUnitIndex = index;
 }

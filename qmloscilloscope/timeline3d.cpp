@@ -9,8 +9,8 @@ Timeline3D::Timeline3D(QNode *parent)
     : QEntity(parent)
     , m_camera(new QCamera())
     , m_count(0)
-    , y(0.0f)
-    , x(0.0f)
+    , y(5000.0f)
+    , x(50000.0f)
 {
     m_camera->lens()->setPerspectiveProjection(45.0f, 16.0f/9.0f, 0.1f, 1000.0f);
 
@@ -50,10 +50,7 @@ Timeline3D::Timeline3D(QNode *parent)
     m_planeMaterial->setDiffuse(QColor(255,255,255));
     m_planeMaterial->setAlpha(0.3f);
     
-    QTimer *timer = new QTimer();
-    QObject::connect(timer, &QTimer::timeout,this,&Timeline3D::onTimerUpdate);
 
-    timer->start(100);
 
     Qt3DCore::QEntity *lightEntity = new Qt3DCore::QEntity(this);
     Qt3DRender::QPointLight *light = new Qt3DRender::QPointLight(lightEntity);
@@ -64,12 +61,21 @@ Timeline3D::Timeline3D(QNode *parent)
     lightTransform->setTranslation(QVector3D(0, 0, 0));
     lightEntity->addComponent(lightTransform);
 
-    //m_camera->setPosition(QVector3D(y,sinf(M_PI/12)*30.0f,x+50.0f));
-    //m_camera->setViewCenter(QVector3D(y,0.0f,x));
+    m_camera->setPosition(QVector3D(y,sinf(M_PI/12)*30.0f,x+50.0f));
+    m_camera->setViewCenter(QVector3D(y,0.0f,x));
+
+    //QTimer *timer = new QTimer();
+    //QObject::connect(timer, &QTimer::timeout,this,&Timeline3D::onTimerUpdate);
+
+    //timer->start(100);
+    onTimerUpdate();
 }
 
 void Timeline3D::addScan()
 {
+    onTimerUpdate();
+    return;
+
     if (!dataSource)
         return;
 
@@ -85,26 +91,30 @@ void Timeline3D::connectDataSource(DataSource *dataSource)
 }
 
 void Timeline3D::addPoint() {
+
+    //return;
+
     float* reVertexArray;
     unsigned int* reIndexArray;
 
     x -= 5.0f;
     y += qrand() % 2 - 1;
 
-    if (!(m_count % sliceCount)) {
-    //if (!m_count) {
+    //if (!(m_count % sliceCount)) {
+    if (!m_count % 100) {
         //every 100-th timer tick:
         m_geometryRenderer = new QGeometryRenderer();
         QGeometry* meshGeometry = new QGeometry(m_geometryRenderer);
 
         QByteArray vertexArray;
-        vertexArray.resize(pointCount*3*sizeof(float));
+        //vertexArray.resize(pointCount*3*sizeof(float));
+        vertexArray.resize(200*3*sizeof(float));
         reVertexArray = reinterpret_cast<float*>(vertexArray.data());
 
         QByteArray indexArray;
         indexArray.resize(pointCount*sizeof(int));
         reIndexArray = reinterpret_cast<unsigned int*>(indexArray.data());
-/*
+
         //coordinates of left vertex
         reVertexArray[0] = y-5.0f;
         reVertexArray[1] = 0.0f;
@@ -113,7 +123,9 @@ void Timeline3D::addPoint() {
         //coordinates of right vertex
         reVertexArray[3] = y+5.0f;
         reVertexArray[4] = 0.0f;
-        reVertexArray[5] = x;*/
+        reVertexArray[5] = x;
+
+        /**/
 
         /*int jV =0 , jI = 0;
         for(auto e : scan_data->keys())  {
@@ -135,9 +147,9 @@ void Timeline3D::addPoint() {
         vertexBuffer->setUsage(Qt3DRender::QBuffer::DynamicDraw);
         vertexBuffer->setData(vertexArray);
 
-        indexBuffer = new Qt3DRender::QBuffer(Qt3DRender::QBuffer::IndexBuffer, meshGeometry);
+        /*indexBuffer = new Qt3DRender::QBuffer(Qt3DRender::QBuffer::IndexBuffer, meshGeometry);
         indexBuffer->setUsage(Qt3DRender::QBuffer::DynamicDraw);
-        indexBuffer->setData(indexArray);
+        indexBuffer->setData(indexArray);*/
 
         // Attributes
         positionAttribute = new QAttribute(meshGeometry);
@@ -153,11 +165,11 @@ void Timeline3D::addPoint() {
         meshGeometry->addAttribute(positionAttribute);
 
 
-        indexAttribute = new QAttribute(meshGeometry);
+        /*indexAttribute = new QAttribute(meshGeometry);
         indexAttribute->setAttributeType(QAttribute::IndexAttribute);
         indexAttribute->setBuffer(indexBuffer);
         indexAttribute->setDataType(QAttribute::UnsignedInt);
-        indexAttribute->setDataSize(1);
+        indexAttribute->setDataSize(1);*/
 
 
 

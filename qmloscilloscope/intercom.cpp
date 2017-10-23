@@ -132,12 +132,13 @@ void intercom::sendScan()
             , Q_ARG(QVariant, current_shift)
             , Q_ARG(QVariant, current_shift));
 
-    if (fullscan_mode_on && current_shift<=3100) {
+    if (fullscan_mode_on && scan_counter <= 7) {
         sendShift(current_shift, current_shift, current_shift, current_shift);
         current_shift += (_dataSource->getBufferSize() - 1);
+        scan_counter++;
         QThread::msleep(100);
     }
-    if (current_shift>3100) {
+    if (scan_counter>7) {
         fullscan_mode_on = false;
         fullscan_mode_complete = true;
     }
@@ -149,7 +150,7 @@ void intercom::sendScan()
 
 
     _sender->writeDatagram(QByteArray::fromHex("4453"), AddressProvider::getAddress(0), dst_port);
-    scan_counter++;
+
     packNum = 0;
 
 
@@ -411,7 +412,9 @@ void intercom::beforeScanRange()
     fullscan_mode_on = true;
     fullscan_mode_complete = false;
     current_shift = 0;
+    scan_counter = 0;
     if (_dataSource)    {
+        _dataSource->copyToHistory();
         _dataSource->resetScanIndex();
     }
 }

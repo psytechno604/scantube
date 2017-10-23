@@ -14,7 +14,8 @@ HEADERS += \
     scantube.h \
     measurement.h \
     timeline3d.h \
-    addressprovider.h
+    addressprovider.h \
+    peak.h
 
 SOURCES += \
     main.cpp \
@@ -29,7 +30,8 @@ SOURCES += \
     scantube.cpp \
     measurement.cpp \
     timeline3d.cpp \
-    addressprovider.cpp
+    addressprovider.cpp \
+    peak.cpp
 
 RESOURCES += \
     resources.qrc

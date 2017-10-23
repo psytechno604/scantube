@@ -70,6 +70,9 @@ QT_CHARTS_USE_NAMESPACE
 
 #include "measurement.h"
 #include "measurementmodel.h"
+
+
+class Peak;
 /*
 QVector
 typedef std::vector<double> vectord;
@@ -161,9 +164,22 @@ public slots:
     Q_INVOKABLE void setSeries(QAbstractSeries *series, int i);
     Q_INVOKABLE void setDistanceSeries(QAbstractSeries *series, int i);
 
-    Q_INVOKABLE double getScanValue(int e, int i, bool use_0 = false, bool use_abs = false);
+    Q_INVOKABLE double getScanValue(QVector<double> *data, QVector<double> *data0, int i, bool use_abs);
 
     Q_INVOKABLE void textChanged(QString text);
+
+    Q_INVOKABLE QString getReceiverName(int index);
+
+    Q_INVOKABLE QString getIP(int index);
+    Q_INVOKABLE QString getEmitter(int index);
+    Q_INVOKABLE QString getRow(int index);
+
+    Q_INVOKABLE QString getIP();
+    Q_INVOKABLE QString getEmitter();
+    Q_INVOKABLE QString getRow();
+
+    Q_INVOKABLE void setUnitIndex(int index);
+    Q_INVOKABLE void copyToHistory();
     //Q_INVOKABLE void newScan();
 private:
     double fc{1e+9};
@@ -171,7 +187,7 @@ private:
     unsigned short ford {8};
     double Td {1e-9};
 
-    int findMaxLess(int e, double cutoff, int margin_left, int margin_right, bool use_stat = false);
+    void findMaxLess(QVector<double> *data, QVector<double>  *stat_data, QVector<Peak> *peak_data, int margin_left, int margin_right);
     QVector<QAbstractSeries*> series {nullptr};
     QVector<QAbstractSeries*> distanceSeries {nullptr};
     QVector<QAbstractSeries *> allWaveformsSeries;
@@ -185,8 +201,12 @@ private:
     int currentUnitIndex {0};
     QString ipNum {"1"}, emitterNum {"0"}, rowNum {"0"};
 
-    QVector<QVector<QVector<unsigned short>>> history_scan_data;
-    int history_depth {8};
+    QVector<QVector<QVector<double>>> history_scan_data;
+    int history_index {0};
+    void increaseHistoryIndex();
+    bool has_data {false};
+
+    int history_depth {100};
 
     //QVector<QMap<int, QVector<unsigned short>>> full_scan_data;
 
@@ -200,10 +220,14 @@ private:
 
     QVector<QVector<double>> *current_set {nullptr};
     QVector<QVector<double>> *current_set_0 {nullptr};
+    QVector<QVector<double>> *current_max_index_stat {nullptr};
 
 
     int max_change {2000};
     QVector<double> last_good_value;
+
+    QVector<QVector<Peak>> peak_data;
+    QVector<QVector<Peak>> *current_peak_data{nullptr};
 
     QVector<QVector<double>> distance_data;
     QVector<QVector<double>> distance_data_0;

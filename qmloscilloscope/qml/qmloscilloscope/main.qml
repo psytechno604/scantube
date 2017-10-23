@@ -38,9 +38,9 @@ import QtQuick.Layouts 1.3
 import QtCharts 2.2
 import QtDataVisualization 1.2
 
-//import Qt3D.Core 2.0
-//import Qt3D.Render 2.0
-//import QtQuick.Scene3D 2.0
+import Qt3D.Core 2.0
+import Qt3D.Render 2.0
+import QtQuick.Scene3D 2.0
 
 import com.example.Timeline3D 1.0
 
@@ -486,8 +486,10 @@ Item {
                 onClicked: {
                    //dataSource.updateAllWaveforms(series_0_0, 0);
                     //dataSource.updateAllWaveforms(series_0_1, 1);
+                    timeline_3d_unit.addScan();
                     dataSource.calcDistances();
                     updateSingleWaveform();
+                    dataSource.updateSurface3D(surfaceSeries);
                 }
             }
 
@@ -616,14 +618,16 @@ Item {
                                     ComboBox {
                                         id: comboBox_selectIP
                                         model: ["1", "2", "3", "4"]
+                                        currentIndex: model.indexOf(dataSource.getIP())
                                         onActivated: {
                                             dataSource.selectIP(currentText);
                                             updateSingleWaveform();
                                         }
                                     }
                                     ComboBox {
-                                        id: comboBox_selectEmitter
+                                        id: comboBox_selectEmitter                                        
                                         model: ["0", "1", "2", "3", "4", "5", "6", "7"]
+                                        currentIndex: model.indexOf(dataSource.getEmitter())
                                         onActivated: {
                                             dataSource.selectEmitter(currentText);
                                             updateSingleWaveform();
@@ -632,6 +636,7 @@ Item {
                                     ComboBox {
                                         id: comboBox_selectRow
                                         model: ["0", "1"]
+                                        currentIndex: model.indexOf(dataSource.getRow())
                                         onActivated: {
                                             dataSource.selectRow(currentText);
                                             updateSingleWaveform();
@@ -791,16 +796,17 @@ Item {
                                         min: 0
                                         max: 32
                                         tickCount: 33
-                                        labelsVisible: false;
+                                        labelsVisible: true;
                                     }
 
                                     ValueAxis {
                                         id: axisRadial_1_0
-                                        min: 0
+                                        min: -500
                                         max: 2500
-                                        labelsVisible: false;
+                                        labelsVisible: true;
+                                        tickCount: 7
                                     }
-                                    SplineSeries {
+                                    ScatterSeries {
                                         name: "1st"
                                         id: series_1_0
                                         axisAngular: axisAngular_1_0
@@ -808,63 +814,63 @@ Item {
                                         pointsVisible: true
                                         pointLabelsVisible: false
 
-                                        width: 2
+
                                         color: "red"
                                         opacity: 0.5
                                     }
-                                    SplineSeries {
+                                    ScatterSeries {
                                         name: "2nd"
                                         id: series_1_1
                                         axisAngular: axisAngular_1_0
                                         axisRadial: axisRadial_1_0
                                         pointsVisible: true
                                         pointLabelsVisible: false
-                                        width: 2
+
                                         color: "red"
                                         opacity: 0.25
                                     }
-                                    SplineSeries {
+                                    ScatterSeries {
                                         name: "3rd"
                                         id: series_1_2
                                         axisAngular: axisAngular_1_0
                                         axisRadial: axisRadial_1_0
                                         pointsVisible: true
                                         pointLabelsVisible: false
-                                        width: 2
+
                                         color: "red"
                                         opacity: 0.15
                                     }
 
-                                    SplineSeries {
+                                    ScatterSeries {
                                         name: "1st"
                                         id: series_1_3
                                         axisAngular: axisAngular_1_0
                                         axisRadial: axisRadial_1_0
                                         pointsVisible: true
                                         pointLabelsVisible: false
-                                        width: 2
+
                                         color: "blue"
                                         opacity: 0.5
                                     }
-                                    SplineSeries {
+                                    ScatterSeries {
                                         name: "2nd"
                                         id: series_1_4
                                         axisAngular: axisAngular_1_0
                                         axisRadial: axisRadial_1_0
                                         pointsVisible: true
                                         pointLabelsVisible: false
-                                        width: 2
+
                                         color: "blue"
                                         opacity: 0.25
                                     }
-                                    SplineSeries {
+                                    ScatterSeries {
                                         name: "3rd"
                                         id: series_1_5
                                         axisAngular: axisAngular_1_0
                                         axisRadial: axisRadial_1_0
                                         pointsVisible: true
                                         pointLabelsVisible: false
-                                        width: 2
+
                                         color: "blue"
                                         opacity: 0.15
                                     }
@@ -894,9 +900,17 @@ Item {
 
                         Item {
                             id: timeline_3d
-                            anchors.fill: parent
+                            width: parent.width
+                            height: parent.height
 
+                            Scene3D {
+                                anchors.fill: parent
+                                focus: true
 
+                                Timeline3D {
+                                    id: timeline_3d_unit
+                                }
+                            }
 
                         }
                         Item {
@@ -906,20 +920,20 @@ Item {
                             Surface3D {
                                 id: timeline_3d_surface_object
                                 anchors.fill: parent
-                                //                                 axisX.min: 0.0
-                                //                            axisX.max: 100.0
-                                //                            axisX.title: "Scan"
-                                //                            axisX.titleVisible: true
+                                                                 axisX.min: 0.0
+                                                            axisX.max: 100.0
+                                                            axisX.title: "Scan"
+                                                            axisX.titleVisible: true
 
-                                //                            axisZ.min: 0.0
-                                //                            axisZ.max: 727.0
-                                //                            axisZ.title: "Distance"
-                                //                            axisZ.titleVisible: true
+                                                            axisZ.min: 0.0
+                                                            axisZ.max: 727.0
+                                                            axisZ.title: "Distance"
+                                                            axisZ.titleVisible: true
 
-                                //                            axisY.min: -1024
-                                //                            axisY.max: 1024
-                                //                            axisY.title: "Signal level"
-                                //                            axisY.titleVisible: true
+                                                            axisY.min: -1024
+                                                            axisY.max: 1024
+                                                            axisY.title: "Signal level"
+                                                            axisY.titleVisible: true
 
                                 horizontalAspectRatio: 2
 
@@ -943,8 +957,8 @@ Item {
 
                                 Component.onCompleted: {
                                     dataSource.updateSurface3D(surfaceSeries);
-                                    dataSource.setAllWaveformsSeries(series_0_0, 0);
-                                    dataSource.setAllWaveformsSeries(series_0_1, 1);
+                                    //dataSource.setAllWaveformsSeries(series_0_0, 0);
+                                    //dataSource.setAllWaveformsSeries(series_0_1, 1);
 
                                 }
                             }
@@ -1414,838 +1428,403 @@ Item {
         visible: false
         z: 100
 
-        Button {
-            id: btn100
-            text: qsTr("100")
-            width: 40
-            height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.8 * parent.width/2, 20)
-            y: getBtnY(parent.height/2 - height/2, 0.8 * parent.height/2, 20)
-            onClicked: {
-                buttonOnCircleClicked("1", "0", "0");
-            }
-        }
-        Button {
-            id: btn200
-            text: qsTr("200")
-            width: 40
-            height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.8 * parent.width/2, 21)
-            y: getBtnY(parent.height/2 - height/2, 0.8 * parent.height/2, 21)
-            onClicked: {
-                buttonOnCircleClicked("2", "0", "0");
-            }
-        }
-        Button {
-            id: btn300
-            text: qsTr("300")
-            width: 40
-            height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.8 * parent.width/2, 22)
-            y: getBtnY(parent.height/2 - height/2, 0.8 * parent.height/2, 22)
-            onClicked: {
-                buttonOnCircleClicked("3", "0", "0");
-            }
-        }
-        Button {
-            id: btn400
-            text: qsTr("400")
-            width: 40
-            height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.8 * parent.width/2, 23)
-            y: getBtnY(parent.height/2 - height/2, 0.8 * parent.height/2, 23)
-            onClicked: {
-                buttonOnCircleClicked("4", "0", "0");
-            }
-        }
-        Button {
-            id: btn101
-            text: qsTr("101")
-            width: 40
-            height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.8 * parent.width/2, 24)
-            y: getBtnY(parent.height/2 - height/2, 0.8 * parent.height/2, 24)
-            onClicked: {
-                buttonOnCircleClicked("1", "0", "1");
-            }
-        }
-        Button {
-            id: btn201
-            text: qsTr("201")
-            width: 40
-            height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.8 * parent.width/2, 25)
-            y: getBtnY(parent.height/2 - height/2, 0.8 * parent.height/2, 25)
-            onClicked: {
-                buttonOnCircleClicked("2", "0", "1");
-            }
-        }
-        Button {
-            id: btn301
-            text: qsTr("301")
-            width: 40
-            height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.8 * parent.width/2, 26)
-            y: getBtnY(parent.height/2 - height/2, 0.8 * parent.height/2, 26)
-            onClicked: {
-                buttonOnCircleClicked("3", "0", "1");
-            }
-        }
-        Button {
-            id: btn401
-            text: qsTr("401")
-            width: 40
-            height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.8 * parent.width/2, 27)
-            y: getBtnY(parent.height/2 - height/2, 0.8 * parent.height/2, 27)
-            onClicked: {
-                buttonOnCircleClicked("4", "0", "1");
-            }
-        }
 
-
-
-
-        Button {
-            id: btn120
-            text: qsTr("120")
-            width: 40
-            height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.8 * parent.width/2, 28)
-            y: getBtnY(parent.height/2 - height/2, 0.8 * parent.height/2, 28)
+        STReceiverWidget {
+            unitIndex: 0
             onClicked: {
-                buttonOnCircleClicked("1", "2", "0");
-            }
-            background: Rectangle {
-                color: parent.down ? "#808080" : "#a0a0a0"
+                buttonOnCircleClicked(unitIndex)
             }
         }
-        Button {
-            id: btn220
-            text: qsTr("220")
-            width: 40
-            height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.8 * parent.width/2, 29)
-            y: getBtnY(parent.height/2 - height/2, 0.8 * parent.height/2, 29)
+        STReceiverWidget {
+            unitIndex: 1
             onClicked: {
-                buttonOnCircleClicked("2", "2", "0");
-            }
-            background: Rectangle {
-                color: parent.down ? "#808080" : "#a0a0a0"
+                buttonOnCircleClicked(unitIndex)
             }
         }
-        Button {
-            id: btn320
-            text: qsTr("320")
-            width: 40
-            height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.8 * parent.width/2, 30)
-            y: getBtnY(parent.height/2 - height/2, 0.8 * parent.height/2, 30)
+        STReceiverWidget {
+            unitIndex: 2
             onClicked: {
-                buttonOnCircleClicked("3", "2", "0");
-            }
-            background: Rectangle {
-                color: parent.down ? "#808080" : "#a0a0a0"
+                buttonOnCircleClicked(unitIndex)
             }
         }
-        Button {
-            id: btn420
-            text: qsTr("420")
-            width: 40
-            height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.8 * parent.width/2, 31)
-            y: getBtnY(parent.height/2 - height/2, 0.8 * parent.height/2, 31)
+        STReceiverWidget {
+            unitIndex: 3
             onClicked: {
-                buttonOnCircleClicked("4", "2", "0");
-            }
-            background: Rectangle {
-                color: parent.down ? "#808080" : "#a0a0a0"
+                buttonOnCircleClicked(unitIndex)
             }
         }
-        Button {
-            id: btn121
-            text: qsTr("121")
-            width: 40
-            height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.8 * parent.width/2, 0)
-            y: getBtnY(parent.height/2 - height/2, 0.8 * parent.height/2, 0)
+        STReceiverWidget {
+            unitIndex: 4
             onClicked: {
-                buttonOnCircleClicked("1", "2", "1");
-            }
-            background: Rectangle {
-                color: parent.down ? "#808080" : "#a0a0a0"
+                buttonOnCircleClicked(unitIndex)
             }
         }
-        Button {
-            id: btn221
-            text: qsTr("221")
-            width: 40
-            height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.8 * parent.width/2, 1)
-            y: getBtnY(parent.height/2 - height/2, 0.8 * parent.height/2, 1)
+        STReceiverWidget {
+            unitIndex: 5
             onClicked: {
-                buttonOnCircleClicked("2", "2", "1");
-            }
-            background: Rectangle {
-                color: parent.down ? "#808080" : "#a0a0a0"
+                buttonOnCircleClicked(unitIndex)
             }
         }
-        Button {
-            id: btn321
-            text: qsTr("321")
-            width: 40
-            height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.8 * parent.width/2, 2)
-            y: getBtnY(parent.height/2 - height/2, 0.8 * parent.height/2, 2)
+        STReceiverWidget {
+            unitIndex: 6
             onClicked: {
-                buttonOnCircleClicked("3", "2", "1");
-            }
-            background: Rectangle {
-                color: parent.down ? "#808080" : "#a0a0a0"
+                buttonOnCircleClicked(unitIndex)
             }
         }
-        Button {
-            id: btn421
-            text: qsTr("421")
-            width: 40
-            height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.8 * parent.width/2, 3)
-            y: getBtnY(parent.height/2 - height/2, 0.8 * parent.height/2, 3)
+        STReceiverWidget {
+            unitIndex: 7
             onClicked: {
-                buttonOnCircleClicked("4", "2", "1");
-            }
-            background: Rectangle {
-                color: parent.down ? "#808080" : "#a0a0a0"
+                buttonOnCircleClicked(unitIndex)
             }
         }
-
-
-        Button {
-            id: btn140
-            text: qsTr("140")
-            width: 40
-            height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.8 * parent.width/2, 4)
-            y: getBtnY(parent.height/2 - height/2, 0.8 * parent.height/2, 4)
+        STReceiverWidget {
+            unitIndex: 8
             onClicked: {
-                buttonOnCircleClicked("1", "4", "0");
+                buttonOnCircleClicked(unitIndex)
             }
         }
-        Button {
-            id: btn240
-            text: qsTr("240")
-            width: 40
-            height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.8 * parent.width/2, 5)
-            y: getBtnY(parent.height/2 - height/2, 0.8 * parent.height/2, 5)
+        STReceiverWidget {
+            unitIndex: 9
             onClicked: {
-                buttonOnCircleClicked("2", "4", "0");
+                buttonOnCircleClicked(unitIndex)
             }
         }
-        Button {
-            id: btn340
-            text: qsTr("340")
-            width: 40
-            height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.8 * parent.width/2, 6)
-            y: getBtnY(parent.height/2 - height/2, 0.8 * parent.height/2, 6)
+        STReceiverWidget {
+            unitIndex: 10
             onClicked: {
-                buttonOnCircleClicked("3", "4", "0");
+                buttonOnCircleClicked(unitIndex)
             }
         }
-        Button {
-            id: btn440
-            text: qsTr("440")
-            width: 40
-            height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.8 * parent.width/2, 7)
-            y: getBtnY(parent.height/2 - height/2, 0.8 * parent.height/2, 7)
+        STReceiverWidget {
+            unitIndex: 11
             onClicked: {
-                buttonOnCircleClicked("4", "4", "0");
+                buttonOnCircleClicked(unitIndex)
             }
         }
-        Button {
-            id: btn141
-            text: qsTr("141")
-            width: 40
-            height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.8 * parent.width/2, 8)
-            y: getBtnY(parent.height/2 - height/2, 0.8 * parent.height/2, 8)
+        STReceiverWidget {
+            unitIndex: 12
             onClicked: {
-                buttonOnCircleClicked("1", "4", "1");
+                buttonOnCircleClicked(unitIndex)
             }
         }
-        Button {
-            id: btn241
-            text: qsTr("241")
-            width: 40
-            height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.8 * parent.width/2, 9)
-            y: getBtnY(parent.height/2 - height/2, 0.8 * parent.height/2, 9)
+        STReceiverWidget {
+            unitIndex: 13
             onClicked: {
-                buttonOnCircleClicked("2", "4", "1");
+                buttonOnCircleClicked(unitIndex)
             }
         }
-        Button {
-            id: btn341
-            text: qsTr("341")
-            width: 40
-            height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.8 * parent.width/2, 10)
-            y: getBtnY(parent.height/2 - height/2, 0.8 * parent.height/2, 10)
+        STReceiverWidget {
+            unitIndex: 14
             onClicked: {
-                buttonOnCircleClicked("3", "4", "1");
+                buttonOnCircleClicked(unitIndex)
             }
         }
-        Button {
-            id: btn441
-            text: qsTr("441")
-            width: 40
-            height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.8 * parent.width/2, 11)
-            y: getBtnY(parent.height/2 - height/2, 0.8 * parent.height/2, 11)
+        STReceiverWidget {
+            unitIndex: 15
             onClicked: {
-                buttonOnCircleClicked("4", "4", "1");
+                buttonOnCircleClicked(unitIndex)
             }
         }
-
-
-        Button {
-            id: btn160
-            text: qsTr("160")
-            width: 40
-            height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.8 * parent.width/2, 12)
-            y: getBtnY(parent.height/2 - height/2, 0.8 * parent.height/2, 12)
+        STReceiverWidget {
+            unitIndex: 16
             onClicked: {
-                buttonOnCircleClicked("1", "6", "0");
-            }
-            background: Rectangle {
-                color: parent.down ? "#808080" : "#a0a0a0"
+                buttonOnCircleClicked(unitIndex)
             }
         }
-        Button {
-            id: btn260
-            text: qsTr("260")
-            width: 40
-            height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.8 * parent.width/2, 13)
-            y: getBtnY(parent.height/2 - height/2, 0.8 * parent.height/2, 13)
+        STReceiverWidget {
+            unitIndex: 17
             onClicked: {
-                buttonOnCircleClicked("2", "6", "0");
-            }
-            background: Rectangle {
-                color: parent.down ? "#808080" : "#a0a0a0"
+                buttonOnCircleClicked(unitIndex)
             }
         }
-        Button {
-            id: btn360
-            text: qsTr("360")
-            width: 40
-            height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.8 * parent.width/2, 14)
-            y: getBtnY(parent.height/2 - height/2, 0.8 * parent.height/2, 14)
+        STReceiverWidget {
+            unitIndex: 18
             onClicked: {
-                buttonOnCircleClicked("3", "6", "0");
-            }
-            background: Rectangle {
-                color: parent.down ? "#808080" : "#a0a0a0"
+                buttonOnCircleClicked(unitIndex)
             }
         }
-        Button {
-            id: btn460
-            text: qsTr("460")
-            width: 40
-            height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.8 * parent.width/2, 15)
-            y: getBtnY(parent.height/2 - height/2, 0.8 * parent.height/2, 15)
+        STReceiverWidget {
+            unitIndex: 19
             onClicked: {
-                buttonOnCircleClicked("4", "6", "0");
-            }
-            background: Rectangle {
-                color: parent.down ? "#808080" : "#a0a0a0"
+                buttonOnCircleClicked(unitIndex)
             }
         }
-        Button {
-            id: btn161
-            text: qsTr("161")
-            width: 40
-            height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.8 * parent.width/2, 16)
-            y: getBtnY(parent.height/2 - height/2, 0.8 * parent.height/2, 16)
+        STReceiverWidget {
+            unitIndex: 20
             onClicked: {
-                buttonOnCircleClicked("1", "6", "1");
-            }
-            background: Rectangle {
-                color: parent.down ? "#808080" : "#a0a0a0"
+                buttonOnCircleClicked(unitIndex)
             }
         }
-        Button {
-            id: btn261
-            text: qsTr("261")
-            width: 40
-            height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.8 * parent.width/2, 17)
-            y: getBtnY(parent.height/2 - height/2, 0.8 * parent.height/2, 17)
+        STReceiverWidget {
+            unitIndex: 21
             onClicked: {
-                buttonOnCircleClicked("2", "6", "1");
-            }
-            background: Rectangle {
-                color: parent.down ? "#808080" : "#a0a0a0"
+                buttonOnCircleClicked(unitIndex)
             }
         }
-        Button {
-            id: btn361
-            text: qsTr("361")
-            width: 40
-            height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.8 * parent.width/2, 18)
-            y: getBtnY(parent.height/2 - height/2, 0.8 * parent.height/2, 18)
+        STReceiverWidget {
+            unitIndex: 22
             onClicked: {
-                buttonOnCircleClicked("3", "6", "1");
-            }
-            background: Rectangle {
-                color: parent.down ? "#808080" : "#a0a0a0"
+                buttonOnCircleClicked(unitIndex)
             }
         }
-        Button {
-            id: btn461
-            text: qsTr("461")
-            width: 40
-            height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.8 * parent.width/2, 19)
-            y: getBtnY(parent.height/2 - height/2, 0.8 * parent.height/2, 19)
+        STReceiverWidget {
+            unitIndex: 23
             onClicked: {
-                buttonOnCircleClicked("4", "6", "1");
-            }
-            background: Rectangle {
-                color: parent.down ? "#808080" : "#a0a0a0"
+                buttonOnCircleClicked(unitIndex)
             }
         }
-
-
-
-
-
-
-
-
-
-        Button {
-            id: btn110
-            text: qsTr("110")
-            width: 40
-            height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 28)
-            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 28)
+        STReceiverWidget {
+            unitIndex: 24
             onClicked: {
-                buttonOnCircleClicked("1", "1", "0");
+                buttonOnCircleClicked(unitIndex)
             }
         }
-        Button {
-            id: btn210
-            text: qsTr("210")
-            width: 40
-            height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 29)
-            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 29)
+        STReceiverWidget {
+            unitIndex: 25
             onClicked: {
-                buttonOnCircleClicked("2", "1", "0");
+                buttonOnCircleClicked(unitIndex)
             }
         }
-        Button {
-            id: btn310
-            text: qsTr("310")
-            width: 40
-            height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 30)
-            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 30)
+        STReceiverWidget {
+            unitIndex: 26
             onClicked: {
-                buttonOnCircleClicked("3", "1", "0");
+                buttonOnCircleClicked(unitIndex)
             }
         }
-        Button {
-            id: btn410
-            text: qsTr("410")
-            width: 40
-            height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 31)
-            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 31)
+        STReceiverWidget {
+            unitIndex: 27
             onClicked: {
-                buttonOnCircleClicked("4", "1", "0");
+                buttonOnCircleClicked(unitIndex)
             }
         }
-        Button {
-            id: btn111
-            text: qsTr("111")
-            width: 40
-            height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 24)
-            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 24)
+        STReceiverWidget {
+            unitIndex: 28
             onClicked: {
-                buttonOnCircleClicked("1", "1", "1");
+                buttonOnCircleClicked(unitIndex)
             }
         }
-        Button {
-            id: btn211
-            text: qsTr("211")
-            width: 40
-            height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 25)
-            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 25)
+        STReceiverWidget {
+            unitIndex: 29
             onClicked: {
-                buttonOnCircleClicked("2", "1", "1");
+                buttonOnCircleClicked(unitIndex)
             }
         }
-        Button {
-            id: btn311
-            text: qsTr("311")
-            width: 40
-            height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 26)
-            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 26)
+        STReceiverWidget {
+            unitIndex: 30
             onClicked: {
-                buttonOnCircleClicked("3", "1", "1");
+                buttonOnCircleClicked(unitIndex)
             }
         }
-        Button {
-            id: btn411
-            text: qsTr("411")
-            width: 40
-            height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 27)
-            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 27)
+        STReceiverWidget {
+            unitIndex: 31
             onClicked: {
-                buttonOnCircleClicked("4", "1", "1");
+                buttonOnCircleClicked(unitIndex)
             }
         }
-
-
-        Button {
-            id: btn130
-            text: qsTr("130")
-            width: 40
-            height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 4)
-            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 4)
+        STReceiverWidget {
+            unitIndex: 32
             onClicked: {
-                buttonOnCircleClicked("1", "3", "0");
-            }
-            background: Rectangle {
-                color: parent.down ? "#808080" : "#a0a0a0"
+                buttonOnCircleClicked(unitIndex)
             }
         }
-        Button {
-            id: btn230
-            text: qsTr("230")
-            width: 40
-            height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 5)
-            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 5)
+        STReceiverWidget {
+            unitIndex: 33
             onClicked: {
-                buttonOnCircleClicked("2", "3", "0");
-            }
-            background: Rectangle {
-                color: parent.down ? "#808080" : "#a0a0a0"
+                buttonOnCircleClicked(unitIndex)
             }
         }
-        Button {
-            id: btn330
-            text: qsTr("330")
-            width: 40
-            height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 6)
-            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 6)
+        STReceiverWidget {
+            unitIndex: 34
             onClicked: {
-                buttonOnCircleClicked("3", "3", "0");
-            }
-            background: Rectangle {
-                color: parent.down ? "#808080" : "#a0a0a0"
+                buttonOnCircleClicked(unitIndex)
             }
         }
-        Button {
-            id: btn430
-            text: qsTr("430")
-            width: 40
-            height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 7)
-            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 7)
+        STReceiverWidget {
+            unitIndex: 35
             onClicked: {
-                buttonOnCircleClicked("4", "3", "0");
-            }
-            background: Rectangle {
-                color: parent.down ? "#808080" : "#a0a0a0"
+                buttonOnCircleClicked(unitIndex)
             }
         }
-        Button {
-            id: btn131
-            text: qsTr("131")
-            width: 40
-            height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 0)
-            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 0)
+        STReceiverWidget {
+            unitIndex: 36
             onClicked: {
-                buttonOnCircleClicked("1", "3", "1");
-            }
-            background: Rectangle {
-                color: parent.down ? "#808080" : "#a0a0a0"
+                buttonOnCircleClicked(unitIndex)
             }
         }
-        Button {
-            id: btn231
-            text: qsTr("231")
-            width: 40
-            height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 1)
-            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 1)
+        STReceiverWidget {
+            unitIndex: 37
             onClicked: {
-                buttonOnCircleClicked("2", "3", "1");
-            }
-            background: Rectangle {
-                color: parent.down ? "#808080" : "#a0a0a0"
+                buttonOnCircleClicked(unitIndex)
             }
         }
-        Button {
-            id: btn331
-            text: qsTr("331")
-            width: 40
-            height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 2)
-            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 2)
+        STReceiverWidget {
+            unitIndex: 38
             onClicked: {
-                buttonOnCircleClicked("3", "3", "1");
-            }
-            background: Rectangle {
-                color: parent.down ? "#808080" : "#a0a0a0"
+                buttonOnCircleClicked(unitIndex)
             }
         }
-        Button {
-            id: btn431
-            text: qsTr("431")
-            width: 40
-            height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 3)
-            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 3)
+        STReceiverWidget {
+            unitIndex: 39
             onClicked: {
-                buttonOnCircleClicked("4", "3", "1");
-            }
-            background: Rectangle {
-                color: parent.down ? "#808080" : "#a0a0a0"
+                buttonOnCircleClicked(unitIndex)
             }
         }
-
-
-        Button {
-            id: btn150
-            text: qsTr("150")
-            width: 40
-            height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 15)
-            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 15)
+        STReceiverWidget {
+            unitIndex: 40
             onClicked: {
-                buttonOnCircleClicked("1", "5", "0");
+                buttonOnCircleClicked(unitIndex)
             }
         }
-        Button {
-            id: btn250
-            text: qsTr("250")
-            width: 40
-            height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 16)
-            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 16)
+        STReceiverWidget {
+            unitIndex: 41
             onClicked: {
-                buttonOnCircleClicked("2", "5", "0");
+                buttonOnCircleClicked(unitIndex)
             }
         }
-        Button {
-            id: btn350
-            text: qsTr("350")
-            width: 40
-            height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 17)
-            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 17)
+        STReceiverWidget {
+            unitIndex: 42
             onClicked: {
-                buttonOnCircleClicked("3", "5", "0");
+                buttonOnCircleClicked(unitIndex)
             }
         }
-        Button {
-            id: btn450
-            text: qsTr("450")
-            width: 40
-            height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 18)
-            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 18)
+        STReceiverWidget {
+            unitIndex: 43
             onClicked: {
-                buttonOnCircleClicked("4", "5", "0");
+                buttonOnCircleClicked(unitIndex)
             }
         }
-        Button {
-            id: btn151
-            text: qsTr("151")
-            width: 40
-            height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 8)
-            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 8)
+        STReceiverWidget {
+            unitIndex: 44
             onClicked: {
-                buttonOnCircleClicked("1", "5", "1");
+                buttonOnCircleClicked(unitIndex)
             }
         }
-        Button {
-            id: btn251
-            text: qsTr("251")
-            width: 40
-            height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 9)
-            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 9)
+        STReceiverWidget {
+            unitIndex: 45
             onClicked: {
-                buttonOnCircleClicked("2", "5", "1");
+                buttonOnCircleClicked(unitIndex)
             }
         }
-        Button {
-            id: btn351
-            text: qsTr("351")
-            width: 40
-            height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 10)
-            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 10)
+        STReceiverWidget {
+            unitIndex: 46
             onClicked: {
-                buttonOnCircleClicked("3", "5", "1");
+                buttonOnCircleClicked(unitIndex)
             }
         }
-        Button {
-            id: btn451
-            text: qsTr("451")
-            width: 40
-            height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 11)
-            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 11)
+        STReceiverWidget {
+            unitIndex: 47
             onClicked: {
-                buttonOnCircleClicked("4", "5", "1");
+                buttonOnCircleClicked(unitIndex)
             }
         }
-
-
-        Button {
-            id: btn170
-            text: qsTr("170")
-            width: 40
-            height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 20)
-            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 20)
+        STReceiverWidget {
+            unitIndex: 48
             onClicked: {
-                buttonOnCircleClicked("1", "7", "0");
-            }
-            background: Rectangle {
-                color: parent.down ? "#808080" : "#a0a0a0"
+                buttonOnCircleClicked(unitIndex)
             }
         }
-        Button {
-            id: btn270
-            text: qsTr("270")
-            width: 40
-            height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 21)
-            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 21)
+        STReceiverWidget {
+            unitIndex: 49
             onClicked: {
-                buttonOnCircleClicked("2", "7", "0");
-            }
-            background: Rectangle {
-                color: parent.down ? "#808080" : "#a0a0a0"
+                buttonOnCircleClicked(unitIndex)
             }
         }
-        Button {
-            id: btn370
-            text: qsTr("370")
-            width: 40
-            height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 22)
-            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 22)
+        STReceiverWidget {
+            unitIndex: 50
             onClicked: {
-                buttonOnCircleClicked("3", "7", "0");
-            }
-            background: Rectangle {
-                color: parent.down ? "#808080" : "#a0a0a0"
+                buttonOnCircleClicked(unitIndex)
             }
         }
-        Button {
-            id: btn470
-            text: qsTr("470")
-            width: 40
-            height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 23)
-            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 23)
+        STReceiverWidget {
+            unitIndex: 51
             onClicked: {
-                buttonOnCircleClicked("4", "7", "0");
-            }
-            background: Rectangle {
-                color: parent.down ? "#808080" : "#a0a0a0"
+                buttonOnCircleClicked(unitIndex)
             }
         }
-        Button {
-            id: btn171
-            text: qsTr("171")
-            width: 40
-            height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 16)
-            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 16)
+        STReceiverWidget {
+            unitIndex: 52
             onClicked: {
-                buttonOnCircleClicked("1", "7", "1");
-            }
-            background: Rectangle {
-                color: parent.down ? "#808080" : "#a0a0a0"
+                buttonOnCircleClicked(unitIndex)
             }
         }
-        Button {
-            id: btn271
-            text: qsTr("271")
-            width: 40
-            height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 17)
-            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 17)
+        STReceiverWidget {
+            unitIndex: 53
             onClicked: {
-                buttonOnCircleClicked("2", "7", "1");
-            }
-            background: Rectangle {
-                color: parent.down ? "#808080" : "#a0a0a0"
+                buttonOnCircleClicked(unitIndex)
             }
         }
-        Button {
-            id: btn371
-            text: qsTr("371")
-            width: 40
-            height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 18)
-            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 18)
+        STReceiverWidget {
+            unitIndex: 54
             onClicked: {
-                buttonOnCircleClicked("3", "7", "1");
-            }
-            background: Rectangle {
-                color: parent.down ? "#808080" : "#a0a0a0"
+                buttonOnCircleClicked(unitIndex)
             }
         }
-        Button {
-            id: btn471
-            text: qsTr("471")
-            width: 40
-            height: 40
-            x: getBtnX(parent.width/2 - width/2, 0.6 * parent.width/2, 19)
-            y: getBtnY(parent.height/2 - height/2, 0.6 * parent.height/2, 19)
+        STReceiverWidget {
+            unitIndex: 55
             onClicked: {
-                buttonOnCircleClicked("4", "7", "1");
+                buttonOnCircleClicked(unitIndex)
             }
-            background: Rectangle {
-                color: parent.down ? "#808080" : "#a0a0a0"
+        }
+        STReceiverWidget {
+            unitIndex: 56
+            onClicked: {
+                buttonOnCircleClicked(unitIndex)
+            }
+        }
+        STReceiverWidget {
+            unitIndex: 57
+            onClicked: {
+                buttonOnCircleClicked(unitIndex)
+            }
+        }
+        STReceiverWidget {
+            unitIndex: 58
+            onClicked: {
+                buttonOnCircleClicked(unitIndex)
+            }
+        }
+        STReceiverWidget {
+            unitIndex: 59
+            onClicked: {
+                buttonOnCircleClicked(unitIndex)
+            }
+        }
+        STReceiverWidget {
+            unitIndex: 60
+            onClicked: {
+                buttonOnCircleClicked(unitIndex)
+            }
+        }
+        STReceiverWidget {
+            unitIndex: 61
+            onClicked: {
+                buttonOnCircleClicked(unitIndex)
+            }
+        }
+        STReceiverWidget {
+            unitIndex: 62
+            onClicked: {
+                buttonOnCircleClicked(unitIndex)
+            }
+        }
+        STReceiverWidget {
+            unitIndex: 63
+            onClicked: {
+                buttonOnCircleClicked(unitIndex)
             }
         }
     }
-    function buttonOnCircleClicked(ip, emitter, row) {
+    function buttonOnCircleClicked(index) {
         rect_circleSelector.visible = false;
-        comboBox_selectIP.currentIndex = comboBox_selectIP.model.indexOf(ip);
-        dataSource.selectIP(ip);
-        comboBox_selectEmitter.currentIndex = comboBox_selectEmitter.model.indexOf(emitter);
-        dataSource.selectEmitter(emitter);
-        comboBox_selectRow.currentIndex = comboBox_selectRow.model.indexOf(row);
-        dataSource.selectRow(row);
+        dataSource.setUnitIndex(index);
+
+        comboBox_selectIP.currentIndex = comboBox_selectIP.model.indexOf(dataSource.getIP());
+        //dataSource.selectIP(ip);
+        comboBox_selectEmitter.currentIndex = comboBox_selectEmitter.model.indexOf(dataSource.getEmitter());
+        //dataSource.selectEmitter(emitter);
+        comboBox_selectRow.currentIndex = comboBox_selectRow.model.indexOf(dataSource.getRow());
+        //dataSource.selectRow(row);*/
+
         updateSingleWaveform();
     }
     function getBtnX(x0, R, N) {

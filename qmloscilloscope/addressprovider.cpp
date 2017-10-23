@@ -3326,3 +3326,19 @@ int AddressProvider::getReceiver(int unitIndex)
         return -1;
     }
 }
+
+int AddressProvider::getPseudoIndex(int unitTndex)
+{
+    try {
+        auto keys = pseudo_index_to_index_table.keys();
+        foreach(auto key, keys) {
+            if (pseudo_index_to_index_table[key] == unitTndex) {
+                return int(key);
+            }
+        }
+        return -1;
+    }
+    catch (...) {
+        return -1;
+    }
+}
