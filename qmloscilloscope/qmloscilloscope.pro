@@ -15,7 +15,8 @@ HEADERS += \
     measurement.h \
     timeline3d.h \
     addressprovider.h \
-    peak.h
+    peak.h \
+    measurementdetails.h
 
 SOURCES += \
     main.cpp \
@@ -31,7 +32,8 @@ SOURCES += \
     measurement.cpp \
     timeline3d.cpp \
     addressprovider.cpp \
-    peak.cpp
+    peak.cpp \
+    measurementdetails.cpp
 
 RESOURCES += \
     resources.qrc

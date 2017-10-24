@@ -345,7 +345,7 @@ Item {
                 y: 438
                 width: 62
                 height: 40
-                text: qsTr("")
+                text: qsTr("0")
                 selectByMouse: true
                 MouseArea {
                     anchors.leftMargin: 0
@@ -357,7 +357,7 @@ Item {
                     anchors.fill: parent
                 }
                 onTextChanged: {
-                    dataSource.showByIndex(text*1.0);
+                    main.textChanged("zeroIndex=" + text);
                 }
             }
 
@@ -501,10 +501,13 @@ Item {
                 y: 336
                 width: 45
                 height: 40
-                text: qsTr("Reset")
+                text: qsTr("Save")
                 checked: false
                 checkable: false
                 font.pointSize: 8
+                onClicked: {
+                    main.textChanged("Save history");
+                }
             }
 
 
@@ -583,387 +586,408 @@ Item {
                 Column {
                     width: parent.width
                     height: parent.height
-                    TabBar {
-                        id: tabBar
-                        width: parent.width
-                        currentIndex: 0
-                        TabButton {
-                            text: qsTr("Single waveform")
-                        }
-                        TabButton {
-                            text: qsTr("All waveforms")
-                        }
-                        TabButton {
-                            text: qsTr("Distances diagram")
-                        }
-                        TabButton {
-                            text: qsTr("Timeline 3D")
-                        }
-                        TabButton {
-                            text: qsTr("Timeline 3D Surface")
-                        }
-                    }
-                    StackLayout {
-                        width: parent.width
-                        height: parent.height - tabBar.height
-                        currentIndex: tabBar.currentIndex
-                        Item {
-                            id: single_waveform_tab
+
+                    //SL
+                    Column {
+                        anchors.fill: parent
+                        TabBar {
+                            id: tabBar
                             width: parent.width
-                            height: parent.height
-                            Column {
-                                anchors.fill: parent
+                            currentIndex: 0
+                            TabButton {
+                                text: qsTr("Single waveform")
+                            }
+                            TabButton {
+                                text: qsTr("All waveforms")
+                            }
+                            TabButton {
+                                text: qsTr("Distances diagram")
+                            }
+                            TabButton {
+                                text: qsTr("Timeline 3D")
+                            }
+                            TabButton {
+                                text: qsTr("Timeline 3D Surface")
+                            }
+                        }
+                        Row {
+                            id: row_selectReceiver
+                            ComboBox {
+                                id: comboBox_selectIP
+                                model: ["1", "2", "3", "4"]
+                                currentIndex: model.indexOf(dataSource.getIP())
+                                onActivated: {
+                                    dataSource.selectIP(currentText);
+                                    updateSingleWaveform();
+                                }
+                            }
+                            ComboBox {
+                                id: comboBox_selectEmitter
+                                model: ["0", "1", "2", "3", "4", "5", "6", "7"]
+                                currentIndex: model.indexOf(dataSource.getEmitter())
+                                onActivated: {
+                                    dataSource.selectEmitter(currentText);
+                                    updateSingleWaveform();
+                                }
+                            }
+                            ComboBox {
+                                id: comboBox_selectRow
+                                model: ["0", "1"]
+                                currentIndex: model.indexOf(dataSource.getRow())
+                                onActivated: {
+                                    dataSource.selectRow(currentText);
+                                    updateSingleWaveform();
+                                }
+                            }
+                            Button {
+                                id: button_selectOnCircle
+                                text: qsTr("Select...")
+                                onClicked: {
+                                    rect_circleSelector.visible = true;
+                                }
+                            }
+
+                            Text {
+                                id: single_waveform_distance
+                                text: qsTr("---")
+                                font.pixelSize: 12
+                                color: "white"
+
+                            }
+                            Timer {
+                                id: refreshTimer
+                                interval: 1 / 60 * 1000 // 60 Hz
+                                running: true
+                                repeat: true
+                                onTriggered: {
+                                    setSingleWaveformDistanceText(dataSource.getCurrentDistance());
+                                }
+                            }
+                        }
+                        StackLayout {
+                            width: parent.width
+                            height: parent.height - tabBar.height
+                            currentIndex: tabBar.currentIndex
+                            Item {
+                                id: single_waveform_tab
+                                width: parent.width
+                                height: parent.height
+                                Column {
+                                    anchors.fill: parent
+
+                                    ScopeView {
+                                        id: scopeView
+
+
+                                        width: parent.width
+                                        height: parent.height - row_selectReceiver.height
+                                        onOpenGLSupportedChanged: {
+                                            if (!openGLSupported) {
+                                                controlPanel.openGLButton.enabled = false
+                                                controlPanel.openGLButton.currentSelection = 0
+                                            }
+                                        }
+                                        MouseArea {
+                                            z: -1
+                                            anchors.fill: parent
+                                            acceptedButtons: Qt.LeftButton | Qt.RightButton
+                                            onPressed: {
+                                                console.log("onPressed")
+                                                if (mouse.button == Qt.LeftButton)
+                                                {
+                                                    console.log("Left", width, height, parent.yMax, parent.yMin)
+                                                    _interfaceHelper.ScopeView_LB = 1;
+                                                }
+                                                else if (mouse.button == Qt.RightButton)
+                                                {
+                                                    console.log("Right")
+                                                    _interfaceHelper.ScopeView_RB = 1;
+                                                }
+                                                _interfaceHelper.ScopeView_x0 = mouseX;
+                                                _interfaceHelper.ScopeView_ymax0 = parent.yMax;
+                                                _interfaceHelper.ScopeView_ymin0 = parent.yMin;
+                                                _interfaceHelper.ScopeView_y2max0 = parent.y2Max;
+                                                _interfaceHelper.ScopeView_y2min0 = parent.y2Min;
+                                                _interfaceHelper.ScopeView_y0 = mouseY;
+
+                                                _interfaceHelper.ScopeView_axisNum = (mouseX < width/2)?0:1;
+                                            }
+                                            onPositionChanged: {
+                                                if (_interfaceHelper.ScopeView_RB){
+
+                                                    var k = (mouseY - _interfaceHelper.ScopeView_y0) / height;
+                                                    //if (_interfaceHelper.ScopeView_axisNum == 0)    {
+                                                    parent.yMax = _interfaceHelper.ScopeView_ymax0 * (1 + k);
+                                                    parent.yMin = _interfaceHelper.ScopeView_ymin0 * (1 + k);
+                                                    //}
+                                                    //if (_interfaceHelper.ScopeView_axisNum == 1)    {
+                                                    parent.y2Max = _interfaceHelper.ScopeView_y2max0 * (1 + k);
+                                                    parent.y2Min = _interfaceHelper.ScopeView_y2min0 * (1 + k);
+                                                    //}
+                                                    console.log (mouseX, mouseY);
+                                                }
+
+                                            }
+                                            onReleased: {
+                                                console.log("onReleased")
+                                                if (mouse.button == Qt.LeftButton)
+                                                {
+                                                    console.log("Left")
+                                                    _interfaceHelper.ScopeView_LB = 0;
+                                                }
+                                                else if (mouse.button == Qt.RightButton)
+                                                {
+                                                    console.log("Right")
+                                                    _interfaceHelper.ScopeView_RB = 0;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            Item {
+                                id: all_waveforms
+                                width: parent.width
+                                height: parent.height
                                 Row {
-                                    id: row_selectReceiver
-                                    ComboBox {
-                                        id: comboBox_selectIP
-                                        model: ["1", "2", "3", "4"]
-                                        currentIndex: model.indexOf(dataSource.getIP())
-                                        onActivated: {
-                                            dataSource.selectIP(currentText);
-                                            updateSingleWaveform();
-                                        }
-                                    }
-                                    ComboBox {
-                                        id: comboBox_selectEmitter                                        
-                                        model: ["0", "1", "2", "3", "4", "5", "6", "7"]
-                                        currentIndex: model.indexOf(dataSource.getEmitter())
-                                        onActivated: {
-                                            dataSource.selectEmitter(currentText);
-                                            updateSingleWaveform();
-                                        }
-                                    }
-                                    ComboBox {
-                                        id: comboBox_selectRow
-                                        model: ["0", "1"]
-                                        currentIndex: model.indexOf(dataSource.getRow())
-                                        onActivated: {
-                                            dataSource.selectRow(currentText);
-                                            updateSingleWaveform();
-                                        }
-                                    }
-                                    Button {
-                                        id: button_selectOnCircle
-                                        text: qsTr("Select...")
-                                        onClicked: {
-                                            rect_circleSelector.visible = true;
-                                        }
-                                    }
-
-                                    Text {
-                                        id: single_waveform_distance
-                                        text: qsTr("---")
-                                        font.pixelSize: 12
-                                        color: "white"
-
-                                    }
-                                    Timer {
-                                        id: refreshTimer
-                                        interval: 1 / 60 * 1000 // 60 Hz
-                                        running: true
-                                        repeat: true
-                                        onTriggered: {
-                                            setSingleWaveformDistanceText(dataSource.getCurrentDistance());
-                                        }
-                                    }
-                                }
-                                ScopeView {
-                                    id: scopeView
-
-
                                     width: parent.width
-                                    height: parent.height - row_selectReceiver.height
-                                    onOpenGLSupportedChanged: {
-                                        if (!openGLSupported) {
-                                            controlPanel.openGLButton.enabled = false
-                                            controlPanel.openGLButton.currentSelection = 0
+                                    height: parent.height
+                                    PolarChartView {
+                                        height: parent.height
+                                        width: parent.width / 2
+                                        antialiasing: true
+                                        ValueAxis {
+                                            id: axisAngular_0_0
+                                            min: 0
+                                            max: 32 * 20
+                                            tickCount: 33
+                                            labelsVisible: false;
+                                        }
+
+                                        ValueAxis {
+                                            id: axisRadial_0_0
+                                            min: 0
+                                            max: 2500
+                                            labelsVisible: false;
+                                        }
+                                        SplineSeries {
+                                            name: "Set 0"
+                                            id: series_0_0
+                                            axisAngular: axisAngular_0_0
+                                            axisRadial: axisRadial_0_0
+                                            pointsVisible: false
+                                            pointLabelsVisible: false
+                                            width: 2
+                                            color: "red"
+                                            onPointsReplaced: {
+
+                                            }
+                                        }
+
+                                        SplineSeries {
+                                            name: "Set 1"
+                                            id: series_0_1
+                                            axisAngular: axisAngular_0_0
+                                            axisRadial: axisRadial_0_0
+                                            pointsVisible: false
+                                            pointLabelsVisible: false
+                                            width: 2
+                                            color: "blue"
                                         }
                                     }
-                                    MouseArea {
-                                        z: -1
-                                        anchors.fill: parent
-                                        acceptedButtons: Qt.LeftButton | Qt.RightButton
-                                        onPressed: {
-                                            console.log("onPressed")
-                                            if (mouse.button == Qt.LeftButton)
-                                            {
-                                                console.log("Left", width, height, parent.yMax, parent.yMin)
-                                                _interfaceHelper.ScopeView_LB = 1;
-                                            }
-                                            else if (mouse.button == Qt.RightButton)
-                                            {
-                                                console.log("Right")
-                                                _interfaceHelper.ScopeView_RB = 1;
-                                            }
-                                            _interfaceHelper.ScopeView_x0 = mouseX;
-                                            _interfaceHelper.ScopeView_ymax0 = parent.yMax;
-                                            _interfaceHelper.ScopeView_ymin0 = parent.yMin;
-                                            _interfaceHelper.ScopeView_y2max0 = parent.y2Max;
-                                            _interfaceHelper.ScopeView_y2min0 = parent.y2Min;
-                                            _interfaceHelper.ScopeView_y0 = mouseY;
-
-                                            _interfaceHelper.ScopeView_axisNum = (mouseX < width/2)?0:1;
+                                    PolarChartView {
+                                        height: parent.height
+                                        width: parent.width / 2
+                                        antialiasing: true
+                                        ValueAxis {
+                                            id: axisAngular_1_0
+                                            min: 0
+                                            max: 32
+                                            tickCount: 33
+                                            labelsVisible: true;
                                         }
-                                        onPositionChanged: {
-                                            if (_interfaceHelper.ScopeView_RB){
 
-                                                var k = (mouseY - _interfaceHelper.ScopeView_y0) / height;
-                                                //if (_interfaceHelper.ScopeView_axisNum == 0)    {
-                                                parent.yMax = _interfaceHelper.ScopeView_ymax0 * (1 + k);
-                                                parent.yMin = _interfaceHelper.ScopeView_ymin0 * (1 + k);
-                                                //}
-                                                //if (_interfaceHelper.ScopeView_axisNum == 1)    {
-                                                parent.y2Max = _interfaceHelper.ScopeView_y2max0 * (1 + k);
-                                                parent.y2Min = _interfaceHelper.ScopeView_y2min0 * (1 + k);
-                                                //}
-                                                console.log (mouseX, mouseY);
-                                            }
-
+                                        ValueAxis {
+                                            id: axisRadial_1_0
+                                            min: -500
+                                            max: 2500
+                                            labelsVisible: true;
+                                            tickCount: 7
                                         }
-                                        onReleased: {
-                                            console.log("onReleased")
-                                            if (mouse.button == Qt.LeftButton)
-                                            {
-                                                console.log("Left")
-                                                _interfaceHelper.ScopeView_LB = 0;
-                                            }
-                                            else if (mouse.button == Qt.RightButton)
-                                            {
-                                                console.log("Right")
-                                                _interfaceHelper.ScopeView_RB = 0;
-                                            }
+                                        ScatterSeries {
+                                            name: "1st"
+                                            id: series_1_0
+                                            axisAngular: axisAngular_1_0
+                                            axisRadial: axisRadial_1_0
+                                            pointsVisible: true
+                                            pointLabelsVisible: false
+
+
+                                            color: "red"
+                                            opacity: 0.5
+                                        }
+                                        ScatterSeries {
+                                            name: "2nd"
+                                            id: series_1_1
+                                            axisAngular: axisAngular_1_0
+                                            axisRadial: axisRadial_1_0
+                                            pointsVisible: true
+                                            pointLabelsVisible: false
+
+                                            color: "red"
+                                            opacity: 0.25
+                                        }
+                                        ScatterSeries {
+                                            name: "3rd"
+                                            id: series_1_2
+                                            axisAngular: axisAngular_1_0
+                                            axisRadial: axisRadial_1_0
+                                            pointsVisible: true
+                                            pointLabelsVisible: false
+
+                                            color: "red"
+                                            opacity: 0.15
+                                        }
+
+                                        ScatterSeries {
+                                            name: "1st"
+                                            id: series_1_3
+                                            axisAngular: axisAngular_1_0
+                                            axisRadial: axisRadial_1_0
+                                            pointsVisible: true
+                                            pointLabelsVisible: false
+
+                                            color: "blue"
+                                            opacity: 0.5
+                                        }
+                                        ScatterSeries {
+                                            name: "2nd"
+                                            id: series_1_4
+                                            axisAngular: axisAngular_1_0
+                                            axisRadial: axisRadial_1_0
+                                            pointsVisible: true
+                                            pointLabelsVisible: false
+
+                                            color: "blue"
+                                            opacity: 0.25
+                                        }
+                                        ScatterSeries {
+                                            name: "3rd"
+                                            id: series_1_5
+                                            axisAngular: axisAngular_1_0
+                                            axisRadial: axisRadial_1_0
+                                            pointsVisible: true
+                                            pointLabelsVisible: false
+
+                                            color: "blue"
+                                            opacity: 0.15
+                                        }
+                                        Component.onCompleted: {
+                                            dataSource.setDistanceSeries(series_1_0, 0);
+                                            dataSource.setDistanceSeries(series_1_1, 1);
+                                            dataSource.setDistanceSeries(series_1_2, 2);
+
+                                            dataSource.setDistanceSeries(series_1_3, 3);
+                                            dataSource.setDistanceSeries(series_1_4, 4);
+                                            dataSource.setDistanceSeries(series_1_5, 5);
                                         }
                                     }
                                 }
+
                             }
-                        }
-                        Item {
-                            id: all_waveforms
-                            width: parent.width
-                            height: parent.height
-                            Row {
+                            Item {
+                                id: distances_diagram
                                 width: parent.width
                                 height: parent.height
-                                PolarChartView {
+                                Row {
+                                    width: parent.width
                                     height: parent.height
-                                    width: parent.width / 2
-                                    antialiasing: true
-                                    ValueAxis {
-                                        id: axisAngular_0_0
-                                        min: 0
-                                        max: 32 * 20
-                                        tickCount: 33
-                                        labelsVisible: false;
-                                    }
 
-                                    ValueAxis {
-                                        id: axisRadial_0_0
-                                        min: 0
-                                        max: 2500
-                                        labelsVisible: false;
-                                    }
-                                    SplineSeries {
-                                        name: "Set 0"
-                                        id: series_0_0
-                                        axisAngular: axisAngular_0_0
-                                        axisRadial: axisRadial_0_0
-                                        pointsVisible: false
-                                        pointLabelsVisible: false
-                                        width: 2
-                                        color: "red"
-                                        onPointsReplaced: {
+                                }
+                            }
 
-                                        }
-                                    }
+                            Item {
+                                id: timeline_3d
+                                width: parent.width
+                                height: parent.height
 
-                                    SplineSeries {
-                                        name: "Set 1"
-                                        id: series_0_1
-                                        axisAngular: axisAngular_0_0
-                                        axisRadial: axisRadial_0_0
-                                        pointsVisible: false
-                                        pointLabelsVisible: false
-                                        width: 2
-                                        color: "blue"
+                                Scene3D {
+                                    anchors.fill: parent
+                                    focus: true
+
+                                    Timeline3D {
+                                        id: timeline_3d_unit
                                     }
                                 }
-                                PolarChartView {
-                                    height: parent.height
-                                    width: parent.width / 2
-                                    antialiasing: true
-                                    ValueAxis {
-                                        id: axisAngular_1_0
-                                        min: 0
-                                        max: 32
-                                        tickCount: 33
-                                        labelsVisible: true;
+
+                            }
+                            Item {
+                                id: timeline_3d_surface
+                                anchors.fill: parent
+                                ColorGradient {
+                                    id: surfaceGradient
+                                    ColorGradientStop { position: 0.0; color: "darkslategray" }
+                                    ColorGradientStop { id: middleGradient; position: 0.25; color: "peru" }
+                                    ColorGradientStop { position: 0.75; color: "red" }
+                                }
+                                Surface3D {
+                                    id: timeline_3d_surface_object
+                                    anchors.fill: parent
+
+                                    theme: Theme3D {
+                                        type: Theme3D.ThemeStoneMoss
+                                        font.family: "STCaiyun"
+                                        font.pointSize: 35
+                                        colorStyle: Theme3D.ColorStyleRangeGradient
+                                        baseGradients: [surfaceGradient]
+                                    }
+                                    axisX:  {
+                                        axisX.min = 0.0
+                                        axisX.max= 100.0
+                                        axisX.title = "Scan"
+                                        axisX.titleVisible = true
                                     }
 
-                                    ValueAxis {
-                                        id: axisRadial_1_0
-                                        min: -500
-                                        max: 2500
-                                        labelsVisible: true;
-                                        tickCount: 7
+                                    axisZ: {
+                                        axisZ.min= 0.0
+                                        axisZ.max= 2500.0
+                                        axisZ.title = "Distance"
+                                        axisZ.titleVisible = true
                                     }
-                                    ScatterSeries {
-                                        name: "1st"
-                                        id: series_1_0
-                                        axisAngular: axisAngular_1_0
-                                        axisRadial: axisRadial_1_0
-                                        pointsVisible: true
-                                        pointLabelsVisible: false
-
-
-                                        color: "red"
-                                        opacity: 0.5
-                                    }
-                                    ScatterSeries {
-                                        name: "2nd"
-                                        id: series_1_1
-                                        axisAngular: axisAngular_1_0
-                                        axisRadial: axisRadial_1_0
-                                        pointsVisible: true
-                                        pointLabelsVisible: false
-
-                                        color: "red"
-                                        opacity: 0.25
-                                    }
-                                    ScatterSeries {
-                                        name: "3rd"
-                                        id: series_1_2
-                                        axisAngular: axisAngular_1_0
-                                        axisRadial: axisRadial_1_0
-                                        pointsVisible: true
-                                        pointLabelsVisible: false
-
-                                        color: "red"
-                                        opacity: 0.15
+                                    axisY: {
+                                        axisY.min = -500
+                                        axisY.max = 500
+                                        axisY.title = "Signal level"
+                                        axisY.titleVisible = true
                                     }
 
-                                    ScatterSeries {
-                                        name: "1st"
-                                        id: series_1_3
-                                        axisAngular: axisAngular_1_0
-                                        axisRadial: axisRadial_1_0
-                                        pointsVisible: true
-                                        pointLabelsVisible: false
+                                    horizontalAspectRatio: 0.5
 
-                                        color: "blue"
-                                        opacity: 0.5
-                                    }
-                                    ScatterSeries {
-                                        name: "2nd"
-                                        id: series_1_4
-                                        axisAngular: axisAngular_1_0
-                                        axisRadial: axisRadial_1_0
-                                        pointsVisible: true
-                                        pointLabelsVisible: false
+                                    shadowQuality: AbstractGraph3D.ShadowQualityMedium
+                                    selectionMode: AbstractGraph3D.SelectionSlice | AbstractGraph3D.SelectionItemAndRow
+                                    //scene.activeCamera.cameraPreset: Camera3D.CameraPresetIsometricLeft
 
-                                        color: "blue"
-                                        opacity: 0.25
-                                    }
-                                    ScatterSeries {
-                                        name: "3rd"
-                                        id: series_1_5
-                                        axisAngular: axisAngular_1_0
-                                        axisRadial: axisRadial_1_0
-                                        pointsVisible: true
-                                        pointLabelsVisible: false
 
-                                        color: "blue"
-                                        opacity: 0.15
+
+                                    Surface3DSeries {
+                                        id: surfaceSeries
+                                        flatShadingEnabled: false
+                                        drawMode: Surface3DSeries.DrawSurface
                                     }
+
                                     Component.onCompleted: {
-                                        dataSource.setDistanceSeries(series_1_0, 0);
-                                        dataSource.setDistanceSeries(series_1_1, 1);
-                                        dataSource.setDistanceSeries(series_1_2, 2);
+                                        dataSource.updateSurface3D(surfaceSeries);
+                                        //dataSource.setAllWaveformsSeries(series_0_0, 0);
+                                        //dataSource.setAllWaveformsSeries(series_0_1, 1);
 
-                                        dataSource.setDistanceSeries(series_1_3, 3);
-                                        dataSource.setDistanceSeries(series_1_4, 4);
-                                        dataSource.setDistanceSeries(series_1_5, 5);
                                     }
                                 }
                             }
-
                         }
-                        Item {
-                            id: distances_diagram
-                            width: parent.width
-                            height: parent.height
-                            Row {
-                                width: parent.width
-                                height: parent.height
-
-                            }
-                        }
-
-                        Item {
-                            id: timeline_3d
-                            width: parent.width
-                            height: parent.height
-
-                            Scene3D {
-                                anchors.fill: parent
-                                focus: true
-
-                                Timeline3D {
-                                    id: timeline_3d_unit
-                                }
-                            }
-
-                        }
-                        Item {
-                            id: timeline_3d_surface
-                            anchors.fill: parent
-
-                            Surface3D {
-                                id: timeline_3d_surface_object
-                                anchors.fill: parent
-                                                                 axisX.min: 0.0
-                                                            axisX.max: 100.0
-                                                            axisX.title: "Scan"
-                                                            axisX.titleVisible: true
-
-                                                            axisZ.min: 0.0
-                                                            axisZ.max: 727.0
-                                                            axisZ.title: "Distance"
-                                                            axisZ.titleVisible: true
-
-                                                            axisY.min: -1024
-                                                            axisY.max: 1024
-                                                            axisY.title: "Signal level"
-                                                            axisY.titleVisible: true
-
-                                horizontalAspectRatio: 2
-
-                                shadowQuality: AbstractGraph3D.ShadowQualityMedium
-                                selectionMode: AbstractGraph3D.SelectionSlice | AbstractGraph3D.SelectionItemAndRow
-                                //scene.activeCamera.cameraPreset: Camera3D.CameraPresetIsometricLeft
-
-                                theme: Theme3D {
-                                    type: Theme3D.ThemeStoneMoss
-                                    font.family: "STCaiyun"
-                                    font.pointSize: 35
-                                    colorStyle: Theme3D.ColorStyleRangeGradient
-                                    // baseGradients: [surfaceGradient]
-                                }
-
-                                Surface3DSeries {
-                                    id: surfaceSeries
-                                    flatShadingEnabled: false
-                                    drawMode: Surface3DSeries.DrawSurface
-                                }
-
-                                Component.onCompleted: {
-                                    dataSource.updateSurface3D(surfaceSeries);
-                                    //dataSource.setAllWaveformsSeries(series_0_0, 0);
-                                    //dataSource.setAllWaveformsSeries(series_0_1, 1);
-
-                                }
-                            }
-                        }
+                        //SL
                     }
+
+
                 }
 
             }
@@ -1284,7 +1308,7 @@ Item {
 
             console.log("You chose: " + fileDialog.fileUrl)
 
-            dataSource.openFile(fileDialog.fileUrl.toString().replace("file:///", ""))
+            dataSource.loadHistoryFromFile(fileDialog.fileUrl.toString().replace("file:///", ""))
             //Qt.quit()
         }
         onRejected: {

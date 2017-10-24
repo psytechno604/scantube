@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QVector>
+#include <QDateTime>
 #include "scantube.h"
 
 class Measurement : public QObject
@@ -15,11 +16,17 @@ public:
     double distance;
     QVector<double> _sqerr;
     QVector<double> _corr;
-    QVector<QVector<double>> buffer;
-    QString getText();   
+    QVector<QVector<float>> *buffer {nullptr};
+    QString getText();
+    void setTimestmp(QDateTime newtmstmp);
+    void readFrom(QDataStream &ds);
+    void writeTo(QDataStream &ds);
 signals:
 
 public slots:
+private:
+    int size {371101};
+    QDateTime timestmp;
 };
 
 #endif // MEASUREMENT2_H

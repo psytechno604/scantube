@@ -141,7 +141,7 @@ public slots:
 
     int getMaxCorrelationShift(QVector<double> a, QVector<double> b);
 
-    QVector<QVector<double> > *getScanData();
+    QVector<QVector<float> > *getScanData();
 
     Q_INVOKABLE void selectIP(QString v);
     Q_INVOKABLE void selectEmitter(QString v);
@@ -164,7 +164,7 @@ public slots:
     Q_INVOKABLE void setSeries(QAbstractSeries *series, int i);
     Q_INVOKABLE void setDistanceSeries(QAbstractSeries *series, int i);
 
-    Q_INVOKABLE double getScanValue(QVector<double> *data, QVector<double> *data0, int i, bool use_abs);
+    Q_INVOKABLE double getScanValue(QVector<float> *data, QVector<float> *data0, int i, bool use_abs);
 
     Q_INVOKABLE void textChanged(QString text);
 
@@ -180,19 +180,27 @@ public slots:
 
     Q_INVOKABLE void setUnitIndex(int index);
     Q_INVOKABLE void copyToHistory();
+    Q_INVOKABLE void saveMMAndHistory();
+
+    Q_INVOKABLE void setHasData(bool hd);
+    Q_INVOKABLE void loadHistoryFromFile(QString fname);
     //Q_INVOKABLE void newScan();
 private:
+    void setCurrentSet_0();
+
+    bool testScanIndex();
+
     double fc{1e+9};
     double deltaf;
     unsigned short ford {8};
     double Td {1e-9};
 
-    void findMaxLess(QVector<double> *data, QVector<double>  *stat_data, QVector<Peak> *peak_data, int margin_left, int margin_right);
+    void findMaxLess(QVector<float> *data, QVector<int>  *stat_data, QVector<Peak> *peak_data, int margin_left, int margin_right);
     QVector<QAbstractSeries*> series {nullptr};
     QVector<QAbstractSeries*> distanceSeries {nullptr};
     QVector<QAbstractSeries *> allWaveformsSeries;
 
-    QVector<double> receiver_levels;
+    QVector<float> receiver_levels;
 
 
     int _step {4};
@@ -201,7 +209,7 @@ private:
     int currentUnitIndex {0};
     QString ipNum {"1"}, emitterNum {"0"}, rowNum {"0"};
 
-    QVector<QVector<QVector<double>>> history_scan_data;
+    QVector<QVector<QVector<float>>> history_scan_data;
     int history_index {0};
     void increaseHistoryIndex();
     bool has_data {false};
@@ -213,24 +221,24 @@ private:
     int max_scan_index {buffer_size * 8};
 
     QVector<int> scan_index;
-    QVector<QVector<double>> max_index_stat;
-    QVector<QVector<double>> scan_data;
-    QVector<QVector<double>> scan_data_0;
-    QVector<QVector<double>> processed_data;
+    QVector<QVector<int>> max_index_stat;
+    QVector<QVector<float>> scan_data;
+    QVector<QVector<float>> scan_data_0;
+    QVector<QVector<float>> processed_data;
 
-    QVector<QVector<double>> *current_set {nullptr};
-    QVector<QVector<double>> *current_set_0 {nullptr};
-    QVector<QVector<double>> *current_max_index_stat {nullptr};
+    QVector<QVector<float>> *current_set {nullptr};
+    QVector<QVector<float>> *current_set_0 {nullptr};
+    QVector<QVector<int>> *current_max_index_stat {nullptr};
 
 
     int max_change {2000};
-    QVector<double> last_good_value;
+    QVector<float> last_good_value;
 
     QVector<QVector<Peak>> peak_data;
     QVector<QVector<Peak>> *current_peak_data{nullptr};
 
-    QVector<QVector<double>> distance_data;
-    QVector<QVector<double>> distance_data_0;
+    QVector<QVector<float>> distance_data;
+    QVector<QVector<float>> distance_data_0;
     // 0 - distance from raw data
     // 1 - distance saved as 0
     bool use_distance_0 {false};
@@ -257,6 +265,7 @@ private:
     int maxchannels {32};
 
     MeasurementModel *measurementModel {nullptr};
+    int zeroIndex {0};
     void clearMeasurementModel();
 
     double _LP0_Td {1.0/(100.0*1E9)}, _LP0_fc {1000*1E6}, _LP0_ford {8};

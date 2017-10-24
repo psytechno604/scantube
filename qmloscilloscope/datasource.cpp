@@ -72,6 +72,7 @@ DataSource::DataSource(QQuickView *appViewer, QObject *parent) :
 
     datafile = new QFile("scantube.dat");
     markupfile = new QFile("scantube.csv");
+    pointfile = new QFile("scantube.scan");
 
     if (!datafile->open(QFile::WriteOnly)){
         qDebug() << "datafile cannot be opened";
@@ -295,7 +296,9 @@ void DataSource::update(QAbstractSeries *series, QAbstractSeries *scatter)
 void DataSource::update()
 {
     current_set = &scan_data;
-    current_set_0 = &scan_data_0;
+
+
+
     update(series[0], series[1]);
 
     current_set = &processed_data;
@@ -400,11 +403,12 @@ void DataSource::updateDistances()
 
 void DataSource::updateSurface3D(QtDataVisualization::QAbstract3DSeries *series)
 {
+    setCurrentSet_0();
     //auto sampleCountZ = 727;
     //auto sampleCountX = 101;
     //qDebug() << history_scan_data[0].length();
 
-    if (history_scan_data[0].length() == 0)   {
+    if (history_scan_data[0].length() == 0 || (use_scan_data_0 && !current_set_0))   {
         return;
     }
 
@@ -440,7 +444,10 @@ void DataSource::updateSurface3D(QtDataVisualization::QAbstract3DSeries *series)
             float x = j; // "Scan"
             float y = 0;
             if (history_scan_data[j].length() > currentUnitIndex && history_scan_data[j][currentUnitIndex].length()>i) {
-                y = history_scan_data[j][currentUnitIndex][i]; // "Level"
+                if (use_scan_data_0)
+                    y = history_scan_data[j][currentUnitIndex][i] - (*current_set_0)[currentUnitIndex][i]; // "Level"
+                else
+                    y = history_scan_data[j][currentUnitIndex][i];
             }
 
             (*newRow)[index++].setPosition(QVector3D(x, y, z));
@@ -596,7 +603,12 @@ void DataSource::processSignal(QVector <double> &in, QVector <double> &out)
 void DataSource::processSignal()
 {
     for (auto e=0; e<scan_data.length(); e++) {
-        processSignal(scan_data[e], processed_data[e]);
+        QVector<double> in(scan_data[e].length());
+        QVector<double> out(scan_data[e].length());
+        processSignal(in, out);
+        for (int i=0; i<out.length(); i++)  {
+            processed_data[e][i] = out[i];
+        }
     }
 }
 
@@ -614,20 +626,20 @@ void DataSource::savePoint(double distance, int nframes, int saveAsZeroSignal)
 
 void DataSource::startRecording(QString fbasename)
 {
-    QString strN = QString::number(_N);
+//    QString strN = QString::number(_N);
 
-    fname = fbasename + "_" + QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss") + "_" + strN + ".dat";//  + "_" + QString("%1").arg(QString::number(distance, 'f', 2).toDouble(), 5, 10, QChar('0'))+QString(".bin");
-    fname = fname.replace(":", "_");
-    if (pointfile)
-        delete pointfile;
-    pointfile = new QFile(fname);
-    if (pointfile && pointfile->open(QIODevice::WriteOnly/* | QIODevice::Append*/)) {
-        QDataStream out(pointfile);
-        out.setVersion(QDataStream::Qt_5_9);
-        out << nchannels;
-        out << _N;
-        pointfile->close();
-    }
+//    fname = fbasename + "_" + QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss") + "_" + strN + ".dat";//  + "_" + QString("%1").arg(QString::number(distance, 'f', 2).toDouble(), 5, 10, QChar('0'))+QString(".bin");
+//    fname = fname.replace(":", "_");
+//    if (pointfile)
+//        delete pointfile;
+//    pointfile = new QFile(fname);
+//    if (pointfile && pointfile->open(QIODevice::WriteOnly/* | QIODevice::Append*/)) {
+//        QDataStream out(pointfile);
+//        out.setVersion(QDataStream::Qt_5_9);
+//        out << nchannels;
+//        out << _N;
+//        pointfile->close();
+//    }
 }
 
 void DataSource::openFile(QString openfname)
@@ -673,7 +685,7 @@ void DataSource::openFile(QString openfname)
             qDebug() << "Wrong packet size";
         }
         file.close();
-        showByIndex(0);
+        //showByIndex(0);
         updateListView();
     }
 }
@@ -733,23 +745,23 @@ void DataSource::setValue(QString name, double value)
 
 void DataSource::showByIndex(int index)
 {
-    if (measurementModel && index>=0 && index < measurementModel->rowCount())   {
-        auto m = measurementModel->get(index);
-        if (!m)
-            return;
-        for (auto c=0; c<nchannels; c++)    {
-            for (auto i=0; i<buffer_size; i++)  {
-                buffer_in[i] = m->buffer[c][i];
-            }
-            showFromBuffer(c, 1);
-        }
-        QMetaObject::invokeMethod((QObject*)object, "setDistance", Q_ARG(QVariant, QString::number(m->distance)));
-    }
+//    if (measurementModel && index>=0 && index < measurementModel->rowCount())   {
+//        auto m = measurementModel->get(index);
+//        if (!m)
+//            return;
+//        for (auto c=0; c<nchannels; c++)    {
+//            for (auto i=0; i<buffer_size; i++)  {
+//                buffer_in[i] = m->buffer[c][i];
+//            }
+//            showFromBuffer(c, 1);
+//        }
+//        QMetaObject::invokeMethod((QObject*)object, "setDistance", Q_ARG(QVariant, QString::number(m->distance)));
+//    }
 }
 
 void DataSource::readData(int buffer_part, QByteArray *buffer, QHostAddress sender)
 {
-    has_data = true;
+
 
 
    int ch_num = getUnitIndex(buffer_part, buffer, sender);
@@ -1063,7 +1075,7 @@ int DataSource::getMaxCorrelationShift(QVector<double> a, QVector<double> b)
     return ret;
 }
 
-QVector<QVector<double> > *DataSource::getScanData()
+QVector<QVector<float> > *DataSource::getScanData()
 {
     return &scan_data;
 }
@@ -1120,21 +1132,21 @@ void DataSource::clearMeasurementModel()
 
 void DataSource::compareToData(int channel)
 {
-    if (!measurementModel)
-        return;
-    for (auto d=0; d<measurementModel->rowCount(); d++) {
-        auto m = measurementModel->get(d);
-        m->_sqerr[channel] = 0;
-        for (int i=0; i<buffer_size; i++)   {
-            m->_sqerr[channel] += (m->buffer[channel][i]-buffer_in[i])*(m->buffer[channel][i]-buffer_in[i]);
-        }
-        m->_sqerr[channel] = sqrt(m->_sqerr[channel]);
+//    if (!measurementModel)
+//        return;
+//    for (auto d=0; d<measurementModel->rowCount(); d++) {
+//        auto m = measurementModel->get(d);
+//        m->_sqerr[channel] = 0;
+//        for (int i=0; i<buffer_size; i++)   {
+//            m->_sqerr[channel] += (m->buffer[channel][i]-buffer_in[i])*(m->buffer[channel][i]-buffer_in[i]);
+//        }
+//        m->_sqerr[channel] = sqrt(m->_sqerr[channel]);
 
-        m->_corr[channel] = pearsoncoeff(m->buffer[channel], buffer_in);
+//        m->_corr[channel] = pearsoncoeff(m->buffer[channel], buffer_in);
 
-    }
+//    }
 
-    measurementModel->emitDataChanged();
+//    measurementModel->emitDataChanged();
 }
 
 double DataSource::corr(double *X, double *Y, int N)
@@ -1287,26 +1299,33 @@ void DataSource::resetScanIndex()
 
 void DataSource::setScanIndex()
 {
-    auto max_index = scan_index[0];
+     qDebug() << "testScanIndex before " << testScanIndex();
+    int max_index = scan_index[0];
     for (auto i=0; i<scan_index.length(); i++) {
         if (scan_index[i] > max_index) {
-            max_index = scan_index[0];
+            max_index = scan_index[i];
         }
     }
     for (auto i=0; i<scan_index.length(); i++) {
-        if (scan_index[i] < max_index && scan_index[i] != 0) {
-            auto fill_value = sum_of_values[i] / scan_index[i];
-            sum_of_values[i] += fill_value * (max_index - scan_index[i]);
-            scan_data[i].resize(max_index);
-            max_index_stat[i].resize(max_index);
-            scan_data_0[i].resize(max_index);
-            _points[i].resize(_points[i].length() + (_points[i].length() - max_index) / _step);
+        if (scan_index[i] < max_index) {
+
+            double fill_value = 0.0;
+            /*if (scan_index[i] != 0) {
+                fill_value = sum_of_values[i] / scan_index[i];
+
+            }
+            else {
+                fill_value = 0.0;
+            }*/
+            //scan_index[i] = max_index;
             while (scan_index[i] < max_index)   {
                 scan_data[i][scan_index[i]] = fill_value;
                 scan_index[i]++;
             }
         }
     }
+
+    qDebug() << "testScanIndex after " << testScanIndex();
 }
 
 void DataSource::setAllWaveformsSeries(QAbstractSeries *series, int set)
@@ -1324,14 +1343,14 @@ void DataSource::setDistanceSeries(QAbstractSeries *series, int i)
     this->distanceSeries[i] = series;
 }
 
-double DataSource::getScanValue(QVector<double> *data, QVector<double> *data0, int i, bool use_abs)
+double DataSource::getScanValue(QVector<float> *data, QVector<float> *data0, int i, bool use_abs)
 {
     if (!use_abs)
         return double((*data)[i]) - (data0?double((*data0)[i]):0.0);
     return fabs(double((*data)[i]) - (data0?double((*data0)[i]):0.0));
 }
 
-void DataSource::findMaxLess(QVector<double> *data, QVector<double> *stat_data, QVector<Peak> *peak_data, int margin_left, int margin_right)
+void DataSource::findMaxLess(QVector<float> *data, QVector<int> *stat_data, QVector<Peak> *peak_data, int margin_left, int margin_right)
 {
     if (!data || !peak_data || margin_left < 0 || margin_right < 0 || margin_left > data->length()-1 || margin_right >data->length()-1) {
         throw new QException();
@@ -1393,11 +1412,76 @@ void DataSource::copyToHistory()
         }
         history_scan_data[history_index] = scan_data;
 
-        scan_data = *(new QVector<QVector<double>>(nchannels));
+
+        auto m = new Measurement();
+        m->buffer = &(history_scan_data[history_index]);
+        m->distance = distance;
+        measurementModel->add(m);
+        //scan_data = *(new QVector<QVector<double>>(nchannels));
         has_data = false;
 
         increaseHistoryIndex();
     }
+}
+
+void DataSource::saveMMAndHistory()
+{
+    if (pointfile && pointfile->open(QIODevice::Append/* | QIODevice::Append*/)) {
+        QDataStream out(pointfile);
+        out.setVersion(QDataStream::Qt_5_9);
+        for(auto i=0; i<measurementModel->rowCount(); i++)  {
+            measurementModel->get(i)->writeTo(out);
+        }
+        pointfile->close();
+    }
+
+}
+
+void DataSource::setHasData(bool hd)
+{
+    has_data = hd;
+}
+
+void DataSource::loadHistoryFromFile(QString fname)
+{
+    if (pointfile && pointfile->open(QIODevice::ReadOnly/* | QIODevice::Append*/)) {
+        QDataStream in(pointfile);
+        in.setVersion(QDataStream::Qt_5_9);
+
+        while(!in.atEnd())  {
+            auto m = new Measurement();
+            m->buffer = &(history_scan_data[history_index]);
+            increaseHistoryIndex();
+            m->readFrom(in);
+            measurementModel->add(m);
+        }
+
+        pointfile->close();
+    }
+}
+
+void DataSource::setCurrentSet_0()
+{
+    if (history_scan_data.length() > zeroIndex && history_scan_data[zeroIndex].length()>0) {
+        current_set_0 = &(history_scan_data[zeroIndex]);
+    }
+}
+
+bool DataSource::testScanIndex()
+{
+    int tmp = scan_index[0];
+    for (auto i=0; i<scan_index.length(); i++) {
+        if (scan_index[i] != tmp)   {
+            //qDebug() << "scan_index[i] != tmp, scan_index[i]=" << scan_index[i] << "tmp=" << tmp;
+            return false;
+        }
+        if (scan_data[i].length() < tmp)   {
+            //qDebug() << "scan_data[i].length() < tmp, scan_data[i].length()=" << scan_data[i].length() << "tmp=" << tmp;
+            return false;
+        }
+    }
+
+
 }
 
 void DataSource::textChanged(QString text)
@@ -1415,6 +1499,18 @@ void DataSource::textChanged(QString text)
     }
     if (text.indexOf("Td=", 0, Qt::CaseSensitive) == 0){
         Td =  text.right(text.length()-3).toDouble();
+    }
+
+
+    if (text.indexOf("zeroIndex=", 0, Qt::CaseSensitive) == 0){
+        zeroIndex =  text.right(text.length()-10).toInt();
+        setCurrentSet_0();
+        qDebug() << "zeroIndex=" << zeroIndex;
+    }
+
+
+    if (text.indexOf("Save history", 0, Qt::CaseSensitive) == 0){
+        saveMMAndHistory();
     }
 
     //calcDistances();
