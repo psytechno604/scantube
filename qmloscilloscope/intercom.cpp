@@ -157,12 +157,12 @@ void intercom::sendScan()
 
     if (!timer) {
         timer = new QTimer();
-        QObject::connect(timer, &QTimer::timeout, this, &intercom::endScan);
+        QObject::connect(timer, &QTimer::timeout, this, &intercom::endScan0);
     }
     timer->start(timeout);
 }
 
-void intercom::endScan()
+void intercom::endScan(int flag)
 {
     try {
         if (timer)
@@ -170,7 +170,7 @@ void intercom::endScan()
 
 
 
-        qDebug() << "endScan";
+        qDebug() << "endScan " << flag;
         if (!object)
             object = m_appViewer->rootObject();
 
@@ -187,31 +187,35 @@ void intercom::endScan()
 
 
         if (_dataSource && fullscan_mode_complete && packets_received.length()>=4
-                    /*&& packets_received[0] == 8
+                    && ((packets_received[0] == 8
                     && packets_received[1] == 8
                     && packets_received[2] == 8
-                    && packets_received[3] == 8*/)
+                    && packets_received[3] == 8) || flag ==0) )
         {
+
+
             _dataSource->setHasData(true);
+
+            _dataSource->copyToHistory();
             //_dataSource->calcDistances();
             //QMetaObject::invokeMethod((QObject*)object, "updateDistances");
             //QMetaObject::invokeMethod((QObject*)object, "updateAllWaveforms");
             //QMetaObject::invokeMethod((QObject*)object, "updateSingleWaveform");
 
-            _dataSource->calcDistances();
+            //_dataSource->calcDistances();
             //_dataSource->startRecording("test.dat");
-            _dataSource->update();
+            //_dataSource->update();
 
-            _dataSource->updateDistances();
-            _dataSource->updateAllWaveforms();
+            //_dataSource->updateDistances();
+            //_dataSource->updateAllWaveforms();
 
 
 
-            if (continueScan) {
+            if (continueScan || fullscan_countdown>0) {
                 beforeScanRange();
             }
             fullscan_mode_complete = false;
-            QThread::msleep(500);
+            //QThread::msleep(100);
         }
 
 
@@ -235,6 +239,11 @@ void intercom::endScan()
     catch (...) {
         qDebug() << "endScan exception... (?)";
     }
+}
+
+void intercom::endScan0()
+{
+    endScan(0);
 }
 
 void intercom::stopScanTimer()
@@ -265,8 +274,11 @@ void intercom::sendTest()
 
 void intercom::scanRange()
 {
-    beforeScanRange();
-    sendScan();
+    if (!fullscan_mode_on)  {
+        fullscan_countdown = fullscan_countdown_start;
+        beforeScanRange();
+        sendScan();
+    }
 }
 
 int intercom::getTimeout()
@@ -310,6 +322,15 @@ void intercom::sendShift(int value1, int value2, int value3, int value4)
 void intercom::setContinueScan(bool continueScan)
 {
     this->continueScan = continueScan;
+}
+
+void intercom::scanRangeOnce()
+{
+    if (!fullscan_mode_on)  {
+        fullscan_countdown = 1;
+        beforeScanRange();
+        sendScan();
+    }
 }
 
 void intercom::reCreateSender()
@@ -375,14 +396,7 @@ void intercom::processDatagram() {
 
 
     if (s>3 && s < MIN_DATA_PACKET_SIZE) {
-        //_dataSource->save_point(buffer.toDouble(), 10, 0);
-        _dataSource->savePoint(distance, 10, 0);
-        distance = distance - 0.1;
-
-
-        if (!object)
-            object = m_appViewer->rootObject();
-        QMetaObject::invokeMethod((QObject*)object, "setDistance", Q_ARG(QVariant, QString::number(distance)));
+        readCommand(buffer);
     }
 
     if (_dataSource && s >= MIN_DATA_PACKET_SIZE) {
@@ -403,7 +417,7 @@ void intercom::processDatagram() {
                 && packets_received[1] == 8
                 && packets_received[2] == 8
                 && packets_received[3] == 8)
-            endScan();
+            endScan(1);
         else
             if (timer)
                 timer->start(timeout);
@@ -416,9 +430,25 @@ void intercom::beforeScanRange()
     fullscan_mode_on = true;
     fullscan_mode_complete = false;
     current_shift = 0;
+
+    fullscan_countdown--;
+
     scan_counter = 0;
     if (_dataSource)    {
-        _dataSource->copyToHistory();
+
         _dataSource->resetScanIndex();
+    }
+}
+
+void intercom::readCommand(QByteArray &buffer)
+{
+    qDebug() << "intercom::readCommand('" << buffer.data() <<"')";
+
+    QString str(buffer.data());
+
+    if (str.indexOf("distance=", 0, Qt::CaseSensitive) == 0){
+        _dataSource->copyToHistory();
+        _dataSource->SetDistance(str.right(str.length()-9).toFloat());
+        scanRange();
     }
 }

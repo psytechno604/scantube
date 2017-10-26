@@ -21,7 +21,8 @@ public:
     Q_INVOKABLE void setDataSource(DataSource *ds);
     Q_INVOKABLE void sendFix(QString distance);
     Q_INVOKABLE void sendScan();
-    Q_INVOKABLE void endScan();
+    Q_INVOKABLE void endScan(int flag=0);
+    Q_INVOKABLE void endScan0();
     Q_INVOKABLE void stopScanTimer();
     Q_INVOKABLE void sendTest();
     Q_INVOKABLE void scanRange();
@@ -32,8 +33,12 @@ public:
     Q_INVOKABLE void sendShift(int value, int ipnum);
     Q_INVOKABLE void sendShift(int value1, int value2, int value3, int value4);
     Q_INVOKABLE void setContinueScan(bool continueScan);
+
+    Q_INVOKABLE void scanRangeOnce();
 private:
     //bool waiting_for_shift
+    int fullscan_countdown {0};
+    int fullscan_countdown_start {10};
     bool fullscan_mode_on {false};
     bool fullscan_mode_complete {false};
     int current_shift{0};
@@ -81,6 +86,7 @@ public slots:
     void processDatagram();
 
     void beforeScanRange();
+    void readCommand(QByteArray &buffer);
 };
 
 #endif // INTERCOM_H

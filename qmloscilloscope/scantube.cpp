@@ -1,5 +1,14 @@
 #include "scantube.h"
 
+
+/*template <typename T>T shiftedcorr(QVector<T> X, QVector<T> Y, int shift)
+{
+    if (shift >= 0)
+        return pearsoncoeff<T>(X.mid<T>(shift, X.length() - shift), Y.mid<T>(0, Y.length() - shift));
+    else
+        return pearsoncoeff<T>(X.mid<T>(0, X.length() + shift), Y.mid<T>(-shift, Y.length() + shift));
+}*/
+/*
 QVector<double> operator-(QVector<double> a, double b)
 {
     QVector<double> retvect;
@@ -63,7 +72,7 @@ double shiftedcorr(QVector<double> X, QVector<double> Y, int shift)
         return pearsoncoeff(X.mid(shift, X.length() - shift), Y.mid(0, Y.length() - shift));
     else
         return pearsoncoeff(X.mid(0, X.length() + shift), Y.mid(-shift, Y.length() + shift));
-}
+}*/
 int _FindMaxValueInRangeOFArray(QVector <double>smp, int numsmp, int lowlim, int highlim)
 {
   int k;

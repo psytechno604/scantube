@@ -42,6 +42,7 @@
 #include <QtDataVisualization/Q3DTheme>
 
 #include <QSplineSeries>
+#include <QApplication>
 
 #include "measurement.h"
 #include "scantube.h"
@@ -52,6 +53,8 @@ QT_CHARTS_USE_NAMESPACE
 
 Q_DECLARE_METATYPE(QAbstractSeries *)
 Q_DECLARE_METATYPE(QAbstractAxis *)
+
+//template float pearsoncoeff<float>(QVector<float>, QVector<float>);
 
 DataSource::DataSource(QQuickView *appViewer, QObject *parent) :
     QObject(parent),
@@ -99,6 +102,8 @@ DataSource::DataSource(QQuickView *appViewer, QObject *parent) :
     processed_data.resize(nchannels);
     peak_data.resize(nchannels);
 
+    distance_from_mm.resize(nchannels);
+    distance_weight_from_mm.resize(nchannels);
     //for(auto i=0; i<nchannels; i++) {
         //scan_data.append(*(new QVector<unsigned short>()));
         //scan_data_0.append(*(new QVector<unsigned short>()));
@@ -207,7 +212,7 @@ void DataSource::showFromBuffer(int b_index, int block)
     //int start_position, object_position;
     //process_signal(buffer_in, buffer_out, &start_position, &object_position, buffer_size);
 
-    compareToData(b_index);
+    //compareToData(b_index);
 
     double myDistance = 0;
     if (measurementModel)
@@ -434,20 +439,23 @@ void DataSource::updateSurface3D(QtDataVisualization::QAbstract3DSeries *series)
     dataArray->reserve(maxI);
 
     for (int i = 0 ; i < maxI ; i++) {
-        QtDataVisualization::QSurfaceDataRow *newRow = new QtDataVisualization::QSurfaceDataRow(history_scan_data.length());
+        QtDataVisualization::QSurfaceDataRow *newRow = new QtDataVisualization::QSurfaceDataRow(measurementModel->rowCount());
         // Keep values within range bounds, since just adding step can cause minor drift due
         // to the rounding errors.
-        float z = i; //"Distance"
+        float z = i/10.0; //"Distance"
         int index = 0;
 
-        for (int j = 0; j < history_scan_data.length(); j++) {
+        for (int j = 0; j < measurementModel->rowCount(); j++) {
+            auto m = measurementModel->get(j);
+            auto b = m->getBuffer();
             float x = j; // "Scan"
             float y = 0;
-            if (history_scan_data[j].length() > currentUnitIndex && history_scan_data[j][currentUnitIndex].length()>i) {
+
+            if (b->length() > currentUnitIndex && (*b)[currentUnitIndex].length()>i) {
                 if (use_scan_data_0)
-                    y = history_scan_data[j][currentUnitIndex][i] - (*current_set_0)[currentUnitIndex][i]; // "Level"
+                    y = fabs(fabs((*b)[currentUnitIndex][i]) - fabs((*current_set_0)[currentUnitIndex][i])); // "Level"
                 else
-                    y = history_scan_data[j][currentUnitIndex][i];
+                    y = fabs((*b)[currentUnitIndex][i]);
             }
 
             (*newRow)[index++].setPosition(QVector3D(x, y, z));
@@ -464,7 +472,130 @@ void DataSource::updateSurface3D(QtDataVisualization::QAbstract3DSeries *series)
 
     surface_data_lock.unlock();
 }
+void DataSource::updateCorrelationChart(QtDataVisualization::QAbstract3DSeries *series)
+{
+    setCurrentSet_0();
+    //auto sampleCountZ = 727;
+    //auto sampleCountX = 101;
+    //qDebug() << history_scan_data[0].length();
 
+    if (history_scan_data[0].length() == 0 || (use_scan_data_0 && !current_set_0))   {
+        return;
+    }
+
+    //compareToData(-1);
+
+    surface_data_lock.lockForRead();
+
+    auto s3ds =  static_cast<QtDataVisualization::QSurface3DSeries *>(series);
+
+    auto proxy = s3ds->dataProxy();
+
+    //auto series = new QtDataVisualization::QSurface3DSeries(proxy);
+
+    auto dataArray = new QtDataVisualization::QSurfaceDataArray();
+
+    auto maxI = 100;
+
+    dataArray->reserve(maxI);
+
+    for (int i = 0 ; i < maxI ; i++) {
+        QtDataVisualization::QSurfaceDataRow *newRow = new QtDataVisualization::QSurfaceDataRow(measurementModel->rowCount());
+        // Keep values within range bounds, since just adding step can cause minor drift due
+        // to the rounding errors.
+        float z = i; //"Distance"
+        int index = 0;
+
+        for (int j = 0; j < measurementModel->rowCount(); j++) {
+            auto m = measurementModel->get(j);
+
+            float x = j; // "Scan"
+            float y = 0;
+            if (m->_corr.length() > currentUnitIndex && currentUnitIndex >= 0)  {
+                y = m->_corr[currentUnitIndex] * 1000;
+            }
+
+
+            (*newRow)[index++].setPosition(QVector3D(x, y, z));
+        }
+        *dataArray << newRow;
+    }
+
+    proxy->resetArray(dataArray);
+
+    //proxy->
+
+    //proxy->
+    //s3ds
+
+    surface_data_lock.unlock();
+}
+
+void DataSource::collapseMMAndHistory(int block_size)
+{
+    if (block_size <= 0)
+        return;
+
+    for (auto i=0; i<measurementModel->rowCount(); i+=block_size)   {
+        auto m = measurementModel->get(i);
+        auto m_ = measurementModel->get(i/block_size);
+        m_->distance = m->distance;
+        m_->_corr.fill(0);
+        auto b = m->getBuffer();
+        //auto b_ = m_->getBuffer();
+        for(auto e=0; e<b->length(); e++) {
+            for (auto d=0; d<(*b)[e].length();d++){
+                float summa = 0.0f;
+                for (auto i_ = i; i_<i+block_size; i_++)    {
+                    summa += measurementModel->getValue(i_, e, d);
+                }
+                measurementModel->setValue(i/block_size, e, d, summa / block_size);
+            }
+        }
+    }
+    measurementModel->clear(measurementModel->rowCount() / block_size);
+}
+
+void DataSource::copyHistoryToClipboard()
+{
+    if (mimeData)   {
+        delete mimeData;
+    }
+    mimeData = new QMimeData();
+
+    QByteArray itemData;
+    QTextStream dataStream(&itemData, QIODevice::WriteOnly);
+
+    if(measurementModel->rowCount() <= 0)   {
+        return;
+    }
+
+    auto m = measurementModel->get(0);
+    auto b = m->getBuffer();
+
+    auto m0 = measurementModel->get(zeroIndex);
+    auto b0 = m0->getBuffer();
+
+
+
+
+    for(int d=0; d<(*b)[currentUnitIndex].length(); d++) {
+        for(int r=0; r<measurementModel->rowCount(); r++) {
+            b = measurementModel->get(r)->getBuffer();
+            QString str = QString::number(fabs((*b)[currentUnitIndex][d] - (use_scan_data_0?((*b0)[currentUnitIndex][d]):0)));
+            dataStream << str;
+            if (r < measurementModel->rowCount()-1) {
+                dataStream << ',';
+            }
+            else {
+                dataStream << '\n';
+            }
+        }
+    }
+
+    mimeData->setData("csv", itemData);
+    QApplication::clipboard()->setMimeData(mimeData);
+}
 void DataSource::calcCorrelationFunc(QVector <double> &in, QVector <double> &out, float *corrfunct, int n__corr, int numsmpl)
 {
     int i, j, offs;
@@ -526,7 +657,7 @@ void DataSource::processSignal(QVector <double> &in, QVector <double> &out)
     ndaln2 = ndaln2*1;
     H.resize(ndaln2);
     dblbubl.resize(ndaln2);
-    Fc = 1000 * 1E6;
+    //Fc = 1000 * 1E6;
 
     for (auto i=0; i<in.length(); i++)    {
         out[i] = in[i];
@@ -600,15 +731,37 @@ void DataSource::processSignal(QVector <double> &in, QVector <double> &out)
 //    }
 }
 
+void DataSource::processSignal(Measurement *m)
+{
+    if (!m)
+        return;
+
+    auto b = m->getBuffer();
+    auto pb = m->getPBuffer();
+    if (pb->length()<b->length())   {
+        pb->resize(b->length());
+    }
+    for (auto e=0; e<b->length(); e++) {
+        if ((*pb)[e].length() < (*b)[e].length()) {
+            (*pb)[e]->resize((*b)[e].length());
+        }
+        QVector<double> in;
+        for (auto d=0; d<(*b)[e].length(); d++) {
+            in.push_back((*b)[e][d]);
+        }
+        QVector<double> out;
+        processSignal(in, out);
+
+        for (auto d=0; d<out.length(); d++)  {
+            (*pb)[e][d] = out[d];
+        }
+    }
+}
+
 void DataSource::processSignal()
 {
-    for (auto e=0; e<scan_data.length(); e++) {
-        QVector<double> in(scan_data[e].length());
-        QVector<double> out(scan_data[e].length());
-        processSignal(in, out);
-        for (int i=0; i<out.length(); i++)  {
-            processed_data[e][i] = out[i];
-        }
+    for(int r=0; r< measurementModel->rowCount(); r++) {
+
     }
 }
 
@@ -675,7 +828,7 @@ void DataSource::openFile(QString openfname)
                     }
                     //_M->buffer[channel] = new double[_n];
                     for(auto i=0; i<_n; i++)    {
-                        fileStream >> _M->buffer[channel][i];
+                        fileStream >> (*(_M->getBuffer()))[channel][i];
                     }
                 }
                 measurementModel->add(_M);
@@ -1065,13 +1218,13 @@ int DataSource::getMaxCorrelationShift(QVector<double> a, QVector<double> b)
 {
     double max_corr = -1, tmp;
     int ret = -a.length()/2;
-    for (auto i=-a.length()/2; i< a.length()/2; i++){
+    /*for (auto i=-a.length()/2; i< a.length()/2; i++){
         tmp = shiftedcorr(a, b, i);
         if (tmp > max_corr) {
             max_corr = tmp;
             ret = i;
         }
-    }
+    }*/
     return ret;
 }
 
@@ -1132,21 +1285,60 @@ void DataSource::clearMeasurementModel()
 
 void DataSource::compareToData(int channel)
 {
-//    if (!measurementModel)
-//        return;
-//    for (auto d=0; d<measurementModel->rowCount(); d++) {
-//        auto m = measurementModel->get(d);
+    if (!measurementModel || (channel>= scan_data.length()))
+        return;
+    for (auto d=0; d<measurementModel->rowCount(); d++) {
+        auto m = measurementModel->get(d);
+        auto b = m->getBuffer();
+        if (m->_corr.length() < b->length())    {
+            m->_corr.resize(b->length());
+        }
+        if (b)  {
+            if (channel >= 0)   {
+                m->_corr[channel] = pearsoncoeff<float>(scan_data[channel], (*b)[channel]);
+            }
+            else {
+                for (auto e=0; e<b->length(); e++)  {
+                    m->_corr[e] = pearsoncoeff<float>(scan_data[e], (*b)[e]);
+                }
+            }
+        }
+
 //        m->_sqerr[channel] = 0;
 //        for (int i=0; i<buffer_size; i++)   {
 //            m->_sqerr[channel] += (m->buffer[channel][i]-buffer_in[i])*(m->buffer[channel][i]-buffer_in[i]);
 //        }
 //        m->_sqerr[channel] = sqrt(m->_sqerr[channel]);
 
-//        m->_corr[channel] = pearsoncoeff(m->buffer[channel], buffer_in);
+        //m->_corr[channel] = pearsoncoeff(m->buffer[channel], buffer_in);
 
-//    }
+    }
+    float x = 0.0f, y=0.0f;
+    for (int e=0; e<nchannels; e++) {
+        QVector<float> tmp;
+        for (auto d=0; d<measurementModel->rowCount(); d++) {
+            auto m = measurementModel->get(d);
+            tmp.append(m->_corr[e]);
+        }
+        int imax;
+        auto fmax = findMaxLess(&tmp, FLT_MAX, &imax);
+        distance_from_mm[e] = imax;
 
-//    measurementModel->emitDataChanged();
+        auto f = findMaxLess(&tmp, fmax, &imax);
+        f = findMaxLess(&tmp, f, &imax);
+        distance_weight_from_mm[e] = fmax - f;
+
+        x += (fmax - f)*sin(2*M_PI*imax/32);
+        y += (fmax - f)*cos(2*M_PI*imax/32);
+    }
+    float sector = 32*(-qAtan2(y, x)+M_PI/2)/(2*M_PI);
+    if (sector < 0)
+        sector = 32 + sector;
+    qDebug() << "sector=" << sector;
+
+    //measurementModel->emitDataChanged();
+    //pearsoncoeff()
+    //pearsoncoeff(scan_data[currentUnitIndex], history_scan_data[history_index][currentUnitIndex]);
 }
 
 double DataSource::corr(double *X, double *Y, int N)
@@ -1170,7 +1362,7 @@ void DataSource::calcDistances()
     receiver_levels.fill(0);
 
     //int window_size = 100;
-    processSignal();
+    //processSignal();
     //current_set = &processed_data;
     current_set = &scan_data;
     current_max_index_stat = &max_index_stat;
@@ -1394,6 +1586,18 @@ void DataSource::findMaxLess(QVector<float> *data, QVector<int> *stat_data, QVec
 
 }
 
+float DataSource::findMaxLess(QVector<float> *data, float v, int *index)
+{
+    float maxless = FLT_MIN;
+    for (int i=0; i<data->length(); i++)    {
+        if ((*data)[i] > maxless && (*data)[i] < v) {
+            maxless = (*data)[i];
+            *index = i;
+        }
+    }
+    return maxless;
+}
+
 void DataSource::increaseHistoryIndex()
 {
     if (history_index>=history_depth - 1)   {
@@ -1406,7 +1610,7 @@ void DataSource::increaseHistoryIndex()
 
 void DataSource::copyToHistory()
 {
-    if (has_data)    {
+    if (has_data && write_history)    {
         if (history_scan_data.length() < history_index+1)   {
             history_scan_data.resize(history_depth);
         }
@@ -1414,7 +1618,7 @@ void DataSource::copyToHistory()
 
 
         auto m = new Measurement();
-        m->buffer = &(history_scan_data[history_index]);
+        m->setBuffer(&(history_scan_data[history_index]));
         m->distance = distance;
         measurementModel->add(m);
         //scan_data = *(new QVector<QVector<double>>(nchannels));
@@ -1444,20 +1648,30 @@ void DataSource::setHasData(bool hd)
 
 void DataSource::loadHistoryFromFile(QString fname)
 {
-    if (pointfile && pointfile->open(QIODevice::ReadOnly/* | QIODevice::Append*/)) {
-        QDataStream in(pointfile);
+    QFile file(fname);
+    if (file.open(QIODevice::ReadOnly))    {
+        QDataStream in(&file);
+
+    //if (pointfile && pointfile->open(QIODevice::ReadOnly/* | QIODevice::Append*/)) {
+        //QDataStream in(pointfile);
         in.setVersion(QDataStream::Qt_5_9);
 
         while(!in.atEnd())  {
             auto m = new Measurement();
-            m->buffer = &(history_scan_data[history_index]);
+            m->setBuffer( &(history_scan_data[history_index]));
             increaseHistoryIndex();
             m->readFrom(in);
             measurementModel->add(m);
         }
 
-        pointfile->close();
+        file.close();
     }
+
+}
+
+void DataSource::SetDistance(float distance)
+{
+    this->distance = distance;
 }
 
 void DataSource::setCurrentSet_0()
@@ -1513,6 +1727,19 @@ void DataSource::textChanged(QString text)
         saveMMAndHistory();
     }
 
+    if (text.indexOf("write history=true", 0, Qt::CaseSensitive) == 0){
+        write_history = true;
+    }
+    if (text.indexOf("write history=false", 0, Qt::CaseSensitive) == 0){
+        write_history = false;
+    }
+
+    if (text.indexOf("Command=compareToData", 0, Qt::CaseSensitive) == 0){
+        compareToData(-1);
+    }
+    if (text.indexOf("Command=collapse", 0, Qt::CaseSensitive) == 0){
+        collapseMMAndHistory(10);
+    }
     //calcDistances();
     //_dataSource->startRecording("test.dat");
     // update();

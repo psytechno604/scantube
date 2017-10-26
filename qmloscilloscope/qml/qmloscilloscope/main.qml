@@ -333,7 +333,7 @@ Item {
                 height: 40
                 checked: _interfaceHelper.getIntValue("checkBoxUseFile");
                 onCheckedChanged: {
-                    _interfaceHelper.setValue("checkBoxUseFile", checked * 1);
+                    main.textChanged("write history=" + checked);
                 }
             }
 
@@ -486,10 +486,11 @@ Item {
                 onClicked: {
                    //dataSource.updateAllWaveforms(series_0_0, 0);
                     //dataSource.updateAllWaveforms(series_0_1, 1);
-                    timeline_3d_unit.addScan();
+                    /*timeline_3d_unit.addScan();
                     dataSource.calcDistances();
-                    updateSingleWaveform();
+                    updateSingleWaveform();*/
                     dataSource.updateSurface3D(surfaceSeries);
+                    dataSource.updateCorrelationChart(surfaceSeriesCorr);
                 }
             }
 
@@ -553,7 +554,7 @@ Item {
                 id: button_saveDistance0
                 x: 8
                 y: 392
-                width: 184
+                width: 82
                 height: 40
                 text: qsTr("Save distance 0")
                 checkable: false
@@ -564,7 +565,20 @@ Item {
 
                 }
             }
-
+            Button {
+                id: button_copyToClipboard
+                x: 100
+                y: 392
+                width: 82
+                height: 40
+                text: qsTr("Copy")
+                checkable: false
+                checked: false
+                font.pointSize: 8
+                onClicked: {
+                    dataSource.copyHistoryToClipboard();
+                }
+            }
         }
 
 
@@ -941,27 +955,27 @@ Item {
                                         colorStyle: Theme3D.ColorStyleRangeGradient
                                         baseGradients: [surfaceGradient]
                                     }
-                                    axisX:  {
-                                        axisX.min = 0.0
-                                        axisX.max= 100.0
-                                        axisX.title = "Scan"
-                                        axisX.titleVisible = true
+                                    axisX:  ValueAxis3D {
+                                        min : 0.0
+                                        max : 330.0
+                                        title : "Scan"
+                                        titleVisible : true
                                     }
 
-                                    axisZ: {
-                                        axisZ.min= 0.0
-                                        axisZ.max= 2500.0
-                                        axisZ.title = "Distance"
-                                        axisZ.titleVisible = true
+                                    axisZ: ValueAxis3D {
+                                        min :  70.0
+                                        max : 150.0
+                                        title  : "Distance"
+                                        titleVisible : true
                                     }
-                                    axisY: {
-                                        axisY.min = -500
-                                        axisY.max = 500
-                                        axisY.title = "Signal level"
-                                        axisY.titleVisible = true
+                                    axisY: ValueAxis3D {
+                                        min : -500
+                                        max : 500
+                                        title : "Signal level"
+                                        titleVisible : true
                                     }
 
-                                    horizontalAspectRatio: 0.5
+                                    horizontalAspectRatio: 1
 
                                     shadowQuality: AbstractGraph3D.ShadowQualityMedium
                                     selectionMode: AbstractGraph3D.SelectionSlice | AbstractGraph3D.SelectionItemAndRow
@@ -974,7 +988,12 @@ Item {
                                         flatShadingEnabled: false
                                         drawMode: Surface3DSeries.DrawSurface
                                     }
-
+                                    Surface3DSeries {
+                                        visible: false
+                                        id: surfaceSeriesCorr
+                                        flatShadingEnabled: false
+                                        drawMode: Surface3DSeries.DrawSurface
+                                    }
                                     Component.onCompleted: {
                                         dataSource.updateSurface3D(surfaceSeries);
                                         //dataSource.setAllWaveformsSeries(series_0_0, 0);
@@ -998,6 +1017,7 @@ Item {
                 height: 200
 
                 Slider {
+                    visible: false;
                     id: slider1
                     x: 0
                     y: 0
@@ -1014,6 +1034,7 @@ Item {
                 }
 
                 TextField {
+                    visible: false;
                     id: textField_slider1
                     x: slider1.x + slider1.width+5
                     y: slider1.y
@@ -1154,6 +1175,7 @@ Item {
                 }
 
                 TextField {
+                    //visible: false;
                     id: textField_slider1_level
                     x: textField_slider1.x + textField_slider1.width + 10
                     y: textField_slider1.y
@@ -1233,7 +1255,7 @@ Item {
                     checkable: false
                     font.pointSize: 8
                     onClicked: {
-                        _intercom.scanRange();
+                        _intercom.scanRangeOnce();
                     }
                 }
 /*
@@ -1242,6 +1264,7 @@ Item {
                 unsigned short ford {8};
                 double Td {1e-9};*/
                 TextField {
+                    visible: false;
                     id: textField_fc
                     x: textField_slider4_level.x + textField_slider4_level.width + 10
                     y: textField_slider1_level.y
@@ -1255,6 +1278,7 @@ Item {
                     }
                 }
                 TextField {
+
                     id: textField_deltaf
                     x: textField_fc.x
                     y:  textField_slider2_level.y
@@ -1292,7 +1316,34 @@ Item {
                         main.textChanged("Td="+textField_Td.text);
                     }
                 }
+                TextField {
+                    id: textField_Command
+                    x: textField_Td.x + textField_Td.width + 10
+                    y:  textField_slider4_level.y
+                    width: 100
+                    height: 40
+                    text: appSettings.commandtext
+                    selectByMouse: true
 
+                    onEditingFinished: {
+
+                    }
+                }
+
+                Button {
+                    id: button_compareToData
+                    x: textField_Command.x + textField_Command.width + 10
+                    y: textField_Command.y
+                    width: 55
+                    height: 40
+                    text: qsTr("Command")
+                    checked: false
+                    checkable: false
+                    font.pointSize: 8
+                    onClicked: {
+                        main.textChanged("Command=" + textField_Command.text);
+                    }
+                }
             }
 
         }
@@ -1442,6 +1493,8 @@ Item {
         property alias deltaf: textField_deltaf.text
         property alias ford: textField_ford.text
         property alias td: textField_Td.text
+
+        property alias commandtext: textField_Command.text
     }
     Rectangle {
         id: rect_circleSelector

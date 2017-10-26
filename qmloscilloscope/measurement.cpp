@@ -29,6 +29,7 @@ QVector<double> operator*(QVector<double> a, QVector<double> b)
 Measurement::Measurement(QObject *parent) : QObject(parent)
 {
     timestmp = QDateTime::currentDateTime();
+    processed_buffer = new QVector<QVector<float>>;
 }
 /**/
 QString Measurement::getText()
@@ -77,7 +78,7 @@ void Measurement::readFrom(QDataStream &ds)
 
 void Measurement::writeTo(QDataStream &ds)
 {
-    ds << size;
+    ds << getSize();
 
     ds << timestmp;
 
@@ -94,6 +95,39 @@ void Measurement::writeTo(QDataStream &ds)
         }
     }
 }
+
+QVector<QVector<float> > *Measurement::getBuffer()
+{
+    return buffer;
+}
+
+QVector<QVector<float> > *Measurement::getPBuffer()
+{
+    return processed_buffer;
+}
+
+void Measurement::setBuffer(QVector<QVector<float> > *b)
+{
+    this->buffer = b;
+
+    if (b && _corr.length() < b->length())  {
+        _corr.resize(b->length());
+        _corr.fill(0);
+    }
+}
+
+int Measurement::getSize()
+{
+    int sz = 2*sizeof(int) + sizeof(double) + sizeof(QDateTime);
+    if (buffer) {
+        for (auto i=0; i<buffer->length(); i++) {
+            sz += sizeof(int) + (*buffer)[i].length()*sizeof(short int);
+        }
+    }
+    return sz;
+}
+
+
 
 
 

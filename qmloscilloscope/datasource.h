@@ -117,6 +117,7 @@ public slots:
     void initCorrelationParameters(float  sigTau, float Fdskr);
 
     void processSignal(QVector <double> &in, QVector <double> &out);
+    void processSignal(Measurement *m);
     void processSignal();
 
     void savePoint(double distance, int nf, int saveAsZeroSignal);
@@ -185,17 +186,28 @@ public slots:
     Q_INVOKABLE void setHasData(bool hd);
     Q_INVOKABLE void loadHistoryFromFile(QString fname);
     //Q_INVOKABLE void newScan();
+    Q_INVOKABLE void SetDistance(float distance);
+    Q_INVOKABLE void updateCorrelationChart(QtDataVisualization::QAbstract3DSeries *series);
+
+    Q_INVOKABLE void collapseMMAndHistory(int block_size);
+
+    Q_INVOKABLE void copyHistoryToClipboard();
 private:
+    QMimeData *mimeData {nullptr};
+
+    bool write_history {false};
     void setCurrentSet_0();
 
     bool testScanIndex();
 
+    //
     double fc{1e+9};
     double deltaf;
     unsigned short ford {8};
     double Td {1e-9};
 
     void findMaxLess(QVector<float> *data, QVector<int>  *stat_data, QVector<Peak> *peak_data, int margin_left, int margin_right);
+    float findMaxLess(QVector<float> *data, float v, int *index);
     QVector<QAbstractSeries*> series {nullptr};
     QVector<QAbstractSeries*> distanceSeries {nullptr};
     QVector<QAbstractSeries *> allWaveformsSeries;
@@ -214,7 +226,7 @@ private:
     void increaseHistoryIndex();
     bool has_data {false};
 
-    int history_depth {100};
+    int history_depth {330};
 
     //QVector<QMap<int, QVector<unsigned short>>> full_scan_data;
 
@@ -225,6 +237,9 @@ private:
     QVector<QVector<float>> scan_data;
     QVector<QVector<float>> scan_data_0;
     QVector<QVector<float>> processed_data;
+
+    QVector<float> distance_from_mm;
+    QVector<float> distance_weight_from_mm;
 
     QVector<QVector<float>> *current_set {nullptr};
     QVector<QVector<float>> *current_set_0 {nullptr};
@@ -323,22 +338,22 @@ private:
     int subtractZeroSignal {0};
     int useFilter {1};
 
-    bool IsPowerOfTwo(ulong x);
+    static bool IsPowerOfTwo(ulong x);
     void calcCorrelationFunc(QVector <double> &in, QVector <double>&out, float *corrfunct, int n__corr, int numsmpl);
-    void MakeHPButterworthFilter(vectorc& H, double Td, double fc, unsigned short ford);
-    void MakeLPButterworthFilter(vectorc& H, double Td, double fc, unsigned short ford);
-    void Make_BP_ButterworthFilter(vectorc& H, double fc, double deltaf, unsigned short ford, double Td);
+    static void MakeHPButterworthFilter(vectorc& H, double Td, double fc, unsigned short ford);
+    static void MakeLPButterworthFilter(vectorc& H, double Td, double fc, unsigned short ford);
+    static void Make_BP_ButterworthFilter(vectorc& H, double fc, double deltaf, unsigned short ford, double Td);
     void cfft(vectorc& a);
     void icfft(vectorc& a);
 
-    int _FindMaxValueInRangeOFArray(QVector <double> smp, int numsmp, int lowlim, int highlim);
+    static int _FindMaxValueInRangeOFArray(QVector <double> smp, int numsmp, int lowlim, int highlim);
 
     void accumulateChannel(int b_index);
 
     void clearMeasurementData();
 
 
-    void compareToData(int channel);
+    void compareToData(int channel = -1);
 
     double corr(double *X, double *Y, int N);
 

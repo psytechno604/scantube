@@ -60,6 +60,7 @@ void MeasurementModel::add(Measurement *_M)
 {
     if (_M) {
         beginInsertRows(QModelIndex(), _data.size(), _data.size());
+
         _data.append(_M);
         endInsertRows();
     }
@@ -89,6 +90,29 @@ double MeasurementModel::getDistance(int channel)
     return (*max)?(*max)->distance:0;
 }
 
+float MeasurementModel::getValue(int i, int e, int d)
+{
+    auto m = get(i);
+    if (m) {
+        auto b = m->getBuffer();
+        if (b && b->length() > e && (*b)[e].length() > d)  {
+            return (*b)[e][d];
+        }
+    }
+    throw 1;
+}
+
+void MeasurementModel::setValue(int i, int e, int d, float value)
+{
+    auto m = get(i);
+    if (m) {
+        auto b = m->getBuffer();
+        if (b && b->length() > e && (*b)[e].length() > d)  {
+            (*b)[e][d] = value;
+        }
+    }
+}
+
 void MeasurementModel::clear()
 {
     beginRemoveRows(QModelIndex(), 0, _data.size());
@@ -100,5 +124,21 @@ void MeasurementModel::clear()
     //emitDataChanged();
     endRemoveRows();
 
+}
+
+void MeasurementModel::clear(int newSize)
+{
+    if (newSize >= _data.length())
+        return;
+
+    beginRemoveRows(QModelIndex(), newSize, _data.size() - newSize + 1);
+    for (auto i=newSize; i<_data.length(); i++)   {
+        if (_data[i])
+            delete _data[i];
+    }
+    _data.remove(newSize, _data.size() - newSize);
+
+    endRemoveRows();
+    emitDataChanged();
 }
 

@@ -31,10 +31,14 @@ public:
     void emitDataChanged();
     Measurement * get(int i);
     double getDistance(int channel);
+
+    float getValue(int i, int e, int d);
+    void setValue(int i, int e, int d, float value);
 signals:
 
 public slots:
     void clear();
+    void clear(int newSize);
 private:
     QStringList m_data;
     QVector<Measurement *> _data;

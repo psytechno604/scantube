@@ -18,6 +18,8 @@ Item {
         y: getBtnY(parent.height/2 - height/2, getRadius(unitIndex) * parent.height/2, getSector(unitIndex))
         onClicked: {
             parent.clicked();
+            dataSource.updateSurface3D(surfaceSeries);
+            dataSource.updateCorrelationChart(surfaceSeriesCorr);
         }
     }
     function getBtnX(x0, R, N) {
