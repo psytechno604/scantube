@@ -53,13 +53,21 @@ Item {
     id: main
     width: 1024
     height: 768
-    property alias checkBox_subtractZeroSignal: checkBox_subtractZeroSignal
+
+    property string backgroundColor: "#444444"
+    property string outputTextColor: "yellow"
+    property string staticTextColor: "red"
+    //property string inputTextColor: "yellow"
 
     signal textChanged(string msg);
-    //property alias column: column
 
-    //color: "#ffffff"
     z:-1
+
+    Rectangle {
+        anchors.fill: parent
+        z: - 100
+        color: backgroundColor
+    }
 
     Row {
         id: row
@@ -70,381 +78,398 @@ Item {
         anchors.fill: parent
         z: -1
 
-        Item {
+        Column {
             id : leftcolumn
             width : 200
             height: parent.height
+            spacing: 5
+            Row {
+                spacing: 1
+                Button {
+                    id: buttonStart
+                    width: 53
+                    height: 40
+                    text: qsTr("Start")
+                    padding: 0
+                    rotation: 0
+                    enabled: true
+                    bottomPadding: 0
+                    topPadding: 0
+                    rightPadding: 0
+                    leftPadding: 0
+                    font.pointSize: 8
+                    checkable: false
+                    onClicked: _intercom.on();
+                }
+                Button {
+                    id: button_scanRange
+                    width: 55
+                    height: 40
+                    text: qsTr("Scan range")
+                    checked: false
+                    checkable: false
+                    font.pointSize: 8
+                    onClicked: {
+                        if (checkboxWriteHistory.checked)
+                            _intercom.scanRange(textFieldFullscanCountdownStart.text);
+                        else
+                            _intercom.scanRange(1);
+                    }
+                }
+                CheckBox {
+                    id: checkboxWriteHistory
 
+                    width: 33
+                    height: 40
+                    checked: appSettings.writeHistory;
+                    onCheckedChanged: {
+                        main.textChanged("write history=" + checked);
+                    }
+                    ToolTip.visible: hovered
+                    ToolTip.text: qsTr("Set write history or not");
+                }
+                TextField {
+                    id: textFieldFullscanCountdownStart
+
+                    width: 40
+                    height: 40
+                    text: qsTr("10")
+                    selectByMouse: true
+                    MouseArea {
+                        anchors.leftMargin: 0
+                        anchors.bottomMargin: 0
+                        acceptedButtons: Qt.NoButton
+                        cursorShape: Qt.IBeamCursor
+                        anchors.rightMargin: 0
+                        anchors.topMargin: 0
+                        anchors.fill: parent
+                    }
+                }
+            }
+            Row {
+                spacing: 1
+                ComboBox {
+                    id: comboBoxAccumulation
+
+                    width: 85
+                    height: 30
+                    model: ["1", "2", "4", "8", "16", "32", "64", "128", "256", "512", "1024"]
+                    onActivated: _intercom.setAccumulation(currentText);
+                }
+                ComboBox {
+                    id: comboBoxSpeed
+
+                    width: 85
+                    height: 30
+                    model: ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F"]
+                    onActivated: _intercom.setSpeed(currentText);
+                }
+            }
+            Row {
+                spacing: 1
+                Button {
+                    id: buttonLoadFile
+                    width: 77
+                    height: 40
+                    text: qsTr("Load file...")
+                    font.pointSize: 8
+                    checkable: false
+                    rotation: 0
+                    bottomPadding: 0
+                    leftPadding: 0
+                    rightPadding: 0
+                    enabled: true
+                    topPadding: 0
+                    padding: 0
+                    onClicked: fileDialog.open();
+                }
+
+                Button {
+                    id: buttonSave
+
+                    width: 45
+                    height: 40
+                    text: qsTr("Save")
+                    checked: false
+                    checkable: false
+                    font.pointSize: 8
+                    onClicked: {
+                        main.textChanged("Save history");
+                    }
+                }
+            }
+            Row {
+                spacing: 1
+                CheckBox {
+                    id: checkBox_subtractZeroSignal
+
+                    checked: dataSource.getSubtractZeroSignal();
+                    autoExclusive: false
+                    spacing: 5
+                    font.weight: Font.Normal
+                    onCheckedChanged: {
+                        dataSource.setSubtractZeroSignal(checked);
+                        updateSingleWaveform();
+                    }
+                    ToolTip.visible: hovered
+                    ToolTip.text: qsTr("Subtract element " + textFieldZeroIndex.text)
+                }
+                TextField {
+                    id: textFieldZeroIndex
+                    width: 40
+                    height: 40
+                    text: appSettings.zeroIndex
+                    selectByMouse: true
+                    MouseArea {
+                        anchors.leftMargin: 0
+                        anchors.bottomMargin: 0
+                        acceptedButtons: Qt.NoButton
+                        cursorShape: Qt.IBeamCursor
+                        anchors.rightMargin: 0
+                        anchors.topMargin: 0
+                        anchors.fill: parent
+                    }
+                    onTextChanged: {
+                        main.textChanged("zeroIndex=" + text);
+                    }
+                }
+                Button {
+                    id: buttonPlot
+
+                    width: 55
+                    height: 40
+                    text: qsTr("Plot")
+                    checked: false
+                    checkable: false
+                    font.pointSize: 8
+                    onClicked: {
+                        //dataSource.updateAllWaveforms(series_0_0, 0);
+                        //dataSource.updateAllWaveforms(series_0_1, 1);
+                        /*timeline_3d_unit.addScan();
+                        dataSource.calcDistances();
+                        updateSingleWaveform();*/
+                        dataSource.updateSurface3D(surfaceSeries);
+                        dataSource.updateCorrelationChart(surfaceSeriesCorr);
+                    }
+                }
+
+
+
+            }
+            Row {
+                spacing: 2
+                Column {
+                    Text {
+                        id: text7_Scan_time
+                        text: qsTr("Scan time:")
+                        font.pixelSize: 12
+                        color: staticTextColor
+                    }
+                    Text {
+                        id: text_dataReceiveTimeElapsed
+                        width: 53
+                        height: 27
+                        text: qsTr("0")
+                        font.pixelSize: 24
+                        color: outputTextColor
+                    }
+
+                }
+
+                Column {
+                    Text {
+                        id: text15_between_scans_
+                        text: qsTr("between scans:")
+                        font.pixelSize: 12
+                        color: staticTextColor
+                    }
+                    Text {
+                        id: text_betweenScansTimeElapsed
+                        width: 53
+                        height: 27
+                        text: qsTr("0")
+                        font.pixelSize: 24
+                        color: outputTextColor
+                    }
+
+                }
+
+                Column {
+
+                    Text {
+                        id: text16_readData_
+
+                        text: qsTr("readData:")
+                        font.pixelSize: 12
+                        color: staticTextColor
+                    }
+
+                    Text {
+                        id: text_readDataTimeElapsed
+                        width: 53
+                        height: 27
+                        color: outputTextColor
+                        text: qsTr("0")
+                        font.pixelSize: 24
+                    }
+
+                }
+            }
+            Row {
+                spacing: 2
+                Column {
+                    Text {
+                        id: text11_ip_1_
+                        text: qsTr("ip 1:")
+                        font.pixelSize: 12
+                        color: staticTextColor
+                    }
+                    Text {
+                        id: text_packetsReceived1
+                        width: 26
+                        height: 25
+                        text: qsTr("0")
+                        font.pixelSize: 24
+                        color: outputTextColor
+                    }
+
+                }
+                Column {
+
+                    Text {
+                        id: text12_ip_2_
+                        text: qsTr("ip 2:")
+                        font.pixelSize: 12
+                        color: staticTextColor
+                    }
+                    Text {
+                        id: text_packetsReceived2
+                        width: 26
+                        height: 27
+                        color: outputTextColor
+                        text: qsTr("0")
+                        font.pixelSize: 24
+
+                    }
+
+                }
+                Column {
+                    Text {
+                        id: text13_ip_3_
+
+                        text: qsTr("ip 3:")
+                        font.pixelSize: 12
+                        color: staticTextColor
+                    }
+                    Text {
+                        id: text_packetsReceived3
+                        width: 26
+                        height: 25
+                        color: outputTextColor
+                        text: qsTr("0")
+                        font.pixelSize: 24
+                    }
+
+                }
+                Column {
+                    Text {
+                        id: text14_ip_4_
+
+                        text: qsTr("ip 4:")
+                        font.pixelSize: 12
+                        color: staticTextColor
+                    }
+                    Text {
+                        id: text_packetsReceived4
+
+                        width: 26
+                        height: 30
+                        color: outputTextColor
+                        text: qsTr("0")
+                        font.pixelSize: 24
+                    }
+                }
+            }
+            Row {
+                Button {
+                    id: button_copyToClipboard
+                    width: 82
+                    height: 40
+                    text: qsTr("Copy")
+                    checkable: false
+                    checked: false
+                    font.pointSize: 8
+                    onClicked: {
+                        dataSource.copyHistoryToClipboard();
+                    }
+                }
+
+            }
+            Row {
+                height: parent.height - y
+                //width: parent.width
+                ListView {
+                    id: listViewMeasurements
+                    height: parent.height
+                    width: leftcolumn.width
+                    keyNavigationWraps: false
+                    highlightFollowsCurrentItem: false
+                    boundsBehavior: Flickable.StopAtBounds
+                    highlightRangeMode: ListView.NoHighlightRange
+                    snapMode: ListView.NoSnap
+                    contentHeight: 0
+                    rotation: 0
+                    flickableDirection: Flickable.VerticalFlick
+                    contentWidth: 0
+                    spacing: 1
+                    orientation: ListView.Vertical
+                    model: measurementModel
+                    clip: true
+                    delegate: Item {
+                        //x: 5
+                        //width: 192
+                        height: 20
+                        Row {
+                            id: row1
+
+                            Text {
+                                property variant data: model
+                                text: model.text
+                                font.bold: false
+                                anchors.verticalCenter: parent.verticalCenter
+                                color: outputTextColor
+                            }
+                            spacing: 5
+                        }
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: {
+                                listView.currentIndex = index;
+                                dataSource.showByIndex(listView.currentIndex);
+                            }
+                        }
+
+                    }
+                    focus: true
+                    onCurrentItemChanged: {
+                        //dataSource.showByIndex(listViewMeasurements.currentIndex);
+                    }
+
+                }
+            }
+            /*
             ComboBox {
-                id: comboBox
-                x: 8
-                y: 54
+                id: comboBoxMyIP
+                visible: false
                 width: 124
                 height: 32
                 model: myIPsListModel
                 textRole: "text"
                 onActivated: _intercom.setMyIP(currentText);
             }
-
-
             Button {
-                id: button
-                x: 8
-                y: 8
-                width: 53
-                height: 40
-                text: qsTr("Start")
-                padding: 0
-                rotation: 0
-                enabled: true
-                bottomPadding: 0
-                topPadding: 0
-                rightPadding: 0
-                leftPadding: 0
-                font.pointSize: 8
-                checkable: false
-                onClicked: _intercom.on();
-            }
-            ComboBox {
-                id: comboBox1
-                x: 8
-                y: 92
-                width: 85
-                height: 30
-                model: ["1", "2", "4", "8", "16", "32", "64", "128", "256", "512", "1024"]
-                onActivated: _intercom.setAccumulation(currentText);
-            }
-            ComboBox {
-                id: comboBox2
-                x: 107
-                y: 92
-                width: 85
-                height: 30
-                model: ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F"]
-                onActivated: _intercom.setSpeed(currentText);
-            }
-            Text {
-                id: text7
-                x: 8
-                y: 126
-                text: qsTr("Scan time:")
-                font.pixelSize: 12
-            }
-
-            Text {
-                id: text_dataReceiveTimeElapsed
-                x: 71
-                y: 126
-                width: 53
-                height: 27
-                color: "#ffffff"
-                text: qsTr("0")
-                font.pixelSize: 24
-            }
-
-            Text {
-                id: text9
-                x: 130
-                y: 128
-                text: qsTr("ms.")
-                font.pixelSize: 12
-            }
-
-            Text {
-                id: text10
-                x: 8
-                y: 159
-                text: qsTr("Timeout:")
-                font.pixelSize: 12
-            }
-
-
-
-
-            SpinBox {
-                id: spinBox_dataReceiveTimeout
-                x: 67
-                y: 159
-                width: 109
-                height: 40
-                value: appSettings.dataReceiveTimeout
-                from: 10
-                to: 1000
-                /*editable: true
-                valueFromText: function(text, locale) { return Number.fromLocaleString(locale, text); }*/
-                onValueChanged: _intercom.setTimeout(value);
-            }
-
-            Text {
-                id: text8
-                x: 8
-                y: 203
-                text: qsTr("Packets received:")
-                font.pixelSize: 12
-            }
-
-
-
-            Text {
-                id: text11
-                x: 8
-                y: 219
-                text: qsTr("ip 1:")
-                font.pixelSize: 12
-            }
-
-            Text {
-                id: text_packetsReceived1
-                x: 8
-                y: 239
-                width: 26
-                height: 25
-                color: "#ffffff"
-                text: qsTr("0")
-                font.pixelSize: 24
-            }
-
-
-
-
-
-
-
-            Text {
-                id: text12
-                x: 39
-                y: 219
-                width: 25
-                height: 0
-                text: qsTr("ip 2:")
-                font.pixelSize: 12
-            }
-
-            Text {
-                id: text_packetsReceived2
-                x: 39
-                y: 239
-                width: 26
-                height: 27
-                color: "#ffffff"
-                text: qsTr("0")
-                font.pixelSize: 24
-
-            }
-
-
-
-
-
-
-            Text {
-                id: text13
-                x: 72
-                y: 219
-                text: qsTr("ip 3:")
-                font.pixelSize: 12
-            }
-
-            Text {
-                id: text_packetsReceived3
-                x: 71
-                y: 239
-                width: 26
-                height: 25
-                color: "#ffffff"
-                text: qsTr("0")
-                font.pixelSize: 24
-            }
-
-
-
-
-
-
-            Text {
-                id: text14
-                x: 103
-                y: 219
-                text: qsTr("ip 4:")
-                font.pixelSize: 12
-            }
-
-            Text {
-                id: text_packetsReceived4
-                x: 103
-                y: 239
-                width: 26
-                height: 30
-                color: "#ffffff"
-                text: qsTr("0")
-                font.pixelSize: 24
-            }
-
-
-
-
-
-
-            Button {
-                id: button2
-                x: 8
-                y: 438
-                width: 77
-                height: 40
-                text: qsTr("Load file...")
-                font.pointSize: 8
-                checkable: false
-                rotation: 0
-                bottomPadding: 0
-                leftPadding: 0
-                rightPadding: 0
-                enabled: true
-                topPadding: 0
-                padding: 0
-                onClicked: fileDialog.open();
-            }
-
-
-
-            CheckBox {
-                id: checkBox_subtractZeroSignal
-                x: 91
-                y: 336
-                width: 65
-                height: 40
-                checked: dataSource.getSubtractZeroSignal();
-                text: qsTr("use")
-                autoExclusive: false
-                spacing: 5
-                font.weight: Font.Normal
-                onCheckedChanged: {
-                    dataSource.setSubtractZeroSignal(checked);
-                    updateSingleWaveform();
-                }
-            }
-
-
-
-            CheckBox {
-                id: checkBoxUseFile
-                x: 91
-                y: 438
-                width: 33
-                height: 40
-                checked: _interfaceHelper.getIntValue("checkBoxUseFile");
-                onCheckedChanged: {
-                    main.textChanged("write history=" + checked);
-                }
-            }
-
-
-
-            TextField {
-                id: textField3
-                x: 130
-                y: 438
-                width: 62
-                height: 40
-                text: qsTr("0")
-                selectByMouse: true
-                MouseArea {
-                    anchors.leftMargin: 0
-                    anchors.bottomMargin: 0
-                    acceptedButtons: Qt.NoButton
-                    cursorShape: Qt.IBeamCursor
-                    anchors.rightMargin: 0
-                    anchors.topMargin: 0
-                    anchors.fill: parent
-                }
-                onTextChanged: {
-                    main.textChanged("zeroIndex=" + text);
-                }
-            }
-
-
-
-            ListView {
-                id: listView
-                x: 8
-                y: 484
-                width: 185
-                height: parent.height-y
-                keyNavigationWraps: false
-                highlightFollowsCurrentItem: false
-                boundsBehavior: Flickable.StopAtBounds
-                highlightRangeMode: ListView.NoHighlightRange
-                snapMode: ListView.NoSnap
-                contentHeight: 0
-                rotation: 0
-                flickableDirection: Flickable.VerticalFlick
-                contentWidth: 0
-                spacing: 0
-                orientation: ListView.Vertical
-                model: measurementModel
-                clip: true
-                delegate: Item {
-                    x: 5
-                    width: 192
-                    height: 20
-                    Row {
-                        id: row1
-                        /*Rectangle {
-                    width: 40
-                    height: 40
-                    color: colorCode
-                }*/
-
-                        Text {
-                            property variant data: model
-                            text: model.text
-                            font.bold: true
-                            anchors.verticalCenter: parent.verticalCenter
-                        }
-                        spacing: 5
-                    }
-                    MouseArea {
-                        anchors.fill: parent
-                        onClicked: {
-                            listView.currentIndex = index;
-                            dataSource.showByIndex(listView.currentIndex);
-                        }
-                    }
-
-                }
-                focus: true
-                onCurrentItemChanged: {
-                    dataSource.showByIndex(listView.currentIndex);
-                }
-
-            }
-
-
-
-            Button {
-                id: button3
-                x: 67
-                y: 8
-                width: 55
-                height: 40
-                text: qsTr("Scan")
-                checked: false
-                checkable: true
-                font.pointSize: 8
-                onClicked: {
-                    if (checked)    {
-                        _intercom.setContinueScan(true);
-                        //_intercom.sendScan();
-                    }
-                    else {
-                        _intercom.setContinueScan(false);
-                    }
-                }
-            }
-
-
-
-            Button {
-                id: button4
+                visible: false
+                id: buttonTest
                 x: 138
                 y: 54
                 width: 54
@@ -455,155 +480,49 @@ Item {
                 font.pointSize: 8
                 onClicked: _intercom.sendTest();
             }
-
-
-
-            Button {
-                id: button5
-                x: 8
-                y: 336
-                width: 82
-                height: 40
-                text: qsTr("Save signal 0")
-                checkable: false
-                checked: false
-                font.pointSize: 8
-                onClicked: dataSource.saveAsScanData0();
-            }
-
-
-
-            Button {
-                id: button6
-                x: 138
-                y: 8
-                width: 55
-                height: 40
-                text: qsTr("Plot")
-                checked: false
-                checkable: false
-                font.pointSize: 8
-                onClicked: {
-                   //dataSource.updateAllWaveforms(series_0_0, 0);
-                    //dataSource.updateAllWaveforms(series_0_1, 1);
-                    /*timeline_3d_unit.addScan();
-                    dataSource.calcDistances();
-                    updateSingleWaveform();*/
-                    dataSource.updateSurface3D(surfaceSeries);
-                    dataSource.updateCorrelationChart(surfaceSeriesCorr);
-                }
-            }
-
-
-
-            Button {
-                id: button7
-                x: 148
-                y: 336
-                width: 45
-                height: 40
-                text: qsTr("Save")
-                checked: false
-                checkable: false
-                font.pointSize: 8
-                onClicked: {
-                    main.textChanged("Save history");
-                }
-            }
-
-
             Text {
-                id: text_betweenScansTimeElapsed
-                x: 92
-                y: 275
-                width: 53
-                height: 27
-                color: "#ffffff"
-                text: qsTr("0")
-                font.pixelSize: 24
-            }
-
-            Text {
-                id: text15
+                visible: false
+                id: text10_Timeout_
                 x: 8
-                y: 272
-                text: qsTr("between scans:")
+                y: 159
+                text: qsTr("Timeout:")
                 font.pixelSize: 12
+                color: staticTextColor
             }
-
-            Text {
-                id: text16
-                x: 8
-                y: 308
-                text: qsTr("readData:")
-                font.pixelSize: 12
-            }
-
-            Text {
-                id: text_readDataTimeElapsed
-                x: 92
-                y: 308
-                width: 53
-                height: 27
-                color: "#ffffff"
-                text: qsTr("0")
-                font.pixelSize: 24
-            }
-
-            Button {
-                id: button_saveDistance0
-                x: 8
-                y: 392
-                width: 82
+            SpinBox {
+                visible: false
+                id: spinBox_dataReceiveTimeout
+                x: 67
+                y: 159
+                width: 109
                 height: 40
-                text: qsTr("Save distance 0")
-                checkable: false
-                checked: false
-                font.pointSize: 8
-                onClicked: {
-                    dataSource.setSaveDistance0(true);
+                value: appSettings.dataReceiveTimeout
+                from: 10
+                to: 1000
 
-                }
+                onValueChanged: _intercom.setTimeout(value);
             }
-            Button {
-                id: button_copyToClipboard
-                x: 100
-                y: 392
-                width: 82
-                height: 40
-                text: qsTr("Copy")
-                checkable: false
-                checked: false
-                font.pointSize: 8
-                onClicked: {
-                    dataSource.copyHistoryToClipboard();
-                }
-            }
+            */
         }
 
-
-
         Column {
-            id: column
+            id: rightcolumn
             x: 0
             width: parent.width-200
             height: parent.height
             z: -1
-
             Item {
-                id: item1
+                id: contentItem
                 y: 0
                 width: parent.width
                 height: parent.height-200
-
-
                 Column {
                     width: parent.width
                     height: parent.height
-
                     //SL
                     Column {
-                        anchors.fill: parent
+                        width: parent.width
+                        height: parent.height
                         TabBar {
                             id: tabBar
                             width: parent.width
@@ -665,7 +584,7 @@ Item {
                                 id: single_waveform_distance
                                 text: qsTr("---")
                                 font.pixelSize: 12
-                                color: "white"
+                                color: outputTextColor
 
                             }
                             Timer {
@@ -680,7 +599,7 @@ Item {
                         }
                         StackLayout {
                             width: parent.width
-                            height: parent.height - tabBar.height
+                            height: parent.height - tabBar.height - row_selectReceiver.height
                             currentIndex: tabBar.currentIndex
                             Item {
                                 id: single_waveform_tab
@@ -940,8 +859,8 @@ Item {
                                 anchors.fill: parent
                                 ColorGradient {
                                     id: surfaceGradient
-                                    ColorGradientStop { position: 0.0; color: "darkslategray" }
-                                    ColorGradientStop { id: middleGradient; position: 0.25; color: "peru" }
+                                    ColorGradientStop { position: 0.0; color: "#0033ff" }
+                                    ColorGradientStop { id: middleGradient; position: 0.25; color: "#ffff11" }
                                     ColorGradientStop { position: 0.75; color: "red" }
                                 }
                                 Surface3D {
@@ -949,7 +868,7 @@ Item {
                                     anchors.fill: parent
 
                                     theme: Theme3D {
-                                        type: Theme3D.ThemeStoneMoss
+                                        type: Theme3D.ThemeQt
                                         font.family: "STCaiyun"
                                         font.pointSize: 35
                                         colorStyle: Theme3D.ColorStyleRangeGradient
@@ -1005,19 +924,16 @@ Item {
                         }
                         //SL
                     }
-
-
                 }
-
             }
 
             Item {
-                id: item2
+                id: controlsItem
                 width: parent.width
                 height: 200
 
                 Slider {
-                    visible: false;
+                    //visible: false;
                     id: slider1
                     x: 0
                     y: 0
@@ -1032,7 +948,6 @@ Item {
                         textField_slider1.text = Math.floor(value);
                     }
                 }
-
                 TextField {
                     visible: false;
                     id: textField_slider1
@@ -1056,7 +971,6 @@ Item {
                         anchors.bottomMargin: 0
                     }
                 }
-
                 Slider {
                     id: slider2
                     x: 0
@@ -1072,7 +986,6 @@ Item {
                         textField_slider2.text = Math.floor(value);
                     }
                 }
-
                 TextField {
                     id: textField_slider2
                     x: slider2.x + slider2.width+5
@@ -1091,7 +1004,6 @@ Item {
                     }
                     selectByMouse: true
                 }
-
                 Slider {
                     id: slider3
                     x: 0
@@ -1107,7 +1019,6 @@ Item {
                         textField_slider3.text = Math.floor(value);
                     }
                 }
-
                 TextField {
                     id: textField_slider3
                     x: slider3.x + slider3.width+5
@@ -1126,7 +1037,6 @@ Item {
                     }
                     selectByMouse: true
                 }
-
                 Slider {
                     id: slider4
                     x: 0
@@ -1244,27 +1154,14 @@ Item {
                     }
                 }
 
-                Button {
-                    id: button_scanRange
-                    x: textField_slider4_level.x
-                    y: button_sendShifts.y
-                    width: 55
-                    height: 40
-                    text: qsTr("Scan range")
-                    checked: false
-                    checkable: false
-                    font.pointSize: 8
-                    onClicked: {
-                        _intercom.scanRangeOnce();
-                    }
-                }
-/*
+
+                /*
                 double fc{1e+9};
                 double deltaf;
                 unsigned short ford {8};
                 double Td {1e-9};*/
                 TextField {
-                    visible: false;
+                    //visible: false;
                     id: textField_fc
                     x: textField_slider4_level.x + textField_slider4_level.width + 10
                     y: textField_slider1_level.y
@@ -1345,10 +1242,7 @@ Item {
                     }
                 }
             }
-
         }
-
-
     }
     FileDialog {
         id: fileDialog
@@ -1369,121 +1263,16 @@ Item {
         //Component.onCompleted: visible = true
     }
 
-    //    Timer {
-    //        id: startPlotTimer
-    //        interval: scanTimer.interval / 2.0
-    //        triggeredOnStart: false
-    //        running: false
-    //        repeat: false
-    //        onTriggered: {
-    //            plotTimer.running = true;
-    //        }
-    //    }
-
-    //    Timer {
-    //        id: scanTimer
-    //        interval: 500
-    //        running: false
-    //        repeat: true
-    //        onTriggered: {
-    //            _intercom.sendScan();
-    //            startPlotTimer.running = true;
-    //        }
-    //    }
-
-
-
-    function setSingleWaveformDistanceText (distance) {
-        single_waveform_distance.text = "Distance = " + distance;
-    }
-    function updateAllWaveforms (){
-        //dataSource.updateAllWaveforms(series_0_0, 0);
-        //dataSource.updateAllWaveforms(series_0_1, 1);
-    }
-    function updateDistances (){
-        /*dataSource.updateDistances(series_1_0, 0);
-        dataSource.updateDistances(series_1_1, 1);
-        dataSource.updateDistances(series_1_2, 2);*/
-        var fix = 8;
-        textField_slider1_level.text = dataSource.getReceiverLevel(0).toFixed(0);
-        textField_slider2_level.text = dataSource.getReceiverLevel(1).toFixed(0);
-        textField_slider3_level.text = dataSource.getReceiverLevel(2).toFixed(0);
-        textField_slider4_level.text = dataSource.getReceiverLevel(3).toFixed(0);
-    }
-
-    function updateSingleWaveform() {
-        dataSource.update(scopeView.lineSeries1);
-    }
-
-    function clearListElements(){
-
-    }
-
-    function addListElement(name, colorCode)   {
-        listView.model.append({
-                                  name: name,
-                                  colorCode: colorCode
-                              });
-    }
-
-    function setDistance(distance)  {
-        textInput.text = distance;
-    }
-
-    function setPacketsReceived(v1, v2, v3, v4) {
-        text_packetsReceived1.text = v1===0?"":v1;
-        text_packetsReceived2.text = v2===0?"":v2;
-        text_packetsReceived3.text = v3===0?"":v3;
-        text_packetsReceived4.text = v4===0?"":v4;
-    }
-    /*function setReceiverLevels(l1, l2, l3, l4) {
-        textField_slider1_level.text = l1;
-        textField_slider2_level.text = l2;
-        textField_slider3_level.text = l3;
-        textField_slider4_level.text = l4;
-    }*/
-    function setDataReceiveTimeElapsed(elapsed) {
-        text_dataReceiveTimeElapsed.text = elapsed;
-    }
-    function setBetweenScansTimeElapsed(elapsed) {
-        text_betweenScansTimeElapsed.text = elapsed;
-    }
-    function setReadDataTimeElapsed(elapsed) {
-        text_readDataTimeElapsed.text = elapsed;
-    }
-    function changeProgressBar(v) {
-        pbValue = v*1
-        return
-    }
-    function sendFix() {
-        if (checkBox1.checked)
-            dataSource.save_point(textInput.text*1, 20, checkBox_saveAsZeroSignal.checked);
-    }
-    function uncheck_checkBox_saveAsZeroSignal()    {
-        checkBox_saveAsZeroSignal.checked = 0;
-    }
-
-    function setFilterValues () {
-        main.textChanged("fc="+textField_fc.text);
-        main.textChanged("deltaf="+textField_deltaf.text);
-        main.textChanged("ford="+textField_ford.text);
-        main.textChanged("Td="+textField_Td.text);
-    }
-
     //![2]
     Component.onCompleted: {
-        //timeline_3d_object.connectDataSource(dataSource);
-        _intercom.setTimeout(spinBox_dataReceiveTimeout.value);
+        _intercom.setTimeout(appSettings.dataReceiveTimeout);
         setSingleWaveformDistanceText(0);
         setPacketsReceived(0, 0, 0, 0);
-
-
-
-
+        dataSource.setWriteHistory(appSettings.writeHistory);
     }
     Settings {
         id: appSettings
-        property alias dataReceiveTimeout: spinBox_dataReceiveTimeout.value
+        property int dataReceiveTimeout: 400
         property alias slider1_value: slider1.value
         property alias slider2_value: slider2.value
         property alias slider3_value: slider3.value
@@ -1495,6 +1284,10 @@ Item {
         property alias td: textField_Td.text
 
         property alias commandtext: textField_Command.text
+
+        property alias zeroIndex: textFieldZeroIndex.text
+
+        property alias writeHistory: checkboxWriteHistory.checked
     }
     Rectangle {
         id: rect_circleSelector
@@ -1891,9 +1684,69 @@ Item {
             }
         }
     }
+    function setSingleWaveformDistanceText (distance) {
+        single_waveform_distance.text = "Distance = " + distance;
+    }
+    function updateAllWaveforms (){
+
+    }
+    function updateDistances (){
+
+        var fix = 8;
+        textField_slider1_level.text = dataSource.getReceiverLevel(0).toFixed(0);
+        textField_slider2_level.text = dataSource.getReceiverLevel(1).toFixed(0);
+        textField_slider3_level.text = dataSource.getReceiverLevel(2).toFixed(0);
+        textField_slider4_level.text = dataSource.getReceiverLevel(3).toFixed(0);
+    }
+    function updateSingleWaveform() {
+        dataSource.update(scopeView.lineSeries1);
+    }
+    function clearListElements(){
+
+    }
+    function addListElement(name, colorCode)   {
+        listView.model.append({
+                                  name: name,
+                                  colorCode: colorCode
+                              });
+    }
+    function setDistance(distance)  {
+        textInput.text = distance;
+    }
+    function setPacketsReceived(v1, v2, v3, v4) {
+        text_packetsReceived1.text = v1===0?"":v1;
+        text_packetsReceived2.text = v2===0?"":v2;
+        text_packetsReceived3.text = v3===0?"":v3;
+        text_packetsReceived4.text = v4===0?"":v4;
+    }
+    function setDataReceiveTimeElapsed(elapsed) {
+        text_dataReceiveTimeElapsed.text = elapsed;
+    }
+    function setBetweenScansTimeElapsed(elapsed) {
+        text_betweenScansTimeElapsed.text = elapsed;
+    }
+    function setReadDataTimeElapsed(elapsed) {
+        text_readDataTimeElapsed.text = elapsed;
+    }
+    function changeProgressBar(v) {
+        pbValue = v*1
+        return
+    }
+    function sendFix() {
+        if (checkBox1.checked)
+            dataSource.save_point(textInput.text*1, 20, checkBox_saveAsZeroSignal.checked);
+    }
+    function uncheck_checkBox_saveAsZeroSignal()    {
+        checkBox_saveAsZeroSignal.checked = 0;
+    }
+    function setFilterValues () {
+        main.textChanged("fc="+textField_fc.text);
+        main.textChanged("deltaf="+textField_deltaf.text);
+        main.textChanged("ford="+textField_ford.text);
+        main.textChanged("Td="+textField_Td.text);
+    }
     function buttonOnCircleClicked(index) {
         rect_circleSelector.visible = false;
-        dataSource.setUnitIndex(index);
 
         comboBox_selectIP.currentIndex = comboBox_selectIP.model.indexOf(dataSource.getIP());
         //dataSource.selectIP(ip);
@@ -1903,6 +1756,8 @@ Item {
         //dataSource.selectRow(row);*/
 
         updateSingleWaveform();
+        dataSource.updateSurface3D(surfaceSeries);
+        dataSource.updateCorrelationChart(surfaceSeriesCorr);
     }
     function getBtnX(x0, R, N) {
         return x0 + R * Math.sin(Math.PI / 32 + N * Math.PI / 16);
@@ -1910,7 +1765,6 @@ Item {
     function getBtnY(y0, R, N) {
         return y0 - R * Math.cos(Math.PI / 32 + N * Math.PI / 16);
     }
-
     function setSliders(v1, v2, v3, v4) {
         slider1.value = v1;
         slider2.value = v2;

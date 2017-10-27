@@ -192,6 +192,7 @@ public slots:
     Q_INVOKABLE void collapseMMAndHistory(int block_size);
 
     Q_INVOKABLE void copyHistoryToClipboard();
+    Q_INVOKABLE void setWriteHistory(bool wh);
 private:
     QMimeData *mimeData {nullptr};
 

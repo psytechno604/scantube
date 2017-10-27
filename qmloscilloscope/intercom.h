@@ -25,7 +25,7 @@ public:
     Q_INVOKABLE void endScan0();
     Q_INVOKABLE void stopScanTimer();
     Q_INVOKABLE void sendTest();
-    Q_INVOKABLE void scanRange();
+    Q_INVOKABLE void scanRange(int fullscan_countdown_start=1);
 
     Q_INVOKABLE int getTimeout();
 

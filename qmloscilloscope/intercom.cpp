@@ -272,9 +272,9 @@ void intercom::sendTest()
 
 }
 
-void intercom::scanRange()
+void intercom::scanRange(int fullscan_countdown_start)
 {
-    if (!fullscan_mode_on)  {
+    if (!fullscan_mode_on && fullscan_countdown_start>0)  {
         fullscan_countdown = fullscan_countdown_start;
         beforeScanRange();
         sendScan();

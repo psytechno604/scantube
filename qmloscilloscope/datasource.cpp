@@ -596,6 +596,11 @@ void DataSource::copyHistoryToClipboard()
     mimeData->setData("csv", itemData);
     QApplication::clipboard()->setMimeData(mimeData);
 }
+
+void DataSource::setWriteHistory(bool wh)
+{
+    write_history = wh;
+}
 void DataSource::calcCorrelationFunc(QVector <double> &in, QVector <double> &out, float *corrfunct, int n__corr, int numsmpl)
 {
     int i, j, offs;
@@ -743,7 +748,7 @@ void DataSource::processSignal(Measurement *m)
     }
     for (auto e=0; e<b->length(); e++) {
         if ((*pb)[e].length() < (*b)[e].length()) {
-            (*pb)[e]->resize((*b)[e].length());
+            (*pb)[e].resize((*b)[e].length());
         }
         QVector<double> in;
         for (auto d=0; d<(*b)[e].length(); d++) {
