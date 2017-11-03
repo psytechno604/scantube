@@ -41,7 +41,15 @@ ChartView {
     property alias yMin: axisY.min
     property alias y2Max: axisY2.max
     property alias y2Min: axisY2.min
-    property alias lineSeries1: lineSeries1
+    //property alias lineSeries1: lineSeries1
+    property alias chartView: chartView
+    property string color0: "#ff0000"
+    property string color1: "green"
+    property string color2: "#4488ff"
+
+    property string color0_1: "#ff4444"
+    property string color1_1: "green"
+    property string color2_1: "#88aaff"
     onOpenGLChanged: {
         if (openGLSupported) {
             series("signal 1").useOpenGL = openGL;
@@ -53,20 +61,27 @@ ChartView {
         }
     }
     Component.onCompleted: {
-        if (!series("original").useOpenGL) {
+        if (!series(0).useOpenGL) {
             openGLSupported = false
             openGL = false
         }
-        dataSource.setSeries(lineSeries1, 0);
-        dataSource.setSeries(scatter1, 1);
-        dataSource.setSeries(lineSeriesS1, 2);
-        dataSource.setSeries(scatter2, 3);
+        console.log("series.length =" + series.length);
+        dataSource.setSeries(max_i0, 0);
+        dataSource.setSeries(max_i1, 1);
+        dataSource.setSeries(max_i2, 2);
+        dataSource.setSeries(slice_i0, 3);
+        dataSource.setSeries(slice_i1, 4);
+        dataSource.setSeries(slice_i2, 5);
+        dataSource.setSeries(processed_i0, 6);
+        dataSource.setSeries(processed_i1, 7);
+        dataSource.setSeries(processed_i2, 8);
+
     }
 
     ValueAxis {
         id: axisY
-        min: -1024
-        max: 1024
+        min: (appSettings.useAbsoluteValues?0:(-appSettings.maxSignalLevel))
+        max: appSettings.maxSignalLevel
     }
     ValueAxis {
         id: axisY2
@@ -77,69 +92,80 @@ ChartView {
 
     ValueAxis {
         id: axisX
-        min: 0
-        max: 3000
+        min: appSettings.d0
+        max: appSettings.dN
     }
     ScatterSeries {
-           id: scatter1
-           name: "Scatter1"
+           id:max_i0
+           name: "Max " + appSettings.i0
            axisX: axisX
                    axisY: axisY
-           XYPoint { x: 0; y: 0 }
-           XYPoint { x: 0; y: 0 }
-           XYPoint { x: 0; y: 0 }
+                   color: color0
        }
     ScatterSeries {
-           id: scatter2
-           name: "Scatter2"
+           id: max_i1
+           name: "Max " + appSettings.i1
            axisX: axisX
                    axisY: axisY
-           XYPoint { x: 0; y: 0 }
-           XYPoint { x: 0; y: 0 }
-           XYPoint { x: 0; y: 0 }
+                   color: color1
+       }
+    ScatterSeries {
+           id: max_i2
+           name: "Max " + appSettings.i2
+           axisX: axisX
+                   axisY: axisY
+                   color: color2
        }
     LineSeries {
-        id: lineSeries1
-        name: "original"
+        id: slice_i0
+        name: "Slice " + appSettings.i0
         axisX: axisX
         axisY: axisY
         useOpenGL: chartView.openGL
+        color: color0
     }
     LineSeries {
-        id: lineSeriesS1
-        name: "processed"
+        id: slice_i1
+        name: "Slice " + appSettings.i1
         axisX: axisX
-        axisY: axisY2
+        axisY: axisY
         useOpenGL: chartView.openGL
-        color: "red"
+        color: color1
     }
     LineSeries {
-        id: lineSeries2
-        name: "signal s1"
-        axisX: axisX
-        axisYRight: axisY2
-        useOpenGL: chartView.openGL
-    }
-    LineSeries {
-        id: lineSeriesS2
-        name: "signal s2"
-        axisX: axisX
-        axisYRight: axisY2
-        useOpenGL: chartView.openGL
-    }
-    LineSeries {
-        id: lineSeriesSelected1
-        name: "signal selected 1"
+        id: slice_i2
+        name: "Slice " + appSettings.i2
         axisX: axisX
         axisYRight: axisY
         useOpenGL: chartView.openGL
+        color: color2
     }
     LineSeries {
-        id: lineSeriesSelected2
-        name: "signal selected 2"
+        visible: show_i0_1.checked
+        id: processed_i0
+        name: "Processed " + appSettings.i0
+        axisX: axisX
+        axisYRight: axisY2
+        useOpenGL: chartView.openGL
+        color: color0_1
+    }
+    LineSeries {
+        id: processed_i1
+        visible: show_i1_1.checked
+        name: "Processed " + appSettings.i1
         axisX: axisX
         axisYRight: axisY
         useOpenGL: chartView.openGL
+        color: color1_1
+    }
+    LineSeries {
+        id: processed_i2
+        visible: show_i2_1.checked
+        name: "Processed " + appSettings.i2
+        axisX: axisX
+        axisYRight: axisY
+        useOpenGL: chartView.openGL
+        color: color2_1
     }
 //![1]
 

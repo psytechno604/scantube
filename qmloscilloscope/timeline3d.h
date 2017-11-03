@@ -39,7 +39,9 @@ private:
     void onTimerUpdate();
 
     //QPlaneMesh* m_planeMesh;
-    QPhongAlphaMaterial *m_planeMaterial;
+    //QPhongAlphaMaterial *m_planeMaterial;
+    QMaterial *m_planeMaterial;
+
 
     Qt3DRender::QBuffer *vertexBuffer;
     Qt3DRender::QBuffer *indexBuffer;

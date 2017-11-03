@@ -54,10 +54,12 @@ Item {
     width: 1024
     height: 768
 
-    property string backgroundColor: "#444444"
-    property string outputTextColor: "yellow"
-    property string staticTextColor: "red"
+    property string backgroundColor: "#888888"
+    property string outputTextColor: "#ffdd00"
+    property string staticTextColor: "#000000"
     //property string inputTextColor: "yellow"
+
+    property alias text_currentShift: text_currentShift.text
 
     signal textChanged(string msg);
 
@@ -77,7 +79,7 @@ Item {
         anchors.topMargin: 0
         anchors.fill: parent
         z: -1
-
+        spacing: 2
         Column {
             id : leftcolumn
             width : 200
@@ -88,7 +90,6 @@ Item {
                 Button {
                     id: buttonStart
                     width: 53
-                    height: 40
                     text: qsTr("Start")
                     padding: 0
                     rotation: 0
@@ -104,7 +105,6 @@ Item {
                 Button {
                     id: button_scanRange
                     width: 55
-                    height: 40
                     text: qsTr("Scan range")
                     checked: false
                     checkable: false
@@ -120,7 +120,6 @@ Item {
                     id: checkboxWriteHistory
 
                     width: 33
-                    height: 40
                     checked: appSettings.writeHistory;
                     onCheckedChanged: {
                         main.textChanged("write history=" + checked);
@@ -132,8 +131,7 @@ Item {
                     id: textFieldFullscanCountdownStart
 
                     width: 40
-                    height: 40
-                    text: qsTr("10")
+                    text: qsTr("3")
                     selectByMouse: true
                     MouseArea {
                         anchors.leftMargin: 0
@@ -148,7 +146,7 @@ Item {
             }
             Row {
                 spacing: 1
-                ComboBox {
+                /*ComboBox {
                     id: comboBoxAccumulation
 
                     width: 85
@@ -163,6 +161,18 @@ Item {
                     height: 30
                     model: ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F"]
                     onActivated: _intercom.setSpeed(currentText);
+                }*/
+                Button {
+                    text : "Clear"
+                    onClicked: {
+
+                    }
+                }
+                Button {
+                    text : "Copy to shared memory"
+                    onClicked: {
+                        dataSource.copyToSharedMemory();
+                    }
                 }
             }
             Row {
@@ -201,20 +211,25 @@ Item {
             Row {
                 spacing: 1
                 CheckBox {
-                    id: checkBox_subtractZeroSignal
+                    id: useZeroSignal
 
-                    checked: dataSource.getSubtractZeroSignal();
+                    checked: appSettings.useZeroSignal;
                     autoExclusive: false
                     spacing: 5
                     font.weight: Font.Normal
                     onCheckedChanged: {
-                        dataSource.setSubtractZeroSignal(checked);
+                        dataSource.setUseZeroSignal(checked);
                         updateSingleWaveform();
                     }
                     ToolTip.visible: hovered
-                    ToolTip.text: qsTr("Subtract element " + textFieldZeroIndex.text)
+                    ToolTip.text: qsTr("Use zero index " + textFieldZeroIndex.text)
                 }
+                Text {
+                    text: qsTr("Zero index:")
+                }
+
                 TextField {
+                    enabled: useZeroSignal.checked
                     id: textFieldZeroIndex
                     width: 40
                     height: 40
@@ -233,28 +248,19 @@ Item {
                         main.textChanged("zeroIndex=" + text);
                     }
                 }
-                Button {
-                    id: buttonPlot
 
-                    width: 55
-                    height: 40
-                    text: qsTr("Plot")
-                    checked: false
-                    checkable: false
-                    font.pointSize: 8
-                    onClicked: {
-                        //dataSource.updateAllWaveforms(series_0_0, 0);
-                        //dataSource.updateAllWaveforms(series_0_1, 1);
-                        /*timeline_3d_unit.addScan();
-                        dataSource.calcDistances();
-                        updateSingleWaveform();*/
-                        dataSource.updateSurface3D(surfaceSeries);
-                        dataSource.updateCorrelationChart(surfaceSeriesCorr);
+            }
+            Row {
+                CheckBox {
+                    id: useAbsoluteValues
+                    checked: appSettings.useAbsoluteValues
+                    onCheckedChanged: {
+
                     }
                 }
-
-
-
+                Text {
+                    text: qsTr("Use absolute value")
+                }
             }
             Row {
                 spacing: 2
@@ -389,6 +395,24 @@ Item {
                         font.pixelSize: 24
                     }
                 }
+                Column {
+                    Text {
+                        id: text14_ADC_
+
+                        text: qsTr("ADC")
+                        font.pixelSize: 12
+                        color: staticTextColor
+                    }
+                    Text {
+                        id: text_currentShift
+
+                        width: 26
+                        height: 30
+                        color: outputTextColor
+                        text: qsTr("0")
+                        font.pixelSize: 24
+                    }
+                }
             }
             Row {
                 Button {
@@ -404,6 +428,126 @@ Item {
                     }
                 }
 
+            }
+            Row {
+                Text {
+                    text: qsTr("Slice 0")
+                }
+                CheckBox {
+                    id: show_i0
+                    checked: appSettings.show_i0
+                    onCheckedChanged: {
+                        dataSource.update(show_i0.checked, appSettings.i0, 0, 3, 6);
+                    }
+                    background: Rectangle {color: scopeView.color0}
+                }
+                Text {
+                    text: qsTr("index=")
+                }
+                TextField {
+                    id: textField_i0
+
+                    width: 40
+                    text: appSettings.i0
+                    selectByMouse: true
+                    MouseArea {
+                        anchors.leftMargin: 0
+                        anchors.bottomMargin: 0
+                        acceptedButtons: Qt.NoButton
+                        cursorShape: Qt.IBeamCursor
+                        anchors.rightMargin: 0
+                        anchors.topMargin: 0
+                        anchors.fill: parent
+                    }
+                    onTextChanged: {
+                        dataSource.update(show_i0.checked, appSettings.i0, 0, 3, 6);
+                    }
+                }
+                CheckBox {
+                    id: show_i0_1
+                    checked: appSettings.show_i0_1
+                    background: Rectangle {color: scopeView.color0_1}
+                }
+            }
+            Row {
+                Text {
+                    text: qsTr("Slice 1")
+                }
+                CheckBox {
+                    id: show_i1
+                    checked: appSettings.show_i1
+                    onCheckedChanged: {
+                        dataSource.update(show_i1.checked, appSettings.i1, 1, 4, 7);
+                    }
+                    background: Rectangle {color: scopeView.color1}
+                }
+                Text {
+                    text: qsTr("index=")
+                }
+                TextField {
+                    id: textField_i1
+
+                    width: 40
+                    text: appSettings.i1
+                    selectByMouse: true
+                    MouseArea {
+                        anchors.leftMargin: 0
+                        anchors.bottomMargin: 0
+                        acceptedButtons: Qt.NoButton
+                        cursorShape: Qt.IBeamCursor
+                        anchors.rightMargin: 0
+                        anchors.topMargin: 0
+                        anchors.fill: parent
+                    }
+                    onTextChanged: {
+                        dataSource.update(show_i1.checked, appSettings.i1, 1, 4, 7);
+                    }
+                }
+                CheckBox {
+                    id: show_i1_1
+                    checked: appSettings.show_i1_1
+                    background: Rectangle {color: scopeView.color1_1}
+                }
+            }
+            Row {
+                Text {
+                    text: qsTr("Slice 2")
+                }
+                CheckBox {
+                    id: show_i2
+                    checked: appSettings.show_i2
+                    onCheckedChanged: {
+                        dataSource.update(show_i2.checked, appSettings.i2, 2, 5, 8);
+                    }
+                    background: Rectangle {color: scopeView.color2}
+                }
+                Text {
+                    text: qsTr("index=")
+                }
+                TextField {
+                    id: textField_i2
+
+                    width: 40
+                    text: appSettings.i2
+                    selectByMouse: true
+                    MouseArea {
+                        anchors.leftMargin: 0
+                        anchors.bottomMargin: 0
+                        acceptedButtons: Qt.NoButton
+                        cursorShape: Qt.IBeamCursor
+                        anchors.rightMargin: 0
+                        anchors.topMargin: 0
+                        anchors.fill: parent
+                    }
+                    onTextChanged: {
+                        dataSource.update(show_i2.checked, text, 2, 5, 8);
+                    }
+                }
+                CheckBox {
+                    id: show_i2_1
+                    checked: appSettings.show_i2_1
+                    background: Rectangle {color: scopeView.color2_1}
+                }
             }
             Row {
                 height: parent.height - y
@@ -587,95 +731,50 @@ Item {
                                 color: outputTextColor
 
                             }
-                            Timer {
-                                id: refreshTimer
-                                interval: 1 / 60 * 1000 // 60 Hz
-                                running: true
-                                repeat: true
-                                onTriggered: {
-                                    setSingleWaveformDistanceText(dataSource.getCurrentDistance());
-                                }
-                            }
                         }
                         StackLayout {
                             width: parent.width
                             height: parent.height - tabBar.height - row_selectReceiver.height
                             currentIndex: tabBar.currentIndex
                             Item {
-                                id: single_waveform_tab
-                                width: parent.width
-                                height: parent.height
-                                Column {
-                                    anchors.fill: parent
 
-                                    ScopeView {
-                                        id: scopeView
+                                anchors.fill: parent
+
+                                ScopeView {
+                                    id: scopeView
+                                    x: 0
+                                    y: 0
+                                    width: parent.width
+                                    height: parent.height - row_selectReceiver.height
 
 
-                                        width: parent.width
-                                        height: parent.height - row_selectReceiver.height
-                                        onOpenGLSupportedChanged: {
-                                            if (!openGLSupported) {
-                                                controlPanel.openGLButton.enabled = false
-                                                controlPanel.openGLButton.currentSelection = 0
-                                            }
-                                        }
-                                        MouseArea {
-                                            z: -1
-                                            anchors.fill: parent
-                                            acceptedButtons: Qt.LeftButton | Qt.RightButton
-                                            onPressed: {
-                                                console.log("onPressed")
-                                                if (mouse.button == Qt.LeftButton)
-                                                {
-                                                    console.log("Left", width, height, parent.yMax, parent.yMin)
-                                                    _interfaceHelper.ScopeView_LB = 1;
-                                                }
-                                                else if (mouse.button == Qt.RightButton)
-                                                {
-                                                    console.log("Right")
-                                                    _interfaceHelper.ScopeView_RB = 1;
-                                                }
-                                                _interfaceHelper.ScopeView_x0 = mouseX;
-                                                _interfaceHelper.ScopeView_ymax0 = parent.yMax;
-                                                _interfaceHelper.ScopeView_ymin0 = parent.yMin;
-                                                _interfaceHelper.ScopeView_y2max0 = parent.y2Max;
-                                                _interfaceHelper.ScopeView_y2min0 = parent.y2Min;
-                                                _interfaceHelper.ScopeView_y0 = mouseY;
-
-                                                _interfaceHelper.ScopeView_axisNum = (mouseX < width/2)?0:1;
-                                            }
-                                            onPositionChanged: {
-                                                if (_interfaceHelper.ScopeView_RB){
-
-                                                    var k = (mouseY - _interfaceHelper.ScopeView_y0) / height;
-                                                    //if (_interfaceHelper.ScopeView_axisNum == 0)    {
-                                                    parent.yMax = _interfaceHelper.ScopeView_ymax0 * (1 + k);
-                                                    parent.yMin = _interfaceHelper.ScopeView_ymin0 * (1 + k);
-                                                    //}
-                                                    //if (_interfaceHelper.ScopeView_axisNum == 1)    {
-                                                    parent.y2Max = _interfaceHelper.ScopeView_y2max0 * (1 + k);
-                                                    parent.y2Min = _interfaceHelper.ScopeView_y2min0 * (1 + k);
-                                                    //}
-                                                    console.log (mouseX, mouseY);
-                                                }
-
-                                            }
-                                            onReleased: {
-                                                console.log("onReleased")
-                                                if (mouse.button == Qt.LeftButton)
-                                                {
-                                                    console.log("Left")
-                                                    _interfaceHelper.ScopeView_LB = 0;
-                                                }
-                                                else if (mouse.button == Qt.RightButton)
-                                                {
-                                                    console.log("Right")
-                                                    _interfaceHelper.ScopeView_RB = 0;
-                                                }
-                                            }
-                                        }
-                                    }
+                                }
+                                TextField {
+                                    x: 0
+                                    y: scopeView.height - height
+                                    id: d0
+                                    width: 55
+                                    height: 36
+                                    text: appSettings.d0
+                                    selectByMouse: true
+                                }
+                                TextField {
+                                    x: scopeView.width - width
+                                    y: scopeView.height - height
+                                    id: dN
+                                    width: 55
+                                    height: 36
+                                    text: appSettings.dN
+                                    selectByMouse: true
+                                }
+                                TextField {
+                                    x: 0
+                                    y: 0
+                                    id: maxSignalLevel
+                                    width: 55
+                                    height: 36
+                                    text: appSettings.maxSignalLevel
+                                    selectByMouse: true
                                 }
                             }
                             Item {
@@ -838,7 +937,6 @@ Item {
 
                                 }
                             }
-
                             Item {
                                 id: timeline_3d
                                 width: parent.width
@@ -859,9 +957,10 @@ Item {
                                 anchors.fill: parent
                                 ColorGradient {
                                     id: surfaceGradient
-                                    ColorGradientStop { position: 0.0; color: "#0033ff" }
-                                    ColorGradientStop { id: middleGradient; position: 0.25; color: "#ffff11" }
-                                    ColorGradientStop { position: 0.75; color: "red" }
+                                    ColorGradientStop { position: 0.0; color: "#00ff00" }
+                                    ColorGradientStop { id: middleGradient; position: 0.1; color: "#ffff00" }
+                                    ColorGradientStop { id: middleGradient1; position: 0.2; color: "#0000ff" }
+                                    ColorGradientStop { position: 0.3; color: "#ff0000" }
                                 }
                                 Surface3D {
                                     id: timeline_3d_surface_object
@@ -875,22 +974,22 @@ Item {
                                         baseGradients: [surfaceGradient]
                                     }
                                     axisX:  ValueAxis3D {
-                                        min : 0.0
-                                        max : 330.0
-                                        title : "Scan"
+                                        min : appSettings.surface3d_x_min
+                                        max : appSettings.surface3d_x_max
+                                        title : appSettings.surface3d_x_name //scan
                                         titleVisible : true
                                     }
 
                                     axisZ: ValueAxis3D {
-                                        min :  70.0
-                                        max : 150.0
-                                        title  : "Distance"
+                                        min :  appSettings.surface3d_z_min
+                                        max : appSettings.surface3d_z_max
+                                        title  : appSettings.surface3d_z_name //distance
                                         titleVisible : true
                                     }
                                     axisY: ValueAxis3D {
-                                        min : -500
-                                        max : 500
-                                        title : "Signal level"
+                                        min : appSettings.surface3d_y_min
+                                        max : appSettings.surface3d_y_max
+                                        title : appSettings.surface3d_y_name //signal level
                                         titleVisible : true
                                     }
 
@@ -905,7 +1004,7 @@ Item {
                                     Surface3DSeries {
                                         id: surfaceSeries
                                         flatShadingEnabled: false
-                                        drawMode: Surface3DSeries.DrawSurface
+                                        drawMode: Surface3DSeries.DrawSurface                                        
                                     }
                                     Surface3DSeries {
                                         visible: false
@@ -931,314 +1030,171 @@ Item {
                 id: controlsItem
                 width: parent.width
                 height: 200
-
-                Slider {
-                    //visible: false;
-                    id: slider1
-                    x: 0
-                    y: 0
-                    width: parent.width - 500
-                    height: 36
-                    stepSize: 1
-                    to: 3100
-                    from: 0
-                    value: appSettings.slider1_value
-                    onValueChanged: {
-                        _intercom.sendShift(value, 1);
-                        textField_slider1.text = Math.floor(value);
-                    }
-                }
-                TextField {
-                    visible: false;
-                    id: textField_slider1
-                    x: slider1.x + slider1.width+5
-                    y: slider1.y
-                    width: 82
-                    height: 36
-                    text: slider1.value
-                    selectByMouse: true
-                    onAccepted: {
-                        slider1.value = text
-                    }
-
-                    MouseArea {
-                        cursorShape: Qt.IBeamCursor
-                        anchors.leftMargin: 0
-                        anchors.rightMargin: 0
-                        anchors.topMargin: 0
-                        acceptedButtons: Qt.NoButton
+                StackLayout {
+                    width: parent.width
+                    height: parent.height - tabBar.height - row_selectReceiver.height
+                    currentIndex: tabBar.currentIndex
+                    Item {
                         anchors.fill: parent
-                        anchors.bottomMargin: 0
+                        Row {
+                            anchors.fill: parent
+                            Column {
+                                width: parent.width/3
+                                Row {
+                                    CheckBox {}
+                                    Text { text: "HP" }
+                                    ComboBox {
+                                        id: hP_order
+                                        currentIndex: appSettings.hP_order_index
+                                        model: ["1", "2", "3", "4", "5", "6", "7", "8"]
+                                        onActivated: {
+
+                                        }
+                                    }
+                                }
+                            }
+                            Column {
+                                width: parent.width/3
+                                Row {
+                                    CheckBox {}
+                                    Text { text: "LP" }
+                                    ComboBox {
+                                        id: lP_order
+                                        model: ["1", "2", "3", "4", "5", "6", "7", "8"]
+                                        onActivated: {
+
+                                        }
+                                    }
+                                }
+                            }
+                            Column {
+                                width: parent.width/3
+                                Row {
+                                    CheckBox {}
+                                    Text { text: "BP" }
+                                    ComboBox {
+                                        id: bP_order
+                                        model: ["1", "2", "3", "4", "5", "6", "7", "8"]
+                                        onActivated: {
+
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
-                }
-                Slider {
-                    id: slider2
-                    x: 0
-                    y: slider1.y + slider1.height
-                    width: slider1.width
-                    height: 36
-                    from: 0
-                    to: 3100
-                    stepSize: 1
-                    value: appSettings.slider2_value
-                    onValueChanged: {
-                        _intercom.sendShift(value, 2);
-                        textField_slider2.text = Math.floor(value);
+                    Item {
+
                     }
-                }
-                TextField {
-                    id: textField_slider2
-                    x: slider2.x + slider2.width+5
-                    y: slider2.y
-                    width: 82
-                    height: 36
-                    text: slider2.value
-                    MouseArea {
-                        anchors.topMargin: 0
-                        anchors.bottomMargin: 0
-                        anchors.rightMargin: 0
-                        cursorShape: Qt.IBeamCursor
+                    Item {
+
+                    }
+                    Item {
+                        Button {
+                            text: qsTr("Draw")
+                            onClicked: {
+                                timeline_3d_unit.addScan();
+                            }
+                        }
+                    }
+                    Item {
                         anchors.fill: parent
-                        anchors.leftMargin: 0
-                        acceptedButtons: Qt.NoButton
-                    }
-                    selectByMouse: true
-                }
-                Slider {
-                    id: slider3
-                    x: 0
-                    y: slider2.y + slider2.height
-                    width: slider1.width
-                    height: 36
-                    from: 0
-                    to: 3100
-                    value: appSettings.slider3_value
-                    stepSize: 1
-                    onValueChanged: {
-                        _intercom.sendShift(value, 3);
-                        textField_slider3.text = Math.floor(value);
-                    }
-                }
-                TextField {
-                    id: textField_slider3
-                    x: slider3.x + slider3.width+5
-                    y: slider3.y
-                    width: 82
-                    height: 36
-                    text: slider3.value
-                    MouseArea {
-                        anchors.topMargin: 0
-                        anchors.bottomMargin: 0
-                        anchors.rightMargin: 0
-                        anchors.fill: parent
-                        cursorShape: Qt.IBeamCursor
-                        anchors.leftMargin: 0
-                        acceptedButtons: Qt.NoButton
-                    }
-                    selectByMouse: true
-                }
-                Slider {
-                    id: slider4
-                    x: 0
-                    y: slider3.y + slider3.height
-                    width: slider1.width
-                    height: 36
-                    from: 0
-                    to: 3100
-                    stepSize: 1
-                    value: appSettings.slider4_value
-                    onValueChanged: {
-                        _intercom.sendShift(value, 4);
-                        textField_slider4.text = Math.floor(value);
-                    }
-                }
+                        Row {
+                            anchors.fill: parent
+                            Column {
+                                width: parent.width/3
+                                Row {
+                                    width:parent.width
+                                    TextField {
+                                        width: parent.width/3
+                                        id: surface3d_x_name
+                                        text: appSettings.surface3d_x_name
+                                    }
+                                    TextField {
+                                        width: parent.width/3
+                                        id: surface3d_y_name
+                                        text: appSettings.surface3d_y_name
+                                    }
+                                    TextField {
+                                        width: parent.width/3
+                                        id: surface3d_z_name
+                                        text: appSettings.surface3d_z_name
+                                    }
+                                }
+                                Row {
+                                    width:parent.width
+                                    TextField {
+                                        width: parent.width/3
+                                        id: surface3d_x_min
+                                        text: appSettings.surface3d_x_min
+                                    }
+                                    TextField {
+                                        width: parent.width/3
+                                        id: surface3d_y_min
+                                        text: appSettings.surface3d_y_min
+                                    }
+                                    TextField {
+                                        width: parent.width/3
+                                        id: surface3d_z_min
+                                        text: appSettings.surface3d_z_min
+                                    }
+                                }
+                                Row {
+                                    width:parent.width
+                                    TextField {
+                                        width: parent.width/3
+                                        id: surface3d_x_max
+                                        text: appSettings.surface3d_x_max
+                                    }
+                                    TextField {
+                                        width: parent.width/3
+                                        id: surface3d_y_max
+                                        text: appSettings.surface3d_y_max
+                                    }
+                                    TextField {
+                                        width: parent.width/3
+                                        id: surface3d_z_max
+                                        text: appSettings.surface3d_z_max
+                                    }
+                                }
+                            }
+                            Column {
+                                width: parent.width/3
+                                Item { //placeholder
+                                    anchors.fill: parent
+                                }
+                            }
+                            Column {
+                                width: parent.width/3
+                                TextField {
+                                    width: parent.width/3
+                                    id: surface3d_scanStep
+                                    text: appSettings.surface3d_scanStep
+                                    onAccepted: {
+                                        dataSource.setSurface3DScanStep(appSettings.surface3d_scanStep);
+                                    }
+                                }
+                                Button {
+                                    id: buttonPlot
 
-                TextField {
-                    id: textField_slider4
-                    x: slider4.x + slider4.width+5
-                    y: slider4.y
-                    width: 82
-                    height: 36
-                    text: slider4.value
-                    MouseArea {
-                        anchors.topMargin: 0
-                        anchors.bottomMargin: 0
-                        anchors.rightMargin: 0
-                        cursorShape: Qt.IBeamCursor
-                        anchors.fill: parent
-                        anchors.leftMargin: 0
-                        acceptedButtons: Qt.NoButton
-                    }
-                    selectByMouse: true
-                }
-                Button {
-                    id: button_sendShifts
-                    x: textField_slider4.x
-                    y: textField_slider4.y + textField_slider4.height+5
-                    width: 55
-                    height: 40
-                    text: qsTr("Resend")
-                    checked: false
-                    checkable: false
-                    font.pointSize: 8
-                    onClicked: _intercom.sendShift(slider1.value, slider2.value, slider3.value, slider4.value);
-                }
-
-                TextField {
-                    //visible: false;
-                    id: textField_slider1_level
-                    x: textField_slider1.x + textField_slider1.width + 10
-                    y: textField_slider1.y
-                    width: 82
-                    height: 36
-                    selectByMouse: true
-                    MouseArea {
-                        anchors.topMargin: 0
-                        anchors.fill: parent
-                        anchors.rightMargin: 0
-                        cursorShape: Qt.IBeamCursor
-                        acceptedButtons: Qt.NoButton
-                        anchors.bottomMargin: 0
-                        anchors.leftMargin: 0
-                    }
-                }
-                TextField {
-                    id: textField_slider2_level
-                    x: textField_slider2.x + textField_slider2.width + 10
-                    y: textField_slider2.y
-                    width: 82
-                    height: 36
-                    selectByMouse: true
-                    MouseArea {
-                        anchors.topMargin: 0
-                        anchors.fill: parent
-                        anchors.rightMargin: 0
-                        cursorShape: Qt.IBeamCursor
-                        acceptedButtons: Qt.NoButton
-                        anchors.bottomMargin: 0
-                        anchors.leftMargin: 0
-                    }
-                }
-                TextField {
-                    id: textField_slider3_level
-                    x: textField_slider3.x + textField_slider3.width + 10
-                    y: textField_slider3.y
-                    width: 82
-                    height: 36
-                    selectByMouse: true
-                    MouseArea {
-                        anchors.topMargin: 0
-                        anchors.fill: parent
-                        anchors.rightMargin: 0
-                        cursorShape: Qt.IBeamCursor
-                        acceptedButtons: Qt.NoButton
-                        anchors.bottomMargin: 0
-                        anchors.leftMargin: 0
-                    }
-                }
-                TextField {
-                    id: textField_slider4_level
-                    x: textField_slider4.x + textField_slider4.width + 10
-                    y: textField_slider4.y
-                    width: 82
-                    height: 36
-                    selectByMouse: true
-                    MouseArea {
-                        anchors.topMargin: 0
-                        anchors.fill: parent
-                        anchors.rightMargin: 0
-                        cursorShape: Qt.IBeamCursor
-                        acceptedButtons: Qt.NoButton
-                        anchors.bottomMargin: 0
-                        anchors.leftMargin: 0
-                    }
-                }
-
-
-                /*
-                double fc{1e+9};
-                double deltaf;
-                unsigned short ford {8};
-                double Td {1e-9};*/
-                TextField {
-                    //visible: false;
-                    id: textField_fc
-                    x: textField_slider4_level.x + textField_slider4_level.width + 10
-                    y: textField_slider1_level.y
-                    width: 83
-                    height: 40
-                    text: appSettings.fc
-                    selectByMouse: true
-
-                    onEditingFinished: {
-                        main.textChanged("fc="+textField_fc.text);
-                    }
-                }
-                TextField {
-
-                    id: textField_deltaf
-                    x: textField_fc.x
-                    y:  textField_slider2_level.y
-                    width: 83
-                    height: 40
-                    text: appSettings.deltaf
-                    selectByMouse: true
-
-                    onEditingFinished: {
-                        main.textChanged("deltaf="+textField_deltaf.text);
-                    }
-                }
-                TextField {
-                    id: textField_ford
-                    x: textField_fc.x
-                    y:  textField_slider3_level.y
-                    width: 83
-                    height: 40
-                    text: appSettings.ford
-                    selectByMouse: true
-                    onEditingFinished: {
-                        main.textChanged("ford="+textField_ford.text);
-                    }
-                }
-                TextField {
-                    id: textField_Td
-                    x: textField_fc.x
-                    y:  textField_slider4_level.y
-                    width: 83
-                    height: 40
-                    text: appSettings.td
-                    selectByMouse: true
-
-                    onEditingFinished: {
-                        main.textChanged("Td="+textField_Td.text);
-                    }
-                }
-                TextField {
-                    id: textField_Command
-                    x: textField_Td.x + textField_Td.width + 10
-                    y:  textField_slider4_level.y
-                    width: 100
-                    height: 40
-                    text: appSettings.commandtext
-                    selectByMouse: true
-
-                    onEditingFinished: {
-
-                    }
-                }
-
-                Button {
-                    id: button_compareToData
-                    x: textField_Command.x + textField_Command.width + 10
-                    y: textField_Command.y
-                    width: 55
-                    height: 40
-                    text: qsTr("Command")
-                    checked: false
-                    checkable: false
-                    font.pointSize: 8
-                    onClicked: {
-                        main.textChanged("Command=" + textField_Command.text);
+                                    width: parent.width/3
+                                    height: 40
+                                    text: qsTr("Plot")
+                                    checked: false
+                                    checkable: false
+                                    font.pointSize: 8
+                                    onClicked: {
+                                        //dataSource.updateAllWaveforms(series_0_0, 0);
+                                        //dataSource.updateAllWaveforms(series_0_1, 1);
+                                        /*timeline_3d_unit.addScan();
+                                        dataSource.calcDistances();
+                                        updateSingleWaveform();*/
+                                        dataSource.updateSurface3D(surfaceSeries);
+                                        //dataSource.updateCorrelationChart(surfaceSeriesCorr);
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -1265,29 +1221,72 @@ Item {
 
     //![2]
     Component.onCompleted: {
+
         _intercom.setTimeout(appSettings.dataReceiveTimeout);
         setSingleWaveformDistanceText(0);
         setPacketsReceived(0, 0, 0, 0);
         dataSource.setWriteHistory(appSettings.writeHistory);
+
+        dataSource.setSurface3DScanStep(appSettings.surface3d_scanStep);
+    }
+    Connections {
+        target: dataSource
+        onCurrentUnitIndexChanged: {
+            updateSingleWaveform();
+        }
+        onFileLoaded: {
+            updateSingleWaveform();
+        }
     }
     Settings {
         id: appSettings
+
+        property alias surface3d_scanStep: surface3d_scanStep.text
+
+        property alias surface3d_x_name: surface3d_x_name.text
+        property alias surface3d_x_min: surface3d_x_min.text
+        property alias surface3d_x_max: surface3d_x_max.text
+
+        property alias surface3d_y_name: surface3d_y_name.text
+        property alias surface3d_y_min: surface3d_y_min.text
+        property alias surface3d_y_max: surface3d_y_max.text
+
+        property alias surface3d_z_name: surface3d_z_name.text
+        property alias surface3d_z_min: surface3d_z_min.text
+        property alias surface3d_z_max: surface3d_z_max.text
+
+
+        property alias hP_order_index: hP_order.currentIndex
+        property alias lP_order_index: lP_order.currentIndex
+
+        property alias maxSignalLevel: maxSignalLevel.text
+        property alias useAbsoluteValues: useAbsoluteValues.checked
+        property alias useZeroSignal: useZeroSignal.checked
         property int dataReceiveTimeout: 400
-        property alias slider1_value: slider1.value
-        property alias slider2_value: slider2.value
-        property alias slider3_value: slider3.value
-        property alias slider4_value: slider4.value
 
-        property alias fc: textField_fc.text
-        property alias deltaf: textField_deltaf.text
-        property alias ford: textField_ford.text
-        property alias td: textField_Td.text
 
-        property alias commandtext: textField_Command.text
+
+
+
 
         property alias zeroIndex: textFieldZeroIndex.text
 
         property alias writeHistory: checkboxWriteHistory.checked
+
+        property alias i0: textField_i0.text
+        property alias i1: textField_i1.text
+        property alias i2: textField_i2.text
+
+        property alias show_i0: show_i0.checked
+        property alias show_i1: show_i1.checked
+        property alias show_i2: show_i2.checked
+
+        property alias show_i0_1: show_i0_1.checked
+        property alias show_i1_1: show_i1_1.checked
+        property alias show_i2_1: show_i2_1.checked
+
+        property alias d0: d0.text
+        property alias dN: dN.text
     }
     Rectangle {
         id: rect_circleSelector
@@ -1684,6 +1683,7 @@ Item {
             }
         }
     }
+
     function setSingleWaveformDistanceText (distance) {
         single_waveform_distance.text = "Distance = " + distance;
     }
@@ -1699,7 +1699,9 @@ Item {
         textField_slider4_level.text = dataSource.getReceiverLevel(3).toFixed(0);
     }
     function updateSingleWaveform() {
-        dataSource.update(scopeView.lineSeries1);
+        dataSource.update(appSettings.show_i0, appSettings.i0, 0, 3, 6);
+        dataSource.update(appSettings.show_i1, appSettings.i1, 1, 4, 7);
+        dataSource.update(appSettings.show_i2, appSettings.i2, 2, 5, 8);
     }
     function clearListElements(){
 
@@ -1740,10 +1742,10 @@ Item {
         checkBox_saveAsZeroSignal.checked = 0;
     }
     function setFilterValues () {
-        main.textChanged("fc="+textField_fc.text);
-        main.textChanged("deltaf="+textField_deltaf.text);
-        main.textChanged("ford="+textField_ford.text);
-        main.textChanged("Td="+textField_Td.text);
+        //main.textChanged("fc="+textField_fc.text);
+        //main.textChanged("deltaf="+textField_deltaf.text);
+        //main.textChanged("ford="+textField_ford.text);
+        //main.textChanged("Td="+textField_Td.text);
     }
     function buttonOnCircleClicked(index) {
         rect_circleSelector.visible = false;
@@ -1764,12 +1766,6 @@ Item {
     }
     function getBtnY(y0, R, N) {
         return y0 - R * Math.cos(Math.PI / 32 + N * Math.PI / 16);
-    }
-    function setSliders(v1, v2, v3, v4) {
-        slider1.value = v1;
-        slider2.value = v2;
-        slider3.value = v3;
-        slider4.value = v4;
     }
 }
 

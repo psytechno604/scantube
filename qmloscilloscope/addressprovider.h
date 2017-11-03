@@ -12,11 +12,17 @@ public:
     static QHostAddress getAddress(int index);
     static int getIndex(QHostAddress address);
     static int getReceiverCount();
-    static void Init();
+    static void initAll();
+    static void initAddressTable();
+    static void initShiftCommandTable();
+    static void initShiftCommandTable16();
+    static void initPseudoIndexToIndexTable();
+    static void initIndexToReceiverTable();
     static int getUnitIndex(QString unitName);
     static int getUnitIndex(int unitPseudoIndex);
     static QString getUnitName(int unitIndex);
     static QString getShiftCommand(int value);
+    static QString getShiftCommand16(int value);
     static int getReceiver(int unitIndex);
     static int getPseudoIndex(int unitTndex);
 signals:
@@ -24,10 +30,11 @@ signals:
 public slots:
 
 private:
-    static QVector<QHostAddress> address_table;
-    static QVector<QString> shift_command_table;
-    static QMap<int, int> pseudo_index_to_index_table;
-    static QMap<int, int> index_to_receiver_table;
+    static QVector<QHostAddress> s_addressTable;
+    static QVector<QString> s_shiftCommandTable;
+    static QVector<QString> s_shiftCommandTable16;
+    static QMap<int, int> s_pseudoIndexToIndexTable;
+    static QMap<int, int> s_indexToReceiverTable;
 };
 
 #endif // ADDRESS_PROVIDER_H

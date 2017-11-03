@@ -45,11 +45,17 @@ Timeline3D::Timeline3D(QNode *parent)
     m_camera->setUpVector(QVector3D(0.0f,1.0f,0.0f));
 
     //phong alpha 0.3 material
-    m_planeMaterial = new QPhongAlphaMaterial();
-    m_planeMaterial->setAmbient(QColor(100,100,100));
-    m_planeMaterial->setDiffuse(QColor(255,255,255));
-    m_planeMaterial->setAlpha(0.3f);
-    
+    //m_planeMaterial = new QPhongAlphaMaterial();
+    m_planeMaterial = new QMaterial();
+    //m_planeMaterial->setAmbient(QColor(100,100,100));
+    //m_planeMaterial->setDiffuse(QColor(255,255,255));
+   // m_planeMaterial->setAlpha(0.3f);
+
+
+    //m_planeMaterial->addParameter(new QParameter("wireframe", QVariant(true)));
+    m_planeMaterial->addParameter(new QParameter("line.width", QVariant(2.0)));
+    m_planeMaterial->addParameter(new QParameter("line.color", QVariant(QColor(0,0,0,1))));
+    //m_planeMaterial->
 
 
     Qt3DCore::QEntity *lightEntity = new Qt3DCore::QEntity(this);
@@ -101,14 +107,14 @@ void Timeline3D::addPoint() {
     y += qrand() % 2 - 1;
 
     //if (!(m_count % sliceCount)) {
-    if (!m_count % 100) {
-        //every 100-th timer tick:
+    if (!(m_count % 20)) {
+        //every 20-th timer tick:
         m_geometryRenderer = new QGeometryRenderer();
         QGeometry* meshGeometry = new QGeometry(m_geometryRenderer);
 
         QByteArray vertexArray;
         //vertexArray.resize(pointCount*3*sizeof(float));
-        vertexArray.resize(200*3*sizeof(float));
+        vertexArray.resize(40*3*sizeof(float));
         reVertexArray = reinterpret_cast<float*>(vertexArray.data());
 
         QByteArray indexArray;
@@ -177,6 +183,7 @@ void Timeline3D::addPoint() {
         m_geometryRenderer->setFirstVertex(0);
         m_geometryRenderer->setFirstInstance(0);
         m_geometryRenderer->setPrimitiveType(QGeometryRenderer::TriangleStrip);
+        //m_geometryRenderer->setPrimitiveType(QGeometryRenderer::Triangles);
         m_geometryRenderer->setGeometry(meshGeometry);
 
         QEntity* entity = new QEntity(this);
@@ -207,6 +214,8 @@ void Timeline3D::addPoint() {
     uint vertexCount = positionAttribute->count();
     vertexBuffer->updateData(vertexCount*3*sizeof(float),appendVertexArray);
     positionAttribute->setCount(vertexCount+2);
+
+    qDebug() << "x=" << x << " y=" << y << " vertexCount=" << vertexCount;
 }
 
 void Timeline3D::onTimerUpdate()

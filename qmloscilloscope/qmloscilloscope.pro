@@ -16,7 +16,8 @@ HEADERS += \
     timeline3d.h \
     addressprovider.h \
     peak.h \
-    measurementdetails.h
+    measurementdetails.h \
+    constants.h
 
 SOURCES += \
     main.cpp \

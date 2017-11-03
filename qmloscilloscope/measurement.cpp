@@ -29,7 +29,14 @@ QVector<double> operator*(QVector<double> a, QVector<double> b)
 Measurement::Measurement(QObject *parent) : QObject(parent)
 {
     timestmp = QDateTime::currentDateTime();
-    processed_buffer = new QVector<QVector<float>>;
+
+    QVector<float> tmp(_historyBufferSize);
+
+    buffer = new QVector<QVector<float>>(_nChannels);
+    buffer->fill(tmp);
+
+    processed_buffer = new QVector<QVector<float>>(_nChannels);
+    processed_buffer->fill(tmp);
 }
 /**/
 QString Measurement::getText()
@@ -125,24 +132,6 @@ int Measurement::getSize()
         }
     }
     return sz;
-}
-
-
-
-
-
-Measurement::Measurement(double dst, int nch, int n)
-{
-    timestmp = QDateTime::currentDateTime();
-
-    distance = dst;
-    //buffer.resize(nch);
-    _sqerr.resize(nch);
-    _corr.resize(nch);
-
-    for(auto c=0; c<nch; c++)   {
-        buffer[c].resize(n);
-    }
 }
 
 Measurement::~Measurement()

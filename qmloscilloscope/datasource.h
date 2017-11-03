@@ -71,6 +71,9 @@ QT_CHARTS_USE_NAMESPACE
 #include "measurement.h"
 #include "measurementmodel.h"
 
+#include <QChartView>
+
+#include "constants.h"
 
 class Peak;
 /*
@@ -86,13 +89,13 @@ typedef QVector<complexd> vectorc;
 #include "spline.h"
 
 #include <QReadWriteLock>
-
+/*
 typedef struct {
     double distance;
     QVector<double> _sqerr;
     QVector<double> _corr;
     QVector<double *> buffer;
-} measurement;
+} measurement;*/
 
 class DataSource : public QObject
 {
@@ -100,19 +103,22 @@ class DataSource : public QObject
 public:
     explicit DataSource(QQuickView *appViewer, QObject *parent = 0);
     ~DataSource();
+    Q_PROPERTY(int currentUnitIndex MEMBER m_currentUnitIndex READ getCurrentUnitIndex WRITE setCurrentUnitIndex NOTIFY currentUnitIndexChanged);
 Q_SIGNALS:
 signals:
     void changeText(QString text);
+    void currentUnitIndexChanged();
+    void fileLoaded();
 public slots:
-    void showFromBuffer(int b_index, int block);
+    Q_INVOKABLE int getCurrentUnitIndex();
+
     void readData(int buffer_part, QByteArray *buffer, QHostAddress sender);
-    void update(QAbstractSeries *series, QAbstractSeries *scatter);
-    void update();
-    void updateAllWaveforms(QAbstractSeries *series, int set);
+    Q_INVOKABLE void update(bool show, int r, int i_max, int i_slice, int i_proc);
+    void updateAllWaveforms(QAbstractSeries *m_series, int set);
     void updateAllWaveforms();
-    void updateDistances(QAbstractSeries *series, int i, int set);
+    void updateDistances(QAbstractSeries *m_series, int i, int set);
     void updateDistances();
-    void updateSurface3D(QtDataVisualization::QAbstract3DSeries *series);
+    void updateSurface3D(QtDataVisualization::QAbstract3DSeries *m_series);
 
     void initCorrelationParameters(float  sigTau, float Fdskr);
 
@@ -124,13 +130,7 @@ public slots:
     void startRecording(QString fbasename);
 
 
-    void openFile(QString openfname);
-
-    int getSubtractZeroSignal();
-    void setSubtractZeroSignal(int s);
-
-    int getUseFilter();
-    void setUseFilter(int uf);
+    void setUseZeroSignal(int s);
 
     double getValue(QString name);
     void setValue(QString name, double value);
@@ -148,24 +148,19 @@ public slots:
     Q_INVOKABLE void selectEmitter(QString v);
     Q_INVOKABLE void selectRow(QString v);
 
-    Q_INVOKABLE void saveAsScanData0();
 
-    Q_INVOKABLE void calcDistances();
 
-    Q_INVOKABLE double getCurrentDistance();
-    Q_INVOKABLE double getReceiverLevel(int receiver);
-
-    Q_INVOKABLE void setSaveDistance0(bool val);
 
     Q_INVOKABLE int getBufferSize();
 
     Q_INVOKABLE void resetScanIndex();
-    Q_INVOKABLE void setScanIndex();
-    Q_INVOKABLE void setAllWaveformsSeries(QAbstractSeries *series, int set);
-    Q_INVOKABLE void setSeries(QAbstractSeries *series, int i);
-    Q_INVOKABLE void setDistanceSeries(QAbstractSeries *series, int i);
+    Q_INVOKABLE void setScanIndex(int scanIndex);
 
-    Q_INVOKABLE double getScanValue(QVector<float> *data, QVector<float> *data0, int i, bool use_abs);
+    Q_INVOKABLE void setAllWaveformsSeries(QAbstractSeries *m_series, int set);
+    Q_INVOKABLE void setSeries(QAbstractSeries *m_series, int i);
+    Q_INVOKABLE void setDistanceSeries(QAbstractSeries *m_series, int i);
+
+    Q_INVOKABLE double getScanValue(QVector<float> *data, QVector<float> *data0, int i, bool m_useAbsoluteValues);
 
     Q_INVOKABLE void textChanged(QString text);
 
@@ -179,7 +174,7 @@ public slots:
     Q_INVOKABLE QString getEmitter();
     Q_INVOKABLE QString getRow();
 
-    Q_INVOKABLE void setUnitIndex(int index);
+    Q_INVOKABLE void setCurrentUnitIndex(int index);
     Q_INVOKABLE void copyToHistory();
     Q_INVOKABLE void saveMMAndHistory();
 
@@ -187,110 +182,121 @@ public slots:
     Q_INVOKABLE void loadHistoryFromFile(QString fname);
     //Q_INVOKABLE void newScan();
     Q_INVOKABLE void SetDistance(float distance);
-    Q_INVOKABLE void updateCorrelationChart(QtDataVisualization::QAbstract3DSeries *series);
+    Q_INVOKABLE void updateCorrelationChart(QtDataVisualization::QAbstract3DSeries *m_series);
 
     Q_INVOKABLE void collapseMMAndHistory(int block_size);
 
     Q_INVOKABLE void copyHistoryToClipboard();
     Q_INVOKABLE void setWriteHistory(bool wh);
+
+    Q_INVOKABLE void copyToSharedMemory();
+    Q_INVOKABLE void setSurface3DScanStep(int step);
 private:
-    QMimeData *mimeData {nullptr};
+    int m_surface3DScanStep {10};
+    QSharedMemory sharedMemory;
 
-    bool write_history {false};
-    void setCurrentSet_0();
+    bool m_useAbsoluteValues;
+    //QChartView *chartView;
 
-    bool testScanIndex();
+    QMimeData *m_mimeData {nullptr};
+
+    bool m_writeHistory {false};
+    void m_setCurrentSet_0();
+
+   //bool testScanIndex();
 
     //
-    double fc{1e+9};
-    double deltaf;
-    unsigned short ford {8};
-    double Td {1e-9};
+    double m_fc{1e+9};
+    double m_deltaf;
+    unsigned short m_ford {8};
+    double m_Td {1e-9};
 
-    void findMaxLess(QVector<float> *data, QVector<int>  *stat_data, QVector<Peak> *peak_data, int margin_left, int margin_right);
-    float findMaxLess(QVector<float> *data, float v, int *index);
-    QVector<QAbstractSeries*> series {nullptr};
-    QVector<QAbstractSeries*> distanceSeries {nullptr};
-    QVector<QAbstractSeries *> allWaveformsSeries;
+    void m_findMaxLess(QVector<float> *data, QVector<int>  *stat_data, QVector<Peak> *peak_data, int margin_left, int margin_right);
+    float m_findMaxLess(QVector<float> *data, float v, int *index);
+    QVector<QAbstractSeries *> m_series;
+    QVector<QAbstractSeries *> m_distanceSeries;
+    QVector<QAbstractSeries *> m_allWaveformsSeries;
 
-    QVector<float> receiver_levels;
+    QVector<float> m_receiverLevels;
 
 
-    int _step {4};
-    QVector<QVector<QPointF>> _points;
+    //int m_step {4};
+    //QVector<QVector<QPointF>> m_points;
 
-    int currentUnitIndex {0};
-    QString ipNum {"1"}, emitterNum {"0"}, rowNum {"0"};
+    int m_currentUnitIndex {0};
+    QString m_ipNum {"1"}, m_emitterNum {"0"}, m_rowNum {"0"};
 
-    QVector<QVector<QVector<float>>> history_scan_data;
-    int history_index {0};
-    void increaseHistoryIndex();
-    bool has_data {false};
+    QVector<QVector<QVector<float>>> m_historyScanData;
+    int m_historyIndex {0};
+    void m_increaseHistoryIndex();
+    bool m_hasData {false};
 
-    int history_depth {330};
+    int m_historyDepth {330};
 
+    int m_bufferSize {_bufferSize};
     //QVector<QMap<int, QVector<unsigned short>>> full_scan_data;
 
-    int max_scan_index {buffer_size * 8};
+    //int m_maxScanIndex {m_bufferSize * 8};
 
-    QVector<int> scan_index;
-    QVector<QVector<int>> max_index_stat;
-    QVector<QVector<float>> scan_data;
-    QVector<QVector<float>> scan_data_0;
-    QVector<QVector<float>> processed_data;
+    int m_scanIndex {0};
+    //QVector<QVector<int>> m_maxIndexStat;
+    QVector<QVector<float>> m_scanData;
+    //QVector<QVector<float>> m_scanData0;
+    //QVector<QVector<float>> m_processedData;
 
-    QVector<float> distance_from_mm;
-    QVector<float> distance_weight_from_mm;
+    //QVector<float> m_distanceFromMeasurements;
+    //QVector<float> m_distanceWeightFromMeasurements;
 
-    QVector<QVector<float>> *current_set {nullptr};
-    QVector<QVector<float>> *current_set_0 {nullptr};
-    QVector<QVector<int>> *current_max_index_stat {nullptr};
+    //QVector<QVector<float>> *m_currentSet {nullptr};
+    QVector<QVector<float>> *m_currentSet0 {nullptr};
+    QVector<QVector<int>> *m_currentMaxIndexStat {nullptr};
 
 
-    int max_change {2000};
-    QVector<float> last_good_value;
+    int m_maxChange {2000};
+    QVector<float> m_lastGoodValue;
 
-    QVector<QVector<Peak>> peak_data;
-    QVector<QVector<Peak>> *current_peak_data{nullptr};
+    //QVector<QVector<Peak>> peak_data;
+    //QVector<QVector<Peak>> *current_peak_data{nullptr};
 
-    QVector<QVector<float>> distance_data;
-    QVector<QVector<float>> distance_data_0;
+    //QVector<QVector<float>> distance_data;
+    //QVector<QVector<float>> distance_data_0;
     // 0 - distance from raw data
     // 1 - distance saved as 0
-    bool use_distance_0 {false};
+    //bool use_distance_0 {false};
 
-    double zero_distance {0.1};
+    //double zero_distance {0.1};
 
-    double receiver_multiplier {0.04};
+    //double receiver_multiplier {0.04};
 
-    int distance_index {0};
-    int saved_level_index {1};
-    int raw_level_index {2};
+    //int distance_index {0};
+    //int saved_level_index {1};
+    //int raw_level_index {2};
 
-    QVector<double> sum_of_values;
+    //QVector<double> _sumOfValues;
 
-    QVector<double> zero_receiver_levels;
+    //QVector<double> zero_receiver_levels;
 
-    bool use_scan_data_0 {false};
-    QVector<bool> channel_data_received;
+    bool m_useZeroSignal {false};
+
+    //QVector<bool> channel_data_received;
 
     //QVector<QVector<double>> X, Y;
-    int inputsPerReceiver {8};
-    int channelsInPacket {2};
-    int getUnitIndex(int buffer_part, QByteArray *buffer, QHostAddress sender);
-    int maxchannels {32};
+    //int _inputsPerReceiver {8};
 
-    MeasurementModel *measurementModel {nullptr};
-    int zeroIndex {0};
-    void clearMeasurementModel();
+    int _getUnitIndex(int buffer_part, QByteArray *buffer, QHostAddress sender);
+    //int _maxChannels {32};
+
+    MeasurementModel *_measurementModel {nullptr};
+    int _zeroIndex {0};
+    void _clearMeasurementModel();
 
     double _LP0_Td {1.0/(100.0*1E9)}, _LP0_fc {1000*1E6}, _LP0_ford {8};
     double _HP0_Td {1.0/(100.0*1E9)}, _HP0_fc {300*1E6}, _HP0_ford {2};
     double _LP1_Td {1.0/(100.0*1E9)}, _LP1_fc {1000*1E6}, _LP1_ford {2};
 
-    int _N{363}; //TODO: remove hardcode!
 
-    QQuickItem  *object {nullptr};
+
+    QQuickItem  *_object {nullptr};
     QQuickView *m_appViewer {nullptr};
     QVector<QVector<QPointF> > m_data;
 
@@ -303,9 +309,9 @@ private:
     QReadWriteLock surface_data_lock;
     //QReadWriteLock surface_data_lock;
 
-    QFile *datafile {nullptr}, *markupfile {nullptr}, *pointfile {nullptr}, *zerofile {nullptr};
+    QFile *m_datafile {nullptr}, *m_markupfile {nullptr}, *m_pointfile {nullptr}, *zerofile {nullptr};
 
-    QVector<QVector<double>> X, Y;
+    //QVector<QVector<double>> X, Y;
     //QVector<tk::spline> s;
 
     QVector<std::queue<int>> start_pos_acc;
@@ -313,10 +319,10 @@ private:
 
     QString fname {""}, zerofilename;
 
-    int nchannels {64};
+    int m_nChannels {_nChannels};
 
     int nframes {-1};
-    QVector<int> fcount;
+    //QVector<int> fcount;
     float distance {-1.0};
     int is_measured {0};
 
@@ -326,24 +332,23 @@ private:
     float kt_dt;
     float Fc;
     float* signal {nullptr};
-    QVector<double> buffer_in;
-    QVector <double> buffer_out;
-    QVector<double *> raw_acc {nullptr};
-    QVector<double *> processed_acc {nullptr};
-    int buffer_size {_N};
-    QVector<int> shY;
-    QVector<Measurement *> _data;
+    //QVector<double> buffer_in;
+    //QVector <double> buffer_out;
+    //QVector<double *> raw_acc {nullptr};
+    //QVector<double *> processed_acc {nullptr};
 
-    QVector<double *> zero_signal;
-    int saveAsZeroSignal {0};
-    int subtractZeroSignal {0};
-    int useFilter {1};
+    //QVector<Measurement *> _data;
+
+    //QVector<double *> zero_signal;
+    //int saveAsZeroSignal {0};
+    //int subtractZeroSignal {0};
+    //int useFilter {1};
 
     static bool IsPowerOfTwo(ulong x);
     void calcCorrelationFunc(QVector <double> &in, QVector <double>&out, float *corrfunct, int n__corr, int numsmpl);
-    static void MakeHPButterworthFilter(vectorc& H, double Td, double fc, unsigned short ford);
-    static void MakeLPButterworthFilter(vectorc& H, double Td, double fc, unsigned short ford);
-    static void Make_BP_ButterworthFilter(vectorc& H, double fc, double deltaf, unsigned short ford, double Td);
+    static void MakeHPButterworthFilter(vectorc& H, double m_Td, double m_fc, unsigned short m_ford);
+    static void MakeLPButterworthFilter(vectorc& H, double m_Td, double m_fc, unsigned short m_ford);
+    static void Make_BP_ButterworthFilter(vectorc& H, double m_fc, double m_deltaf, unsigned short m_ford, double m_Td);
     void cfft(vectorc& a);
     void icfft(vectorc& a);
 
@@ -355,8 +360,6 @@ private:
 
 
     void compareToData(int channel = -1);
-
-    double corr(double *X, double *Y, int N);
 
 
 };

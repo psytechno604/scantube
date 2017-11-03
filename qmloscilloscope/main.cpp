@@ -71,11 +71,13 @@ private:
 
 int main(int argc, char *argv[])
 {
+    //auto m = new Measurement();
+
     qDebug() << QThread::currentThreadId();
 
-    AddressProvider::Init();
+    AddressProvider::initAll();
 
-    qDebug() << AddressProvider::getUnitIndex(360);
+    //qDebug() << AddressProvider::getUnitIndex(360);
 
     // Qt Charts uses Qt Graphics View Framework for drawing, therefore QApplication must be used.
     QApplication app(argc, argv);

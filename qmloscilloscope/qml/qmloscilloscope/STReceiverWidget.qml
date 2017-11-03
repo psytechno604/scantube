@@ -17,7 +17,7 @@ Item {
         x: getBtnX(parent.width/2 - width/2, getRadius(unitIndex) * parent.width/2, getSector(unitIndex))
         y: getBtnY(parent.height/2 - height/2, getRadius(unitIndex) * parent.height/2, getSector(unitIndex))
         onClicked: {            
-            dataSource.setUnitIndex(unitIndex);
+            dataSource.setCurrentUnitIndex(unitIndex);
             parent.clicked();
 
         }

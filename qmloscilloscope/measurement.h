@@ -5,13 +5,14 @@
 #include <QVector>
 #include <QDateTime>
 #include "scantube.h"
+#include "constants.h"
 
 class Measurement : public QObject
 {
     Q_OBJECT
 public:
     explicit Measurement(QObject *parent = nullptr);
-   /**/ Measurement(double dst, int nch, int n);
+
     ~Measurement();
     double distance;
     QVector<double> _sqerr;

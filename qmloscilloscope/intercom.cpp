@@ -8,27 +8,27 @@
 
 intercom::intercom(QQuickView *appViewer, QObject *parent) : QObject(parent), m_appViewer(appViewer)
 {
-    dataReceiveTime.start();
-    betweenScansTime.start();
-    packets_received.resize(AddressProvider::getReceiverCount());
+    m_dataReceiveTime.start();
+    m_betweenScansTime.start();
+    m_packetsReceived.resize(AddressProvider::getReceiverCount());
 }
 
 void intercom::on()
 {
     qDebug() << "intercom::on" << QThread::currentThreadId();
-    if (!_sender) {
-        reCreateSender();
+    if (!m_sender) {
+        m_reCreateSender();
     }
-    if (!_sender) {
+    if (!m_sender) {
         return;
     }
-    for (auto i=1; i<ips_count; i++) {
-        _sender->writeDatagram(QByteArray::fromHex("490008"), AddressProvider::getAddress(i), dst_port);
+    for (auto i=1; i<m_IPsCount; i++) {
+        m_sender->writeDatagram(QByteArray::fromHex("490008"), AddressProvider::getAddress(i), dst_port);
         QThread::msleep(100);
-        _sender->writeDatagram(QByteArray::fromHex("4431"), AddressProvider::getAddress(i), dst_port);
+        m_sender->writeDatagram(QByteArray::fromHex("4431"), AddressProvider::getAddress(i), dst_port);
     }
     QThread::msleep(100);
-    _sender->writeDatagram(QByteArray::fromHex("4431"), AddressProvider::getAddress(0), dst_port);
+    m_sender->writeDatagram(QByteArray::fromHex("4431"), AddressProvider::getAddress(0), dst_port);
     //QThread::msleep(100);
 
     //qDebug() << "sender: " << _sender->hasPendingDatagrams() << " receiver: " << _receiver->hasPendingDatagrams();
@@ -36,16 +36,16 @@ void intercom::on()
 void intercom::off()
 {
     qDebug() << "intercom::off" << QThread::currentThreadId();
-    if (!_sender) {
+    if (!m_sender) {
         return;
     }
 
-    _sender->writeDatagram(QByteArray::fromHex("4430"), AddressProvider::getAddress(0), dst_port);
+    m_sender->writeDatagram(QByteArray::fromHex("4430"), AddressProvider::getAddress(0), dst_port);
     //QThread::msleep(100);
     //_sender->writeDatagram(QByteArray::fromHex("4430"), address_provider::get_address(1), dst_port);
 
-    delete _sender;
-    _sender = nullptr;
+    delete m_sender;
+    m_sender = nullptr;
     //qDebug() << _sender->hasPendingDatagrams();
     //_data_sockets[1]->send_data(QByteArray::fromHex("00017f1f7f0e7f017f027f1c7f287f197ef87f137f137f137f1e7f007f1a7f057f217f1c7f147f1a7f157f137f147f127f227f0f7f147f0f7f107f197f0f7f1c7f107f097f267f0b7f2d7f1f7f157f067f127f197f157f027f127f147f167f017f0c7f187f277f0f7f1e7f117f027f167f0e7f0a7f257f167f147f157f1a7f127f1c7f097f147f1c7f147f187f277f057f167f117f1c7f0c7f0c7f0d7f167f0e7f0e7f1c7f207f1b7f207f257f087f2d7f1a7f0a7f137f107f197f167f1d7f197f277f0f7f0f7f0d7f277f047f1d7f217f0d7f0c7f087f137f267f097f187f167f1b7f097f377f1d7f217f197f1c7f037f117f267f127f107f0b7f157f117ef97f087f237f177f067f107f047f137f247f177f1d7f0e7f1b7f0c7f267f1a7f157f207f0b7f057f167f187f147f207f317f147f097f187f297f177f137f1d7f057f047f127f0b7f047f117f137f1f7f257f097f1c7f187f087f087f0a7f1f7f107f167f297f0a7f127f177f0e7f1a7f147f207f137f0c7f1a7f1e7f117f207f167f0a7f2a7f0f7f187f097f117f1f7f147f097f287f207f157efb7f177f087f157f1c7f037f257f147f187f0b7f217f077f247f217f067f087f1b7f187f1d7f057f167f047f177f147f0d7f187f127f147f127f207f127f127efe7f0c7f167f1e7f1a7f087f107f0a7f1e7f1b7f217f0d7f0c7f0b7f217f147f147f317f1e7f047f297f0f7f267f227f1d7f157f147f137f197f037f1e7f0c7f107f1a7f1e7f317f1d7f157f187f0b7f207f0b7f227f117f087f147f297f297f1e7f047f157f0f7f1a7f1e7f1b7f077f197f187f137f207f0a7f167f1d7ef77f067f247f1d7f187f187f117f1c7f077f297f1f7f2b7f267f1a7f1a7f257f0e7f267f187f207f127f0f7f1d7f217f037f167f267f367f0b7f147f247f057f117f0c7f137f207f1b7f117eff7f257f1f7f237f167f177f127f1b7f297f147f277f1b7f167f197f1f7f137f0b7f147f127f347f1a7f1a7f117f1f7f007f0b7f1f7f207f1c7f197f1a7f247f0e7f207f207f0f7f197f147f1c7efe7f177f247f037f187f157f0c7f1e7f137f237f107f1a7f1f7f0d7f147f0d7f147f1e7f107f1c7f0f7f1a7f107f057f287f187f0a7f247f117f217f1c7f337f077f247f107f207f177f077f0e7f1d7f1a7f217f227eff7f147f0e7f027f197f0d7f0f7f1a7f187f307f2f7f277f327f157f157f147f1b7f1e7f267f1a7f0e7f187f1c7f127f0b7f267f1a7f0d7f167f1d7f227f167f0c7f177f1e7f037f117f197f1f7f267f187f0a7f217f1c7f1b7efb7f077f1a7f2c7f117f147f0d7f1b7f2a7f1e7f0c7f127f297f0f7efe7f207f157f207f127f157f1f7f187f0f7f1b7f097f047f157f1f7f177f0e7efb7f1c7f237f1b7f1e7f157f117f267f277f257f147f1d7f0e7f1e7f097f087f1e7f127f1b7f187f327f087f177f107f207f1a7f167f237f177f137f147f217f1a7f207f1c7f117f147f1c7f247f007f157f0b7f207f157f1b7f1e7f107f187f0e7f157f217f1d7f137f227f1e7f2c7f187f1f7f1f7f0d7f137f2e7f187f2b7f287f217f147f1d7f147f337f087f2f7f1e7f157f1a7f0d7f257f0d7f0e7f137f347f137f057f1e7f297f187f277f257f077f297f167f2d7f1e7f1a7f177f217f397f0a7f197f237f227f107f387f237f2c7f207f247f2e7f1b7f237f2a7f237f237f207f0a7f237f2a7f217f137f317f1a7f157f2b7f247f267f0d7f247f257f2a7f217f1e7f197f117f177f1d7f1f7f187f1f7f317f137f107f067f247f267f3a7f1c7f2d7f0e7f287f337f277f2a7f3a7f2b7f267f217f2e7f127f2c7f1e7f2d7f2f7f197f2f7f1c7f367f227f237f267f247f0b7f187f2b7f267f267f2c7f0e7f257f297f2a7f2c7f357f357f0e7f227f0b7f2d7f297f327f247f217f3a7f247f1a7f297f1d7f1f7f257f247f1f7f237f207f1c7f237f187f217f217f227f167f2f7f197f3c7f2d7f0a7f1b7f1c7f237f237f2f7f1b7f267f1e7f157f247f257f2d7f1f7f247f217f1e7f2c7f2c7f217f1f"));
 
@@ -58,13 +58,13 @@ void intercom::off()
 void intercom::setMyIP(QString ip)
 {
     //qDebug() << QThread::currentThreadId();
-    myIP = new QHostAddress(ip);
-    reCreateSender();
+    m_myIP = new QHostAddress(ip);
+    m_reCreateSender();
 }
 
 void intercom::setAccumulation(QString acc)
 {
-    if (!_sender) {
+    if (!m_sender) {
         return;
     }
     QString command = "";
@@ -81,36 +81,36 @@ void intercom::setAccumulation(QString acc)
     if (acc=="1024") command = "57010A";
 
     if (command != "")
-        _sender->writeDatagram(QByteArray::fromHex(command.toUtf8()), AddressProvider::getAddress(1), dst_port);
+        m_sender->writeDatagram(QByteArray::fromHex(command.toUtf8()), AddressProvider::getAddress(1), dst_port);
 }
 
 void intercom::setSpeed(QString spd)
 {
-    if (!_sender) {
+    if (!m_sender) {
         return;
     }
     QString accHexValue = "570D8" + spd;
 
 
-    _sender->writeDatagram(QByteArray::fromHex(accHexValue.toUtf8()), AddressProvider::getAddress(1), dst_port);
+    m_sender->writeDatagram(QByteArray::fromHex(accHexValue.toUtf8()), AddressProvider::getAddress(1), dst_port);
 }
 
 void intercom::setTimeout(int timeout)
 {
-    this->timeout = timeout;
+    this->m_timeout = timeout;
 }
 
 void intercom::setDataSource(DataSource *ds)
 {
-    _dataSource = ds;
+    m_dataSource = ds;
 }
 
 void intercom::sendFix(QString distance)
 {
-    if (!myIP || !_sender)
+    if (!m_myIP || !m_sender)
         return;
     //_sender->writeDatagram(QString::number(distance).toUtf8(), *myIP, listen_port);
-    _sender->writeDatagram(distance.toUtf8(), *myIP, listen_port);
+    m_sender->writeDatagram(distance.toUtf8(), *m_myIP, listen_port);
 
 }
 
@@ -118,85 +118,86 @@ void intercom::sendScan()
 {
     //qDebug() << "sendScan, scan_counter=" << scan_counter;
 
-    if (!_sender)
+    if (!m_sender)
         return;
 
-    dataReceiveTime.restart();
+    m_dataReceiveTime.restart();
     //betweenScansTime.restart();
 
-    packets_received.fill(0);
+    m_packetsReceived.fill(0);
 
-    QMetaObject::invokeMethod((QObject*)object, "setSliders"
-                              , Q_ARG(QVariant, current_shift)
-            , Q_ARG(QVariant, current_shift)
-            , Q_ARG(QVariant, current_shift)
-            , Q_ARG(QVariant, current_shift));
 
-    if (fullscan_mode_on && scan_counter <= 7) {
-        sendShift(current_shift, current_shift, current_shift, current_shift);
-        current_shift += (_dataSource->getBufferSize() - 1);
-        scan_counter++;
-        QThread::msleep(100);
+    if (m_fullscanModeOn && m_ADCStep < m_ADCNumSteps) {
+
+        //sendShift(m_currentShift);
+        sendShift16(m_currentShift / _ADCShiftBlockSize - (m_currentShift>0?_overlap/_ADCShiftBlockSize:0));
+
+        m_dataSource->setScanIndex(m_currentShift);
+
+        //m_object->setProperty("text_currentShift",QVariant(m_currentShift));
+
+        QThread::msleep(20);
     }
-    if (scan_counter>7) {
-        fullscan_mode_on = false;
-        fullscan_mode_complete = true;
-    }
-
-    if (_dataSource)    {
-        _dataSource->setScanIndex();
+    if (m_ADCStep>=m_ADCNumSteps) {
+        m_fullscanModeOn = false;
+        m_fullscanModeComplete = true;
     }
 
 
 
-    _sender->writeDatagram(QByteArray::fromHex("4453"), AddressProvider::getAddress(0), dst_port);
-
-    packNum = 0;
 
 
+    m_sender->writeDatagram(QByteArray::fromHex("4453"), AddressProvider::getAddress(0), dst_port);
 
-    if (!timer) {
-        timer = new QTimer();
-        QObject::connect(timer, &QTimer::timeout, this, &intercom::endScan0);
+    //packNum = 0;
+
+
+
+    if (!m_timer) {
+        m_timer = new QTimer();
+        QObject::connect(m_timer, &QTimer::timeout, this, &intercom::endScan0);
     }
-    timer->start(timeout);
+    m_timer->start(m_timeout);
 }
 
 void intercom::endScan(int flag)
 {
     try {
-        if (timer)
-            timer->stop();
+        if (m_timer)
+            m_timer->stop();
 
 
 
         qDebug() << "endScan " << flag;
-        if (!object)
-            object = m_appViewer->rootObject();
+        if (!m_object)
+            m_object = m_appViewer->rootObject();
 
-        QMetaObject::invokeMethod((QObject*)object, "setDataReceiveTimeElapsed", Q_ARG(QVariant, dataReceiveTimeElapsed));
+        QMetaObject::invokeMethod((QObject*)m_object, "setDataReceiveTimeElapsed", Q_ARG(QVariant, m_dataReceiveTimeElapsed));
 
-        QMetaObject::invokeMethod((QObject*)object, "setBetweenScansTimeElapsed", Q_ARG(QVariant, betweenScansTime.elapsed()));
-        betweenScansTime.restart();
-
-
-
-        QMetaObject::invokeMethod((QObject*)object, "setReadDataTimeElapsed", Q_ARG(QVariant, readDataTimeElapsed));
-        readDataTimeElapsed = 0;
+        QMetaObject::invokeMethod((QObject*)m_object, "setBetweenScansTimeElapsed", Q_ARG(QVariant, m_betweenScansTime.elapsed()));
+        m_betweenScansTime.restart();
 
 
 
-        if (_dataSource && fullscan_mode_complete && packets_received.length()>=4
-                    && ((packets_received[0] == 8
-                    && packets_received[1] == 8
-                    && packets_received[2] == 8
-                    && packets_received[3] == 8) || flag ==0) )
+        QMetaObject::invokeMethod((QObject*)m_object, "setReadDataTimeElapsed", Q_ARG(QVariant, m_readDataTimeElapsed));
+        m_readDataTimeElapsed = 0;
+
+        m_currentShift += _bufferSize;
+        m_ADCStep++;
+
+
+        if (m_dataSource && m_fullscanModeComplete
+                    && ((m_packetsReceived.length()>=_numOfDevices
+                    && m_packetsReceived[0] == _inputsPerDevice
+                    && m_packetsReceived[1] == _inputsPerDevice
+                    && m_packetsReceived[2] == _inputsPerDevice
+                    && m_packetsReceived[3] == _inputsPerDevice) || flag ==0) )
         {
 
 
-            _dataSource->setHasData(true);
+            m_dataSource->setHasData(true);
 
-            _dataSource->copyToHistory();
+            m_dataSource->copyToHistory();
             //_dataSource->calcDistances();
             //QMetaObject::invokeMethod((QObject*)object, "updateDistances");
             //QMetaObject::invokeMethod((QObject*)object, "updateAllWaveforms");
@@ -211,26 +212,26 @@ void intercom::endScan(int flag)
 
 
 
-            if (continueScan || fullscan_countdown>0) {
+            if (m_continueScan || m_fullscanCountdown>0) {
                 beforeScanRange();
             }
-            fullscan_mode_complete = false;
+            m_fullscanModeComplete = false;
             //QThread::msleep(100);
         }
 
 
 
-        if (packets_received.length()>=4)
-            QMetaObject::invokeMethod((QObject*)object, "setPacketsReceived"
-                                      , Q_ARG(QVariant, packets_received[0])
-                    , Q_ARG(QVariant, packets_received[1])
-                    , Q_ARG(QVariant, packets_received[2])
-                    , Q_ARG(QVariant, packets_received[3]));
+        if (m_packetsReceived.length()>=4)
+            QMetaObject::invokeMethod((QObject*)m_object, "setPacketsReceived"
+                                      , Q_ARG(QVariant, m_packetsReceived[0])
+                    , Q_ARG(QVariant, m_packetsReceived[1])
+                    , Q_ARG(QVariant, m_packetsReceived[2])
+                    , Q_ARG(QVariant, m_packetsReceived[3]));
 
 //setReceiverLevels
 
 
-        if (fullscan_mode_on) {
+        if (m_fullscanModeOn) {
             QThread::msleep(50);
             sendScan();
         }       
@@ -251,13 +252,13 @@ void intercom::stopScanTimer()
     // this method is against crashing on exit (stop the fucking timers!):
 
     //qDebug() << "stopScanTimer";
-    if (timer)
-        timer->stop();
+    if (m_timer)
+        m_timer->stop();
 }
 
 void intercom::sendTest()
 {
-    if (!myIP || !_sender)
+    if (!m_myIP || !m_sender)
         return;
     /*_sender->writeDatagram(QByteArray::fromHex("06207be47be77be87be37be07be37be47be37be47be67be17be37be47bde7be17be27be37bda7be77bde7be87be27bdf7be57be27be87be17bdc7be27be57be47be27bdf7bde7bdf7be57be57be47be37be87be17be67bdf7be47be47be67be27be87be47be17be37be17be47be47be67be57be67bdf7be37be67bdd7be07be47bdf7be37bdf7bdf7bdd7be17bdb7be47be07be57be57be47be37be37be27be67bde7be67bdf7be37be87bdc7be47be37be17be07be87be47bdd7be47bdf7bde7be17be47bdf7bdf7be07be77be17bde7be07be47be47be07be27bdb7bdd7bdd7bdf7be27be37be87be37be47be67be07be07be17be27be77be27be47be37bdf7be27be57be07be67bde7be67be47be17bdd7be27be37be17bdd7be27be37bdf7bde7be57bdf7be07be77be47bde7be37be07be27be27be17bdd7be27be47be27be47be27bdc7bdf7be37be47be27be37be17be07be27be17be67be07be17be87bde7be47be07be47be07be17bdf7be57be07be47be07be27be17bdf7bdf7be37be47be27bdc7bde7be07be17be57be07be87bdf7be37be47be97be37be17be67be47be67be27be57be37be57be57be27be37be07bdf7be57beb7be57be67be37be47bdf7be47be37be57be77be77be37be17be77be27be47be47be47be47be77be77be77be67be57be57be37be57be67be07be27be87be67be37be27be77be37be57be37be87be47be67be97be57be67be47be27be87be77be47be67beb7be27beb7be97be87be97be17be47be97be77be47be57be77beb7beb7be57be67be97bea7be87bea7be87be67bea7bee7be77bea7be67be87be87be67be77be77be77be97be67bec7be87be87bed7bec7be37be97be87be47be77be37be87be57be87be87be77beb7bea7be17be37be57be67be37be67be57be47be97be87be27be77be87be37be37be67be67be97be87be37be97be87be47be87be37be27be27be87be57be47be37be47be87be47be87be37be37be47be67bea7be580ea80e580e480e480e780e080e580e580e780e580e580e480eb80e780e080e380e580e280e380e780e080e880e680e580e880e280e480e580e180e580e780ea80e480eb80e980e680e780e580e980e580e680e680e680e280e880e580e580e480e680e580e680e080e180e780e280e280e280e580e180e080e080e380e380e280e280de80e080ea80e380e280e780e080e480e580e180e280e380e680e980e280e080e080e380e180df80e380e280de80e280e280e080e680e280dc80e580e680e180e180e380e080e280e680df80e380e980e380e480df80e180e080e580e280e580dd80e080e180dd80df80e080de80e180dd80e380e080e180e280e680de80de80e080e480df80e680e080df80de80e680e280de80e780df80df80de80df80de80de80dd80e080e080de80de80dd80df80df80e080e280de80e180dc80df80e280e380dc80dd80e080df80e080e080e080df80df80e280da80dc80dc80df80dd80dd80d980df80de80dd80db80de80db80e080db80db80da80dd80db80d880d980d780e280d880d980db80d780d580d880d780dc80da80d880d880dc80d680d980dc80d680d580d680d380d880d780d880d180d080d480cf80d280cf80d380d380d680d580d480cf80ce80d280d080d380d280cd80ce80d680d080d080cc80cc80cf80d480ce80cd80cc80d380cf80cf80cf80cb80ce80ca80d580cf80ca80cc80cc80d180cc80cb80cf80c980c980c880cc80ca80ca80cb80ca80ca80ce80cc80c780cc80c780cb80cb80cc80ca80cc80ce80c680cf80cb80ce80ce80c980c780c980c880cb80c780c980cc80cd80c880c980c480cb80c980c980cc80ca80cc80cc80cc80c880ca80c780c780ca80c680c880c880c880ca80c780c980cf80cb80c480ce80cb80c980c780c880cc80cd80c980cb80cb80cb80cf80c980ca80cb80ca80d180ca80d180cd80cb80c980cd80cd80c880cb80cc80ca80ce80ce80ca80d080cf80d180cb80c980cc80cf80ce80d080cd"), *myIP, src_port);
     _sender->writeDatagram(QByteArray::fromHex("06217bd77bd67bda7bd67bd97bd37bd47bd77bd37bd57bd97bd37bd77bd37bda7bd87bd37bd67bdb7bd57bda7bda7bdb7bd17be07bd57bd87bdb7bdd7bd87bd87bd77bd77bd67bd77bd87bdc7bda7bd47bd67bd47bdb7bdb7bdc7bd97bd47bd47bd17bd57bd37bd77bdb7bd67bd67bdb7bd87bd37bd97bde7bd77bd67bd77bd67bda7bd77bd77bd97bdc7bd87bda7bd97bd67bd57bd87bd77bd77bd97bd67bd57bd37bd67bd77bd77bda7bd47bd97bdc7bd67bd97bd57bde7bd67bda7bd37be17bd77bd67bd87bda7bd37bd77bd87bdb7bd87bd47bd67bdb7bd57bdd7bd97bd47bdb7bd87bdd7bd87bd87bd97bd77bd77bd87bd97bdc7bd87bd37bd77bd07bd67bd77bd37bd97bd67bdb7bd67bdf7bd87bdb7bdb7bdd7bdb7bd87bd87bd87bd97bd67bd57bd97bd97bd47bd87bd87bd67bd57bd57bd87bd57bd97bd87bd87bd87bd67bd77bdc7bd97bd87bde7bd67bd97bda7bda7bd87bd87bd67bd97bd57bd77bd87bd67bd77bda7bd67bdb7bd87bda7bd87bdb7bdb7bd67bd87bdc7bd97bdc7bda7bdc7bdb7bda7bdd7bdb7bdb7bdc7bd67bdc7bdb7bd67bd57bd87bda7bd97bd57bdf7bd97bda7bd67bd87bde7bdb7bd77bdc7bdf7bdc7bd67bdc7bdf7bd97bde7be27bdf7bdc7bdf7bdf7bde7bde7bdf7bda7be17bdb7bda7bdc7bdd7bd67bd77be07bdd7bdc7be17bde7be07be17be57be07bde7be57be17bd87be07be17bdd7bdd7bdf7bdc7be17be07be47bdf7bdf7bdf7bdc7be27be37bd87bd47be17be17be17bdc7be47bd97bda7bdf7be67bdf7bde7bdd7be37bdb7be47be17be37bde7bdc7bde7be37be37bda7bde7bd87be27be37bdd7be37bdf7be07be27be77bdd7be07bdd7bdf7bdd7be37be07bdd7be67bdc7bdd7bdc7bdd7be07bde7bdc7be07be47bde7be37be07be07be37bdb7bdf7bdb7bdd7bdf7be07be07be17bdf7bdc7bda7bdd7bde7bdc7bde7bdc7bde7be27be17bdf7bdc7bde7bdb7bdc7bda7bdd7be17bda7be07bdf7be07bdd7be07bde7be27bda7be27bd780e680e580e980e480e380e480e280e480e680e480e780e480e180e480e680e280e780e380e980e280e580e780e680e780e180e580e580e080e380e280e880e580e680e780ea80e380eb80e380e380ea80e480e280e380e280e880e580e180e580e180e980e580e380e080e780dc80e680df80e280e580df80e580e380e280e680e380e180e280e180e180e180e180e280e280e480e380e580e580dd80e480e180e380e680db80dc80e480df80e380e380e480df80e080e380dd80e180e480de80e280e580de80e080df80da80e580e380e080dd80e180e180e080e580dd80dc80e480e480e380e380e080dd80e480e080e480e380e280e080e480e180e480e280dd80d980e180e280e280e480da80e180e180e380e380dd80dd80dd80e080e080e380df80de80e480e380e180df80dc80df80dd80de80e680e580dc80e180da80e380de80dc80dd80e080e080e080de80d780df80d580dc80db80dd80df80da80dc80dd80dd80db80d880d880e280df80df80dc80d980db80d780df80db80da80d780d980db80de80d380dc80da80de80d680d880d280df80d880d780d980d280d780da80db80d280d880d480d080db80d280d580d080d780d380d280d180d380d180d180d380d480ce80d280ce80d180cf80cf80cf80d080d180cf80d080cf80d080c980cc80cb80cd80ce80d280cd80d780ce80d380c980c880c980ca80cf80cd80ce80cb80cd80d180cb80d280ce80cf80cb80ca80cb80c780c880c980c280cc80cc80cb80c780d280c980ca80cc80cb80cc80c980ca80c980c880cb80c780cc80cb80c980c980ce80cc80c780c580c580c980c580cb80c680c880ca80c580c880c780ca80ca80c880cf80c080cc80c780c980c080c880c880c980ca80cb80cd80cc80c680cc80c880c980cc80c680ca80cb80ca80c780cd80ca80ca80c680c880cb80c880cb80cc80d380cc80c780c880ce80cb80c880ca80c880ce80c980cd80ce80ca80cd80ca80cd80cd80cc80d580ce80cc"), *myIP, src_port);
@@ -265,17 +266,17 @@ void intercom::sendTest()
     _sender->writeDatagram(QByteArray::fromHex("06237bdc7bd47bdc7bda7bd77bdc7bdc7bd77bdf7bda7bda7bdc7bd97bda7bda7bd97bdb7bdb7bdb7be57bda7bdd7bdc7be27bdb7bde7be57bdd7bd87bde7bdf7bd87bde7bd97bdc7bdf7bdd7bdc7bdd7bde7bde7bda7bd97bdd7bde7be07bdc7bdc7bdb7be17bdd7bdc7be17bd97bda7bdb7bdd7bdb7bda7bda7bdb7bdf7bdd7be17bd67bd87bd87bdf7bdd7bd97bdb7bdd7bdc7bdd7bd87bda7bdc7bdd7bd57bdb7bd97bda7bd87bdc7be07bde7bdc7bd97bdb7bdf7be27bdf7bda7bda7bd67bda7bdd7bdb7bd87bdc7bda7bd97bd77bda7bda7bd87bd97bda7bdc7bd47bd97bde7bda7bd77bdf7bd97bdb7bdc7bd97bd97bd87bda7bd77bd97bd97bdd7bd97bdb7bde7bd67bd87bd97bd57bd77bd47bd97bd47bde7bd57bda7bd67bda7bda7bd87bd27bda7bda7bd97bda7bd57bd97bda7bd97bda7bd97bd57bd87bd97bd87bdb7bd37be17bda7bdd7bd87bdd7bd67bd57bdb7bda7bd57bd47bda7bd57bd67bd67bd47bd87bd87bd67bdd7bdb7bd67bd97bdd7bd77bd47bd47bd97bda7bd57bdd7bd37bda7bdc7bd87bda7bdf7bd87bd97bd97bd77bdc7bd37bd87bd57bdc7bdd7bdb7bd97bd97bdb7bd47bdd7bdb7bd67bd67bd97bd67bdc7bdb7bde7bd97bdc7bdb7bda7bd67bd87bdd7bd87bd97bde7bdb7bdc7bd97bda7be07bde7bde7bd77bdc7bd67bd67be17bda7bdd7bdb7bdc7bdb7be47bdf7be07bda7be17bdf7bdc7be37bde7be27bdc7bdc7bdf7be27be27bdc7bde7bde7bdf7bdd7bde7be27be17be27be27bde7be37bdb7bdf7bde7bdf7be37be27be17be27be37bda7be57bdd7be37be77be07be07be57be37be17be07bdf7bdf7be47bdc7bdf7be47be27bdd7be27be77bda7bde7bdc7be17be47be37be27bdf7bdf7be17be07bdf7bdd7bdc7be57be57be17bdd7be17be27be07be07bd97bdb7be37be37be37be27bdc7bdd7bdc7be37be07be07be17bdf7be77bde7bda7bd97bdb7bde7bde7bde7bdf7bde7bdb7bd97be07be27bdc7be17bda7be57be07bda7be37bdf80e280e180e380e480e380f080e680e280e580e580dd80e180e280e380e680e480e480e580e480e680e180e180e280ea80e580e480e180e180e180e680e480e480ea80e880e580e480e980e980e580e580e580e580e880e880e580e480ea80e880e580e380e080df80e580e080e180e380e480e080e280dc80de80e080e380e680de80e080e280e380e680e580e280df80df80e380e280df80df80e480e080e280e880e080df80e280e580e280e080de80e580e380e780e480dc80dc80df80df80e280dc80dd80e080dd80dd80e280e080e180e580dc80de80e080dc80e280dc80dc80e080e280e180e680dd80db80e280e080e580e280e080df80e180dd80dc80e080de80e080dc80d880dd80e180dd80da80da80de80e080dc80dd80db80d980de80da80dc80e480da80d680dd80d680da80da80e180d880db80d880df80d880dd80dd80d980db80dc80d980d680d980dc80da80da80d880dd80d680d780d780dc80dc80d980d980d980d480da80d280d780d480d980d680d280d980d780d680d780d380d980d380d580d380d080d580d980d280d380d380d080d280d380d280cf80d080d180d580d280d080ce80d080ce80d080cc80ca80d380d080cc80cf80c880d080ce80cf80cb80cd80cb80ce80cd80c980c980d080c980c780cb80cd80c680c480ca80cb80ca80cc80ca80c280cb80c580cc80cd80c880ca80cc80c880c980c980c780c780c480c280c580c680c680c480c380c880c180c280c880c380c680c880c580c880c180c880c480c180c880c180c480c680c880c680c480c580c080c380c680c580c580c480c580ca80c780c680c280c580c880c180c480c680c780c480c380c380be80c380c380c480c580c580c680cb80c480c180c880c380c780c780c580c680c480c580cb80cb80c580c880ce80c580c280c680c980c580c480cc80cb80c780c680c880c880ca80c980ca80cb80c780c880c780c880cd80c680c980d080cb80c680cc80ce80c880c680cd80c8"), *myIP, src_port);
     */
     //QThread::msleep(100);
-    _sender->writeDatagram(QByteArray::fromHex("06247bdb7bd77bda7bdd7bd97bdc7bd87bdf7bda7bdc7bdc7be17bdb7bdb7bdd7bdb7bdb7bd77bd77bdc7bde7bd87bdf7bdd7bdc7bdd7bdc7be07bdc7bdc7bdb7bda7bda7bde7bdf7bde7be07bde7bda7be07bda7bdb7bdf7bdc7bd97bdb7bdd7bde7bd97bda7bdc7be17bd57bdd7bdd7bdd7be17bdd7bdb7bdd7bdc7bda7bdc7bd97be07bd47bd67bdb7bdb7bda7bd87bd97bdd7bde7bdc7bda7bd97bdd7bde7bdc7bdd7bdb7bd67bd77bde7bde7bd97be07bdb7bdd7bde7bdc7bd77bd97bdc7bd67bd87bde7bd87bd77bdf7bda7bd97bda7bd87bd97bd97bdd7bdc7bdf7bd97bdb7bdb7bd87bdc7bd67bd77bda7bda7bdf7bdb7bd87bda7be07bdf7bdd7bd87bdb7bda7bdd7bdd7bdd7bd97bdb7bdb7bd77bd67bd77bd67bd57bdc7bd77bdc7bd77bdb7bda7bdb7bd97bde7bdb7bd77bdb7bdb7bd67bd77bd87bdc7bd87bd77bdd7bdf7bd87bd97bd97bde7bde7bd87bdb7bd97bdb7bd77bd97bd47bd47bda7be07bdd7bd97bda7bdb7bd97bda7bd47bdd7bd77bdc7bda7bd87bda7bda7bdd7bd87bd37bd77bdd7bd97bd97bdb7bd27bdf7bd77bd97bd77bd97bd97bdf7bd97bd77bd97bd57bd97be07bd87bde7bd87bd67bd87bd87bdd7bd97bde7bd87bdf7be17bdb7bda7bdc7bdb7bdc7bd77bda7bdc7bde7bdc7bd67bd87bdc7be47bdc7bdd7bde7bda7bdc7bdb7bde7bdd7bdd7bdd7bdf7bde7bdf7be17bda7be17bda7be07bdc7bdf7be07be07bdf7be17bdc7be27be17bdd7bdc7bdf7bdd7bdf7be37bdc7bde7be37be97be17bdf7bde7be37be67bdd7be57be17bdf7bdf7be47bdf7be47bdf7be37bde7be27be77be67be27be27be97be47be17be77be27be67be67be37be27be07be57be47be27be57bdf7be47be87be27be77be87be47be47be57be87be77be67be67be17be87be27be97be27be67be47be67be07bea7be37bdf7be57bdf7be37be87be47be37be07bdd7be17be37be27be17bde7bdf7be27be77be27be27be07be37be17be07be57be27be37bde7be17bdf7bdf80e080de80df80e180dd80e380e380e380e280e380e080e080e080e380dc80e180e580e380e380da80e080df80dc80de80e380dc80e580e280e280e480e080e380df80e380e080e780e180e180e480e280de80d980dc80df80e280df80e280e280e480e180e080e080dd80e580de80da80e380e080dc80e680e080e680df80e280e180e380e280dc80da80de80de80df80df80df80d980e380dc80e380e080de80de80dd80e380de80e180de80d980dc80e180dd80df80df80de80df80dc80e280df80da80dd80e280db80dd80e180e380dc80dd80de80df80e280de80e080e280e480e280de80e180e580dd80e380e880de80e080e580df80de80dd80e380de80dd80e080e180de80db80dc80e380e080e080e080e080df80de80dd80dc80df80dd80e380e480e180dd80e280dc80e380de80de80dc80e180e280de80e380e080d880df80e380df80df80de80df80e080df80de80de80dd80da80de80e280da80e180e080d980dc80da80dc80de80df80df80df80df80dc80d980dd80df80d980da80db80d980d880d980d880d880da80d880d780d580dd80d580d380d880d480d380d880d780d580d480d280d480db80d680d180d180d580d580d580d180cc80d180cf80d280cf80d180d580d480d280d280ca80d480ce80d380cf80d180c980ce80cf80d780ce80d080d180cd80cd80cb80ce80cc80c980cb80ca80d080cb80cb80cc80cb80ca80c980cb80cb80c980c780c680c880c680c880c780cf80c780c880ce80c280c880c780cd80c880c280c880c680c680c980c880c380c580c380c780c580c980c380c980c780c180c580c380ca80c880c680c680c980c380c780c580cc80c780c680c380c780c180c680cb80c280c780c680c680c780c880c180c680c080c380c680c680c580c980c580c780c480c880c680c280c780c980ca80c780c980c780c780c680cd80c280c580c880c980c880c580ca80c880c980c680c680cc80cc80cb80ca80ca80c880cb80ce80ce80cb"), *myIP, src_port);
-    _sender->writeDatagram(QByteArray::fromHex("06257bdb7bd97bdd7bdd7be17bdf7bdf7be07bdd7be07bda7bde7bde7bdd7bdb7be47bda7bdf7bde7be07be07bdf7bdf7be07bde7be17bde7bda7be17be37be07be17bde7be27be07be27be17be07be07bdd7be27bdc7be57bdb7bda7be27be37bdc7be17bde7bdf7bdf7be07bdd7bde7bdd7be17bdf7bdd7bdf7be37be37bdf7be37bde7bdc7bdf7be17bde7bdd7be37be17bde7be17bdf7bda7be17bdf7be17bdf7bde7bde7bde7bd77be07be27bdf7bdf7be17be47bdf7bdc7bdd7be37be47be07bdf7bdc7be17be07be17bde7be07bde7bdc7bde7bd87be07bde7be37bdd7bdf7bdd7be37bdd7bdb7bdf7be27be77bdc7bdf7bda7be27bdf7be57be07be17be07bd87be07be27bdc7be27bdd7bdf7bda7bdc7be17bde7bde7bde7be27bd97be07bdf7bdc7bdf7bdb7bdd7bdf7be07be07be07bde7bde7bdf7be27bdf7bdd7bde7bdc7be47be37be37be07bdc7be37be27bdd7be57be37be27be27bdf7bd87bdf7be07bde7be67be27be27bdf7be17bde7be17bdb7bdf7be27bdf7bdf7be17bdb7be17be17be27bde7be27be17be17be07bdd7be07bda7bdd7be27be37be27bdd7be17bdf7bde7be37bdd7bdd7be47be57be17be17be27bdf7bde7be47be57bdf7be27bda7be17bde7be47bde7bdf7bdf7be17be87bdf7bde7be47be67bda7be37be37be37be47bde7be17be47be27be47be17be77be67be47be07be97be47bdd7be57be57beb7be27be67be67be57be57be67be37be27be57be77be57be77be67bea7bea7be77be57be47be57be07be17be87be37be97bea7be47bea7be97bed7bea7be57be47be57be47be77bea7be87bec7bec7be97be77be77be87be37be87be57beb7be87beb7be97be77bf07beb7be47be97be77be67be47bea7be57be97be67be37be77be97be57be97be97be57bea7be97bea7be67be97beb7be67be57be37be87bde7be77be57be57be57beb7be77be47bec7bec7be47be47be37be37be67be47be57be47be57be17be47be77be67be57be37be780e280e080e380dc80e080e180df80dd80e080e180e280e080e380e280dd80e880e380e380e080df80de80e480e080e580e080da80e680e580db80e480e280e080e080e080e280de80e080dd80e080e380de80e180e080e280e180df80e680e280e180e080e280e480dd80e380e580e380dc80dd80e180e180df80dc80e080e080e180df80dd80e580e280e080e380df80dd80e280e480e580e080db80df80dc80e180e380dd80de80e080dc80d980e280de80e080e480e580e080e680e480dd80dd80df80e580e880e180db80e180e080e080e280e080e280e280e280e080e380df80e280e080e180e580df80e380de80de80df80e180d980e380e180e280e280e280da80e280df80e080e280e780e280de80e180e080e380e180e580e080e080e080e280da80e080e280e180df80de80dc80e180df80e180e580df80e380e080e180e280e180e080e280de80e280db80de80e580e080da80da80db80e680da80dd80da80e080e380e280db80dc80df80da80d980e180e280d680d880dc80d780d980db80d880dc80d880df80de80d880da80d480d480dc80d680d780d780d480d380db80d780d780d880d280cf80da80d680d680d380d780cf80d380d480d480cd80d380cf80d480cc80d280d080d580d080d080d180d180d080ca80cc80d380d180ce80cc80ce80d080cb80ce80ca80cc80ca80ca80d180c980c880c980ca80ce80d080c480cb80cc80cc80c980d080cc80c680c980c680cb80c780c980c780cc80ce80c980c780c880ca80c680c780c980c580c580c980c880c180cc80c380c180c480c780c580c280c680c780c580c280c680ca80c980c680c580c580c880c980c580c380c380c480c280c380c580c380c580c380c480c380c680c080c880c580c680c380c580c380c980c180bc80c380c780c680c180c580c380cd80c980c980c880ca80c580cc80cb80cc80c280cc80c580c880c780c880c980c980cb80cd80ca80c780c880c980ca80c980d180c780cd80ce"), *myIP, src_port);
-    _sender->writeDatagram(QByteArray::fromHex("06267bdf7be27bdf7be17be67bdd7bdf7bdd7be17be17bdc7bdc7bdf7bdd7bdd7bdd7be07be37bdc7bdb7bdd7bdd7bde7bdf7be27bde7bdd7bdf7bdc7be07bda7bdc7bdc7bde7bde7bdf7be07bdd7be07bdf7bdc7be47bde7bdf7bdf7bde7bdd7bdc7bdf7bdf7bdd7bdb7bdc7bde7bda7bdc7bdd7be27bdb7bdf7bdf7be47bdb7be07bde7bde7bda7bdc7bdf7bdf7bdb7bd97bdd7be07bd97bde7bdf7bd57bde7be57bdd7bdb7bd97bde7bdb7be17bdc7bdc7bdd7be07be47be47bdf7be07bdf7be07bdd7bdf7bde7bd87bdf7be07bde7bdf7bdd7bdb7bde7bde7bdc7bdf7be17bdb7bdc7be17bdf7be07bde7bde7bdf7be07bdf7be37bdd7be27be07bda7bdd7bde7bdc7be07bdb7bde7bdc7be47bdc7bdc7be17be27be07bde7be47be17be07be27bde7bdd7bdf7bdf7be27bdc7bdf7be07be47be27be07bdb7be37be07be27bdf7be17be27be37bdf7be37be07bdd7be27bdf7be57bde7be47be17be27be07be07be37be17bdf7bdf7bdf7be47be27be27bdf7bdf7bdd7be07be07bda7bdf7be07be17be07be07bde7be57bdf7bdf7bdb7bdb7be57be57bdf7bdd7be07be47be57bde7bdf7be37bdd7bd87bdd7be27bdd7bdc7be47be37be17be37bdc7be27be57be17be37be17be47be27be27be17be47bdf7bdf7bdd7be47be17be57be57be47be27be67be47be37be67be37be37be37bde7be57bdc7bdf7be87be67be97be47be57be77be87be47be87be47bea7be17be47be57be47be17be97beb7be57be67be87be77be47be87be17be77be97bee7be87be67be37be57be57be57bed7be47be87be77be87bea7bee7be97be67be77be47be67be87bea7be57be87be87bea7be77be87be87bea7be37be77be77be67beb7be57be57be57beb7be77be87be67be97be57bea7be77be77be57bea7be77be77be77beb7beb7be87bee7be57be97be87be97be57be37be37be37be37be77beb7be27bea7be07be17be77be77be77be77be47be57bdb7be47be57be17be57be17be87bde7be480d980d880d980dc80d780d780dd80db80da80e080db80d980db80df80de80dc80db80db80dc80db80de80df80dc80e380df80df80d780da80dd80e380de80db80e080dd80e080db80de80db80de80dd80db80d980df80dd80da80dc80e080df80d880dd80dc80de80db80dc80de80dd80d880dd80db80db80e180da80da80db80df80dc80df80de80da80d980d980e180dc80de80dd80dd80db80d880dd80d880d880dc80dc80df80da80db80d780d680df80dd80d980d880da80da80d980d980d980d880d980db80d780d780db80df80dd80db80e080e080dc80d980db80d980d880e080d980d980d980dd80d980e080dc80d680da80df80dd80d880da80da80db80d680dc80e180da80dc80d980da80da80d880d880d880d880d980dc80da80db80dc80d980dd80d980dd80e180d880d780d880de80dd80da80d580d780d980dc80dc80d980db80da80d980d480da80d980d980dd80d880d680d680d680d880dd80d980d480db80dd80d780d580d480d980dd80d380d180d680d480d280d780d080d380d380d380cf80d280d480cc80d580d880d080d380d180d180d080cf80cb80d280ce80d280cf80cf80d280ca80cd80d180c780cd80cc80ca80cb80cf80cf80ce80ce80c880cc80cd80cd80ca80cc80ce80c880c780cf80cd80cd80cb80c680c680c780c780cc80c880c780c580c580c180c680c880c680cb80c680c680c180c680c680c480c380c480c580c880c380c480ca80c980c580c480c780c580c480c780bf80c180c480bf80c580c080c980c680c480c180c780c780c680c980c780c380c380c980c680bf80c880c480c080c280c180c380c280c580ca80c280c580c280c180bf80c180c880c980c380c680c480c880c780c380c480c280c780c680c480c180c380c680c180c780bf80c780c580c680c680c580c780c780c680c480c480c880c780ca80c680c680c980c880c880c580c780c980c680c180c580c380cb80c580c580c180c680be80c980cc80c480c5"), *myIP, src_port);
-    _sender->writeDatagram(QByteArray::fromHex("06277be37be37be27be17be27be37be17be37be17be27be17be37bdd7be67be87bde7bdf7be17be27be47be47be67be27be77be37be47be17be37be27be47be47be37be27be07be37be37be37be77bdf7bdf7be07be97be37be47be57be77be17bde7be47be07bdf7be37beb7be47bdf7be07be37be47be57be87be37be17be17bdf7be47be07be77be17be17be57bdf7bdf7be47be57be37be37be57be37be37be17be17bdc7be47bde7bdf7be77be77be47be07be07be17be57be17be67bdd7be17be47be07be27be37be47be17be67be27bde7bdf7be47bdd7be27be87be47bdd7be37bdb7be37be07be27be17bdf7be77be37be27be37be87be17be37be77be07be47be87be17be57be67be17be37be67be27be27be47be47be47be67be07bde7bde7be17bdf7bdf7be07be17be17be47be07be27be37be37be17be27be17be37be47be37be57be17be17be27be77bdf7be27be47be57be27be07be87bde7be27be57be47be57be27be07be27be47be17bdd7bde7be27be37be17bde7be27be77bdf7be07be27bdd7be47bd97be47be47be37be67be57be37be37be17be47bdf7be37be37be27be67be07be07be77be17be07be27be27be47be27be47be77be67bea7be47be27be27be67be37be77be57be47be47be27be27bea7be47be47be67be77be67be97be27be17be37be27be67be77be97be37be87be47be97be67be97be77be47be37be87be57be47be97be87beb7be77bea7beb7beb7be67be87be97bec7beb7be37be77bec7bea7be57be67bec7be77be97be47bed7be67be77bed7beb7be87bed7be97beb7bee7bea7be97bea7be47bed7beb7be67bef7be67beb7bec7bea7bea7beb7be87bed7bea7bea7bea7bed7bed7be87bea7be67bec7beb7bea7be97be67bea7be97bec7be47be37be77bed7be67bed7be77be57be17be67be17bec7be77be27bea7bea7be37bea7bea7bef7be67be27beb7be97be67be47be57be77be57be27bea7bed7be97be67be67be77be17be680d880d880d380d580d980d580d980d980d580d980d880d580d480d780da80d980d880dc80d980e580da80d380db80dc80d980dc80de80da80dc80d580da80d680d580db80d480d780d480db80d780d580da80d980db80d880da80da80de80db80de80db80d980da80d380da80d980dc80d880d480d780d780d980d880d680da80db80dc80d780d780d680db80d980d880dd80d880dd80d980da80d980d680d580dd80d680d280d180d380da80d880ce80d680d480d780da80d280dd80d880d380dc80d880dd80d580d880dd80da80d780dc80d680d980d780d980d480dc80d880d480d580d980d380d280d680d780d480d880d380d480d680da80db80dd80d480d980db80dd80da80d780db80d980da80d880d580d880d780df80d780d680d580d880d480dc80d480d780d680d880d480d780d580d280d780d780d980d780dd80d680d480d580d680d480d580d580d580d980d180de80d280d880d680d880d880d480d180d480d080d580d280d380d280d680d780d580d480d180d580ca80ce80d580d080d480d480ce80cf80d380ce80d780cf80d080d080d880cf80cd80d280cb80cb80cc80d080d080cb80ce80c980cf80c880c880cb80c580cc80c680c680d180c680c580c980c880cd80c680c580c680cc80c680c680c880c680c680c380c680c780c580c480c580ca80c280c380c380c180c380c480c980bd80bf80c580c780c180c680c480c280c680c280bd80c580c180c180c080bf80c180c280bc80bd80c080be80c280be80c580c580c280c180c480bc80c580c080ca80c680c080c780bf80c480c080c080c080be80bf80bf80c280ba80c280c180c080bf80bc80be80c180c480c280c180c180bc80c280c180c380c080c280c380c580c080bc80c280c380be80c280c080c780c380c080bd80c280c080be80c380c180be80c280c580c280c580c480c180c380c580c180c380c280c580c380c480c280c480c480c380c480c580c480c880c480c680c080c180c680c5"), *myIP, src_port);
+    m_sender->writeDatagram(QByteArray::fromHex("06247bdb7bd77bda7bdd7bd97bdc7bd87bdf7bda7bdc7bdc7be17bdb7bdb7bdd7bdb7bdb7bd77bd77bdc7bde7bd87bdf7bdd7bdc7bdd7bdc7be07bdc7bdc7bdb7bda7bda7bde7bdf7bde7be07bde7bda7be07bda7bdb7bdf7bdc7bd97bdb7bdd7bde7bd97bda7bdc7be17bd57bdd7bdd7bdd7be17bdd7bdb7bdd7bdc7bda7bdc7bd97be07bd47bd67bdb7bdb7bda7bd87bd97bdd7bde7bdc7bda7bd97bdd7bde7bdc7bdd7bdb7bd67bd77bde7bde7bd97be07bdb7bdd7bde7bdc7bd77bd97bdc7bd67bd87bde7bd87bd77bdf7bda7bd97bda7bd87bd97bd97bdd7bdc7bdf7bd97bdb7bdb7bd87bdc7bd67bd77bda7bda7bdf7bdb7bd87bda7be07bdf7bdd7bd87bdb7bda7bdd7bdd7bdd7bd97bdb7bdb7bd77bd67bd77bd67bd57bdc7bd77bdc7bd77bdb7bda7bdb7bd97bde7bdb7bd77bdb7bdb7bd67bd77bd87bdc7bd87bd77bdd7bdf7bd87bd97bd97bde7bde7bd87bdb7bd97bdb7bd77bd97bd47bd47bda7be07bdd7bd97bda7bdb7bd97bda7bd47bdd7bd77bdc7bda7bd87bda7bda7bdd7bd87bd37bd77bdd7bd97bd97bdb7bd27bdf7bd77bd97bd77bd97bd97bdf7bd97bd77bd97bd57bd97be07bd87bde7bd87bd67bd87bd87bdd7bd97bde7bd87bdf7be17bdb7bda7bdc7bdb7bdc7bd77bda7bdc7bde7bdc7bd67bd87bdc7be47bdc7bdd7bde7bda7bdc7bdb7bde7bdd7bdd7bdd7bdf7bde7bdf7be17bda7be17bda7be07bdc7bdf7be07be07bdf7be17bdc7be27be17bdd7bdc7bdf7bdd7bdf7be37bdc7bde7be37be97be17bdf7bde7be37be67bdd7be57be17bdf7bdf7be47bdf7be47bdf7be37bde7be27be77be67be27be27be97be47be17be77be27be67be67be37be27be07be57be47be27be57bdf7be47be87be27be77be87be47be47be57be87be77be67be67be17be87be27be97be27be67be47be67be07bea7be37bdf7be57bdf7be37be87be47be37be07bdd7be17be37be27be17bde7bdf7be27be77be27be27be07be37be17be07be57be27be37bde7be17bdf7bdf80e080de80df80e180dd80e380e380e380e280e380e080e080e080e380dc80e180e580e380e380da80e080df80dc80de80e380dc80e580e280e280e480e080e380df80e380e080e780e180e180e480e280de80d980dc80df80e280df80e280e280e480e180e080e080dd80e580de80da80e380e080dc80e680e080e680df80e280e180e380e280dc80da80de80de80df80df80df80d980e380dc80e380e080de80de80dd80e380de80e180de80d980dc80e180dd80df80df80de80df80dc80e280df80da80dd80e280db80dd80e180e380dc80dd80de80df80e280de80e080e280e480e280de80e180e580dd80e380e880de80e080e580df80de80dd80e380de80dd80e080e180de80db80dc80e380e080e080e080e080df80de80dd80dc80df80dd80e380e480e180dd80e280dc80e380de80de80dc80e180e280de80e380e080d880df80e380df80df80de80df80e080df80de80de80dd80da80de80e280da80e180e080d980dc80da80dc80de80df80df80df80df80dc80d980dd80df80d980da80db80d980d880d980d880d880da80d880d780d580dd80d580d380d880d480d380d880d780d580d480d280d480db80d680d180d180d580d580d580d180cc80d180cf80d280cf80d180d580d480d280d280ca80d480ce80d380cf80d180c980ce80cf80d780ce80d080d180cd80cd80cb80ce80cc80c980cb80ca80d080cb80cb80cc80cb80ca80c980cb80cb80c980c780c680c880c680c880c780cf80c780c880ce80c280c880c780cd80c880c280c880c680c680c980c880c380c580c380c780c580c980c380c980c780c180c580c380ca80c880c680c680c980c380c780c580cc80c780c680c380c780c180c680cb80c280c780c680c680c780c880c180c680c080c380c680c680c580c980c580c780c480c880c680c280c780c980ca80c780c980c780c780c680cd80c280c580c880c980c880c580ca80c880c980c680c680cc80cc80cb80ca80ca80c880cb80ce80ce80cb"), *m_myIP, src_port);
+    m_sender->writeDatagram(QByteArray::fromHex("06257bdb7bd97bdd7bdd7be17bdf7bdf7be07bdd7be07bda7bde7bde7bdd7bdb7be47bda7bdf7bde7be07be07bdf7bdf7be07bde7be17bde7bda7be17be37be07be17bde7be27be07be27be17be07be07bdd7be27bdc7be57bdb7bda7be27be37bdc7be17bde7bdf7bdf7be07bdd7bde7bdd7be17bdf7bdd7bdf7be37be37bdf7be37bde7bdc7bdf7be17bde7bdd7be37be17bde7be17bdf7bda7be17bdf7be17bdf7bde7bde7bde7bd77be07be27bdf7bdf7be17be47bdf7bdc7bdd7be37be47be07bdf7bdc7be17be07be17bde7be07bde7bdc7bde7bd87be07bde7be37bdd7bdf7bdd7be37bdd7bdb7bdf7be27be77bdc7bdf7bda7be27bdf7be57be07be17be07bd87be07be27bdc7be27bdd7bdf7bda7bdc7be17bde7bde7bde7be27bd97be07bdf7bdc7bdf7bdb7bdd7bdf7be07be07be07bde7bde7bdf7be27bdf7bdd7bde7bdc7be47be37be37be07bdc7be37be27bdd7be57be37be27be27bdf7bd87bdf7be07bde7be67be27be27bdf7be17bde7be17bdb7bdf7be27bdf7bdf7be17bdb7be17be17be27bde7be27be17be17be07bdd7be07bda7bdd7be27be37be27bdd7be17bdf7bde7be37bdd7bdd7be47be57be17be17be27bdf7bde7be47be57bdf7be27bda7be17bde7be47bde7bdf7bdf7be17be87bdf7bde7be47be67bda7be37be37be37be47bde7be17be47be27be47be17be77be67be47be07be97be47bdd7be57be57beb7be27be67be67be57be57be67be37be27be57be77be57be77be67bea7bea7be77be57be47be57be07be17be87be37be97bea7be47bea7be97bed7bea7be57be47be57be47be77bea7be87bec7bec7be97be77be77be87be37be87be57beb7be87beb7be97be77bf07beb7be47be97be77be67be47bea7be57be97be67be37be77be97be57be97be97be57bea7be97bea7be67be97beb7be67be57be37be87bde7be77be57be57be57beb7be77be47bec7bec7be47be47be37be37be67be47be57be47be57be17be47be77be67be57be37be780e280e080e380dc80e080e180df80dd80e080e180e280e080e380e280dd80e880e380e380e080df80de80e480e080e580e080da80e680e580db80e480e280e080e080e080e280de80e080dd80e080e380de80e180e080e280e180df80e680e280e180e080e280e480dd80e380e580e380dc80dd80e180e180df80dc80e080e080e180df80dd80e580e280e080e380df80dd80e280e480e580e080db80df80dc80e180e380dd80de80e080dc80d980e280de80e080e480e580e080e680e480dd80dd80df80e580e880e180db80e180e080e080e280e080e280e280e280e080e380df80e280e080e180e580df80e380de80de80df80e180d980e380e180e280e280e280da80e280df80e080e280e780e280de80e180e080e380e180e580e080e080e080e280da80e080e280e180df80de80dc80e180df80e180e580df80e380e080e180e280e180e080e280de80e280db80de80e580e080da80da80db80e680da80dd80da80e080e380e280db80dc80df80da80d980e180e280d680d880dc80d780d980db80d880dc80d880df80de80d880da80d480d480dc80d680d780d780d480d380db80d780d780d880d280cf80da80d680d680d380d780cf80d380d480d480cd80d380cf80d480cc80d280d080d580d080d080d180d180d080ca80cc80d380d180ce80cc80ce80d080cb80ce80ca80cc80ca80ca80d180c980c880c980ca80ce80d080c480cb80cc80cc80c980d080cc80c680c980c680cb80c780c980c780cc80ce80c980c780c880ca80c680c780c980c580c580c980c880c180cc80c380c180c480c780c580c280c680c780c580c280c680ca80c980c680c580c580c880c980c580c380c380c480c280c380c580c380c580c380c480c380c680c080c880c580c680c380c580c380c980c180bc80c380c780c680c180c580c380cd80c980c980c880ca80c580cc80cb80cc80c280cc80c580c880c780c880c980c980cb80cd80ca80c780c880c980ca80c980d180c780cd80ce"), *m_myIP, src_port);
+    m_sender->writeDatagram(QByteArray::fromHex("06267bdf7be27bdf7be17be67bdd7bdf7bdd7be17be17bdc7bdc7bdf7bdd7bdd7bdd7be07be37bdc7bdb7bdd7bdd7bde7bdf7be27bde7bdd7bdf7bdc7be07bda7bdc7bdc7bde7bde7bdf7be07bdd7be07bdf7bdc7be47bde7bdf7bdf7bde7bdd7bdc7bdf7bdf7bdd7bdb7bdc7bde7bda7bdc7bdd7be27bdb7bdf7bdf7be47bdb7be07bde7bde7bda7bdc7bdf7bdf7bdb7bd97bdd7be07bd97bde7bdf7bd57bde7be57bdd7bdb7bd97bde7bdb7be17bdc7bdc7bdd7be07be47be47bdf7be07bdf7be07bdd7bdf7bde7bd87bdf7be07bde7bdf7bdd7bdb7bde7bde7bdc7bdf7be17bdb7bdc7be17bdf7be07bde7bde7bdf7be07bdf7be37bdd7be27be07bda7bdd7bde7bdc7be07bdb7bde7bdc7be47bdc7bdc7be17be27be07bde7be47be17be07be27bde7bdd7bdf7bdf7be27bdc7bdf7be07be47be27be07bdb7be37be07be27bdf7be17be27be37bdf7be37be07bdd7be27bdf7be57bde7be47be17be27be07be07be37be17bdf7bdf7bdf7be47be27be27bdf7bdf7bdd7be07be07bda7bdf7be07be17be07be07bde7be57bdf7bdf7bdb7bdb7be57be57bdf7bdd7be07be47be57bde7bdf7be37bdd7bd87bdd7be27bdd7bdc7be47be37be17be37bdc7be27be57be17be37be17be47be27be27be17be47bdf7bdf7bdd7be47be17be57be57be47be27be67be47be37be67be37be37be37bde7be57bdc7bdf7be87be67be97be47be57be77be87be47be87be47bea7be17be47be57be47be17be97beb7be57be67be87be77be47be87be17be77be97bee7be87be67be37be57be57be57bed7be47be87be77be87bea7bee7be97be67be77be47be67be87bea7be57be87be87bea7be77be87be87bea7be37be77be77be67beb7be57be57be57beb7be77be87be67be97be57bea7be77be77be57bea7be77be77be77beb7beb7be87bee7be57be97be87be97be57be37be37be37be37be77beb7be27bea7be07be17be77be77be77be77be47be57bdb7be47be57be17be57be17be87bde7be480d980d880d980dc80d780d780dd80db80da80e080db80d980db80df80de80dc80db80db80dc80db80de80df80dc80e380df80df80d780da80dd80e380de80db80e080dd80e080db80de80db80de80dd80db80d980df80dd80da80dc80e080df80d880dd80dc80de80db80dc80de80dd80d880dd80db80db80e180da80da80db80df80dc80df80de80da80d980d980e180dc80de80dd80dd80db80d880dd80d880d880dc80dc80df80da80db80d780d680df80dd80d980d880da80da80d980d980d980d880d980db80d780d780db80df80dd80db80e080e080dc80d980db80d980d880e080d980d980d980dd80d980e080dc80d680da80df80dd80d880da80da80db80d680dc80e180da80dc80d980da80da80d880d880d880d880d980dc80da80db80dc80d980dd80d980dd80e180d880d780d880de80dd80da80d580d780d980dc80dc80d980db80da80d980d480da80d980d980dd80d880d680d680d680d880dd80d980d480db80dd80d780d580d480d980dd80d380d180d680d480d280d780d080d380d380d380cf80d280d480cc80d580d880d080d380d180d180d080cf80cb80d280ce80d280cf80cf80d280ca80cd80d180c780cd80cc80ca80cb80cf80cf80ce80ce80c880cc80cd80cd80ca80cc80ce80c880c780cf80cd80cd80cb80c680c680c780c780cc80c880c780c580c580c180c680c880c680cb80c680c680c180c680c680c480c380c480c580c880c380c480ca80c980c580c480c780c580c480c780bf80c180c480bf80c580c080c980c680c480c180c780c780c680c980c780c380c380c980c680bf80c880c480c080c280c180c380c280c580ca80c280c580c280c180bf80c180c880c980c380c680c480c880c780c380c480c280c780c680c480c180c380c680c180c780bf80c780c580c680c680c580c780c780c680c480c480c880c780ca80c680c680c980c880c880c580c780c980c680c180c580c380cb80c580c580c180c680be80c980cc80c480c5"), *m_myIP, src_port);
+    m_sender->writeDatagram(QByteArray::fromHex("06277be37be37be27be17be27be37be17be37be17be27be17be37bdd7be67be87bde7bdf7be17be27be47be47be67be27be77be37be47be17be37be27be47be47be37be27be07be37be37be37be77bdf7bdf7be07be97be37be47be57be77be17bde7be47be07bdf7be37beb7be47bdf7be07be37be47be57be87be37be17be17bdf7be47be07be77be17be17be57bdf7bdf7be47be57be37be37be57be37be37be17be17bdc7be47bde7bdf7be77be77be47be07be07be17be57be17be67bdd7be17be47be07be27be37be47be17be67be27bde7bdf7be47bdd7be27be87be47bdd7be37bdb7be37be07be27be17bdf7be77be37be27be37be87be17be37be77be07be47be87be17be57be67be17be37be67be27be27be47be47be47be67be07bde7bde7be17bdf7bdf7be07be17be17be47be07be27be37be37be17be27be17be37be47be37be57be17be17be27be77bdf7be27be47be57be27be07be87bde7be27be57be47be57be27be07be27be47be17bdd7bde7be27be37be17bde7be27be77bdf7be07be27bdd7be47bd97be47be47be37be67be57be37be37be17be47bdf7be37be37be27be67be07be07be77be17be07be27be27be47be27be47be77be67bea7be47be27be27be67be37be77be57be47be47be27be27bea7be47be47be67be77be67be97be27be17be37be27be67be77be97be37be87be47be97be67be97be77be47be37be87be57be47be97be87beb7be77bea7beb7beb7be67be87be97bec7beb7be37be77bec7bea7be57be67bec7be77be97be47bed7be67be77bed7beb7be87bed7be97beb7bee7bea7be97bea7be47bed7beb7be67bef7be67beb7bec7bea7bea7beb7be87bed7bea7bea7bea7bed7bed7be87bea7be67bec7beb7bea7be97be67bea7be97bec7be47be37be77bed7be67bed7be77be57be17be67be17bec7be77be27bea7bea7be37bea7bea7bef7be67be27beb7be97be67be47be57be77be57be27bea7bed7be97be67be67be77be17be680d880d880d380d580d980d580d980d980d580d980d880d580d480d780da80d980d880dc80d980e580da80d380db80dc80d980dc80de80da80dc80d580da80d680d580db80d480d780d480db80d780d580da80d980db80d880da80da80de80db80de80db80d980da80d380da80d980dc80d880d480d780d780d980d880d680da80db80dc80d780d780d680db80d980d880dd80d880dd80d980da80d980d680d580dd80d680d280d180d380da80d880ce80d680d480d780da80d280dd80d880d380dc80d880dd80d580d880dd80da80d780dc80d680d980d780d980d480dc80d880d480d580d980d380d280d680d780d480d880d380d480d680da80db80dd80d480d980db80dd80da80d780db80d980da80d880d580d880d780df80d780d680d580d880d480dc80d480d780d680d880d480d780d580d280d780d780d980d780dd80d680d480d580d680d480d580d580d580d980d180de80d280d880d680d880d880d480d180d480d080d580d280d380d280d680d780d580d480d180d580ca80ce80d580d080d480d480ce80cf80d380ce80d780cf80d080d080d880cf80cd80d280cb80cb80cc80d080d080cb80ce80c980cf80c880c880cb80c580cc80c680c680d180c680c580c980c880cd80c680c580c680cc80c680c680c880c680c680c380c680c780c580c480c580ca80c280c380c380c180c380c480c980bd80bf80c580c780c180c680c480c280c680c280bd80c580c180c180c080bf80c180c280bc80bd80c080be80c280be80c580c580c280c180c480bc80c580c080ca80c680c080c780bf80c480c080c080c080be80bf80bf80c280ba80c280c180c080bf80bc80be80c180c480c280c180c180bc80c280c180c380c080c280c380c580c080bc80c280c380be80c280c080c780c380c080bd80c280c080be80c380c180be80c280c580c280c580c480c180c380c580c180c380c280c580c380c480c280c480c480c380c480c580c480c880c480c680c080c180c680c5"), *m_myIP, src_port);
 
 }
 
 void intercom::scanRange(int fullscan_countdown_start)
 {
-    if (!fullscan_mode_on && fullscan_countdown_start>0)  {
-        fullscan_countdown = fullscan_countdown_start;
+    if (!m_fullscanModeOn && fullscan_countdown_start>0)  {
+        m_fullscanCountdown = fullscan_countdown_start;
         beforeScanRange();
         sendScan();
     }
@@ -283,72 +284,61 @@ void intercom::scanRange(int fullscan_countdown_start)
 
 int intercom::getTimeout()
 {
-    return timeout;
+    return m_timeout;
 }
 
 void intercom::sendShift(int value)
 {
-    if (_sender) {
+    if (m_sender) {
         auto command = AddressProvider::getShiftCommand(value);
-        for (auto i=1; i<ips_count; i++) {
-            _sender->writeDatagram(QByteArray::fromHex(command.toUtf8()), AddressProvider::getAddress(i), dst_port);
-           // QThread::msleep(100);
+        for (auto i=1; i<m_IPsCount; i++) {
+            m_sender->writeDatagram(QByteArray::fromHex(command.toUtf8()), AddressProvider::getAddress(i), dst_port);
+            QThread::msleep(3);
         }
     }
 }
 
-void intercom::sendShift(int value, int ipnum)
+void intercom::sendShift16(int value)
 {
-    if (_sender) {
-        auto command = AddressProvider::getShiftCommand(value);
-        _sender->writeDatagram(QByteArray::fromHex(command.toUtf8()), AddressProvider::getAddress(ipnum), dst_port);
-    }
-}
-
-void intercom::sendShift(int value1, int value2, int value3, int value4)
-{
-    if (_sender) {
-        auto command = AddressProvider::getShiftCommand(value1);
-        _sender->writeDatagram(QByteArray::fromHex(command.toUtf8()), AddressProvider::getAddress(1), dst_port);
-        command = AddressProvider::getShiftCommand(value2);
-        _sender->writeDatagram(QByteArray::fromHex(command.toUtf8()), AddressProvider::getAddress(2), dst_port);
-        command = AddressProvider::getShiftCommand(value3);
-        _sender->writeDatagram(QByteArray::fromHex(command.toUtf8()), AddressProvider::getAddress(3), dst_port);
-        command = AddressProvider::getShiftCommand(value4);
-        _sender->writeDatagram(QByteArray::fromHex(command.toUtf8()), AddressProvider::getAddress(4), dst_port);
+    if (m_sender) {
+        auto command = AddressProvider::getShiftCommand16(value);
+        for (auto i=1; i<m_IPsCount; i++) {
+            m_sender->writeDatagram(QByteArray::fromHex(command.toUtf8()), AddressProvider::getAddress(i), dst_port);
+            QThread::msleep(3);
+        }
     }
 }
 
 void intercom::setContinueScan(bool continueScan)
 {
-    this->continueScan = continueScan;
+    this->m_continueScan = continueScan;
 }
 
 void intercom::scanRangeOnce()
 {
-    if (!fullscan_mode_on)  {
-        fullscan_countdown = 1;
+    if (!m_fullscanModeOn)  {
+        m_fullscanCountdown = 1;
         beforeScanRange();
         sendScan();
     }
 }
 
-void intercom::reCreateSender()
+void intercom::m_reCreateSender()
 {
-    if (!myIP) {
+    if (!m_myIP) {
         qDebug() << "myIP not set";
         //return;
     }
-    if (_sender) {
-        delete _sender;
+    if (m_sender) {
+        delete m_sender;
     }
     //_sender = new QUdpSocket(this);
-    _sender = new QUdpSocket();
-    connected = false;
+    m_sender = new QUdpSocket();
+    m_connected = false;
     //_sender->bind(*myIP, src_port);
-    _sender->bind(QHostAddress::AnyIPv4, src_port);
-    _sender->setSocketOption(QAbstractSocket::ReceiveBufferSizeSocketOption, 200000);
-    connect(_sender, SIGNAL(readyRead()), this, SLOT(processDatagram()));
+    m_sender->bind(QHostAddress::AnyIPv4, src_port);
+    m_sender->setSocketOption(QAbstractSocket::ReceiveBufferSizeSocketOption, 200000);
+    connect(m_sender, SIGNAL(readyRead()), this, SLOT(processDatagram()));
 }
 
 void intercom::run()
@@ -366,21 +356,21 @@ void intercom::setRunning(bool running)
 }
 
 void intercom::processDatagram() {
-    if (!_sender) {
+    if (!m_sender) {
         return;
     }
     //qDebug() << "intercom::processDatagram" << QThread::currentThreadId();
     //return;
     QByteArray buffer;
-    buffer.resize(_sender->pendingDatagramSize());
+    buffer.resize(m_sender->pendingDatagramSize());
 
    // _sender->
 
     QHostAddress sender;
     quint16 senderPort;
-    _sender->readDatagram(buffer.data(), buffer.size(), &sender, &senderPort);
+    m_sender->readDatagram(buffer.data(), buffer.size(), &sender, &senderPort);
 
-    if (!connected)
+    if (!m_connected)
         sender = AddressProvider::getAddress(1);
 
     //qDebug() << "Message from: " << sender.toString();
@@ -390,7 +380,7 @@ void intercom::processDatagram() {
     int s = buffer.size();
 
     if (s==2) {
-        connected = true;
+        m_connected = true;
     }
 
 
@@ -399,44 +389,44 @@ void intercom::processDatagram() {
         readCommand(buffer);
     }
 
-    if (_dataSource && s >= MIN_DATA_PACKET_SIZE) {
+    if (m_dataSource && s >= MIN_DATA_PACKET_SIZE) {
         auto ipnum = AddressProvider::getIndex(sender);
-        packets_received[ipnum-1]++;
+        m_packetsReceived[ipnum-1]++;
         //qDebug() << "processDatagram, packNum=" << packNum;
-        packNum ++;
+        //packNum ++;
 
-        readDataTime.restart();
-        _dataSource->readData(0, &buffer, sender);
-        _dataSource->readData(1, &buffer, sender);
-        readDataTimeElapsed += readDataTime.elapsed();
+        m_readDataTime.restart();
+        m_dataSource->readData(0, &buffer, sender);
+        m_dataSource->readData(1, &buffer, sender);
+        m_readDataTimeElapsed += m_readDataTime.elapsed();
 
-        dataReceiveTimeElapsed = dataReceiveTime.elapsed();
+        m_dataReceiveTimeElapsed = m_dataReceiveTime.elapsed();
 
-        if (packets_received.length()>=4
-                && packets_received[0] == 8
-                && packets_received[1] == 8
-                && packets_received[2] == 8
-                && packets_received[3] == 8)
+        if (m_packetsReceived.length()>=4
+                && m_packetsReceived[0] == 8
+                && m_packetsReceived[1] == 8
+                && m_packetsReceived[2] == 8
+                && m_packetsReceived[3] == 8)
             endScan(1);
         else
-            if (timer)
-                timer->start(timeout);
+            if (m_timer)
+                m_timer->start(m_timeout);
     }
 
 }
 
 void intercom::beforeScanRange()
 {
-    fullscan_mode_on = true;
-    fullscan_mode_complete = false;
-    current_shift = 0;
+    m_fullscanModeOn = true;
+    m_fullscanModeComplete = false;
+    m_currentShift = 0;
 
-    fullscan_countdown--;
+    m_fullscanCountdown--;
 
-    scan_counter = 0;
-    if (_dataSource)    {
+    m_ADCStep = 0;
+    if (m_dataSource)    {
 
-        _dataSource->resetScanIndex();
+        m_dataSource->resetScanIndex();
     }
 }
 
@@ -447,8 +437,8 @@ void intercom::readCommand(QByteArray &buffer)
     QString str(buffer.data());
 
     if (str.indexOf("distance=", 0, Qt::CaseSensitive) == 0){
-        _dataSource->copyToHistory();
-        _dataSource->SetDistance(str.right(str.length()-9).toFloat());
-        scanRange();
+        m_dataSource->copyToHistory();
+        m_dataSource->SetDistance(str.right(str.length()-9).toFloat());
+        scanRange(3);
     }
 }
