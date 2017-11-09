@@ -36,6 +36,8 @@ public:
     Q_INVOKABLE void setContinueScan(bool m_continueScan);
 
     Q_INVOKABLE void scanRangeOnce();
+
+    Q_INVOKABLE void setFullscanCountdownStart(int value);
 private:
     //bool waiting_for_shift
     int m_fullscanCountdown {0};

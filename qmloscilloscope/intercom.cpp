@@ -180,6 +180,7 @@ void intercom::endScan(int flag)
 
 
         QMetaObject::invokeMethod((QObject*)m_object, "setReadDataTimeElapsed", Q_ARG(QVariant, m_readDataTimeElapsed));
+
         m_readDataTimeElapsed = 0;
 
         m_currentShift += _bufferSize;
@@ -198,6 +199,9 @@ void intercom::endScan(int flag)
             m_dataSource->setHasData(true);
 
             m_dataSource->copyToHistory();
+
+            QMetaObject::invokeMethod((QObject*)m_object, "updateSurface3D");
+
             //_dataSource->calcDistances();
             //QMetaObject::invokeMethod((QObject*)object, "updateDistances");
             //QMetaObject::invokeMethod((QObject*)object, "updateAllWaveforms");
@@ -323,6 +327,11 @@ void intercom::scanRangeOnce()
     }
 }
 
+void intercom::setFullscanCountdownStart(int value)
+{
+    m_fullscanCountdownStart = value;
+}
+
 void intercom::m_reCreateSender()
 {
     if (!m_myIP) {
@@ -337,7 +346,7 @@ void intercom::m_reCreateSender()
     m_connected = false;
     //_sender->bind(*myIP, src_port);
     m_sender->bind(QHostAddress::AnyIPv4, src_port);
-    m_sender->setSocketOption(QAbstractSocket::ReceiveBufferSizeSocketOption, 200000);
+    m_sender->setSocketOption(QAbstractSocket::ReceiveBufferSizeSocketOption, 2000000);
     connect(m_sender, SIGNAL(readyRead()), this, SLOT(processDatagram()));
 }
 
@@ -437,8 +446,8 @@ void intercom::readCommand(QByteArray &buffer)
     QString str(buffer.data());
 
     if (str.indexOf("distance=", 0, Qt::CaseSensitive) == 0){
-        m_dataSource->copyToHistory();
+        //m_dataSource->copyToHistory();
         m_dataSource->SetDistance(str.right(str.length()-9).toFloat());
-        scanRange(3);
+        scanRange(m_fullscanCountdownStart);
     }
 }

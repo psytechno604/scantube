@@ -186,12 +186,34 @@ public slots:
 
     Q_INVOKABLE void collapseMMAndHistory(int block_size);
 
-    Q_INVOKABLE void copyHistoryToClipboard();
+    Q_INVOKABLE void copyHistoryToClipboard(int e_start, int e_end, int r_start, int r_end);
     Q_INVOKABLE void setWriteHistory(bool wh);
 
     Q_INVOKABLE void copyToSharedMemory();
     Q_INVOKABLE void setSurface3DScanStep(int step);
+    Q_INVOKABLE int getNChannels();
+
+    Q_INVOKABLE void setFilterParameters(bool hpOn, int hpFOrd, double hpFc, double hpTd,
+                                         bool lpOn, int lpFOrd, double lpFc, double lpTd,
+                                         bool bpOn, int bpFOrd, double bpFc, double bpTd, double bpDeltaF);
 private:
+    bool m_hpOn;
+    int m_hpFOrd;
+    double m_hpFc;
+    double m_hpTd;
+
+    bool m_lpOn;
+    int m_lpFOrd;
+    double m_lpFc;
+    double m_lpTd;
+
+    bool m_bpOn;
+    int m_bpFOrd;
+    double m_bpFc;
+    double m_bpTd;
+    double m_bpDeltaF;
+
+
     int m_surface3DScanStep {10};
     QSharedMemory sharedMemory;
 
@@ -286,9 +308,9 @@ private:
     int _getUnitIndex(int buffer_part, QByteArray *buffer, QHostAddress sender);
     //int _maxChannels {32};
 
-    MeasurementModel *_measurementModel {nullptr};
-    int _zeroIndex {0};
-    void _clearMeasurementModel();
+    MeasurementModel *m_measurementModel {nullptr};
+    int m_zeroIndex {0};
+    void m_clearMeasurementModel();
 
     double _LP0_Td {1.0/(100.0*1E9)}, _LP0_fc {1000*1E6}, _LP0_ford {8};
     double _HP0_Td {1.0/(100.0*1E9)}, _HP0_fc {300*1E6}, _HP0_ford {2};

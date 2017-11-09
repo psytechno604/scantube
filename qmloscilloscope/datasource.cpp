@@ -144,7 +144,7 @@ void DataSource::update(bool show, int r, int i_max, int i_slice, int i_proc)
 {
 
 
-    auto m = _measurementModel->get(r);
+    auto m = m_measurementModel->get(r);
     if (!m) {
         qDebug() << "DataSource::update: invalid r = " << r;
         return;
@@ -175,6 +175,8 @@ void DataSource::update(bool show, int r, int i_max, int i_slice, int i_proc)
         }
         s->replace(points);
     }
+
+    return; // TODO !!!
 
     auto p = static_cast<QSplineSeries *>(procSeries);
     if (!p) {
@@ -249,8 +251,8 @@ void DataSource::updateSurface3D(QtDataVisualization::QAbstract3DSeries *series)
     auto dataArray = new QtDataVisualization::QSurfaceDataArray();
 
     auto maxI = 0;
-    for (auto h=0; h<_measurementModel->rowCount(); h+=step)   {
-        auto m = _measurementModel->get(h);
+    for (auto h=0; h<m_measurementModel->rowCount(); h+=step)   {
+        auto m = m_measurementModel->get(h);
         auto b = m->getBuffer();
         if (b && (*b).length()>m_currentUnitIndex)    {
             if ((*b)[m_currentUnitIndex].length() > maxI) {
@@ -262,14 +264,14 @@ void DataSource::updateSurface3D(QtDataVisualization::QAbstract3DSeries *series)
     dataArray->reserve(maxI);
 
     for (int i = 0 ; i < maxI ; i++) {
-        QtDataVisualization::QSurfaceDataRow *newRow = new QtDataVisualization::QSurfaceDataRow(_measurementModel->rowCount());
+        QtDataVisualization::QSurfaceDataRow *newRow = new QtDataVisualization::QSurfaceDataRow(m_measurementModel->rowCount());
         // Keep values within range bounds, since just adding step can cause minor drift due
         // to the rounding errors.
         float z = i; //"Distance"
         int index = 0;
 
-        for (int j = 0; j < _measurementModel->rowCount(); j+=step) {
-            auto m = _measurementModel->get(j);
+        for (int j = 0; j < m_measurementModel->rowCount(); j+=step) {
+            auto m = m_measurementModel->get(j);
             auto b = m->getBuffer();
             float x = j/step; // "Scan"
             float y = 0;
@@ -280,9 +282,9 @@ void DataSource::updateSurface3D(QtDataVisualization::QAbstract3DSeries *series)
                 else
                     y = fabs((*b)[m_currentUnitIndex][i]);
             }
-            if (y>100)  {
-                y = -y;
-            }
+            //if (y>100)  {
+             //   y = -y;
+            //}
             (*newRow)[index++].setPosition(QVector3D(x, y, z));
         }
         *dataArray << newRow;
@@ -325,14 +327,14 @@ void DataSource::updateCorrelationChart(QtDataVisualization::QAbstract3DSeries *
     dataArray->reserve(maxI);
 
     for (int i = 0 ; i < maxI ; i++) {
-        QtDataVisualization::QSurfaceDataRow *newRow = new QtDataVisualization::QSurfaceDataRow(_measurementModel->rowCount());
+        QtDataVisualization::QSurfaceDataRow *newRow = new QtDataVisualization::QSurfaceDataRow(m_measurementModel->rowCount());
         // Keep values within range bounds, since just adding step can cause minor drift due
         // to the rounding errors.
         float z = i; //"Distance"
         int index = 0;
 
-        for (int j = 0; j < _measurementModel->rowCount(); j++) {
-            auto m = _measurementModel->get(j);
+        for (int j = 0; j < m_measurementModel->rowCount(); j++) {
+            auto m = m_measurementModel->get(j);
 
             float x = j; // "Scan"
             float y = 0;
@@ -361,10 +363,10 @@ void DataSource::collapseMMAndHistory(int block_size)
     if (block_size <= 0)
         return;
 
-    for (auto i=0; i<_measurementModel->rowCount(); i+=block_size)   {
-        auto m = _measurementModel->get(i);
-        auto m_ = _measurementModel->get(i/block_size);
-        m_->distance = m->distance;
+    for (auto i=0; i<m_measurementModel->rowCount(); i+=block_size)   {
+        auto m = m_measurementModel->get(i);
+        auto m_ = m_measurementModel->get(i/block_size);
+        m_->m_value = m->m_value;
         m_->_corr.fill(0);
         auto b = m->getBuffer();
         //auto b_ = m_->getBuffer();
@@ -372,23 +374,36 @@ void DataSource::collapseMMAndHistory(int block_size)
             for (auto d=0; d<(*b)[e].length();d++){
                 float summa = 0.0f;
                 for (auto i_ = i; i_<i+block_size; i_++)    {
-                    summa += _measurementModel->getValue(i_, e, d);
+                    summa += m_measurementModel->getValue(i_, e, d);
                 }
-                _measurementModel->setValue(i/block_size, e, d, summa / block_size);
+                m_measurementModel->setValue(i/block_size, e, d, summa / block_size);
             }
         }
     }
-    _measurementModel->clear(_measurementModel->rowCount() / block_size);
+    m_measurementModel->clear(m_measurementModel->rowCount() / block_size);
 }
 
-void DataSource::copyHistoryToClipboard()
+void DataSource::copyHistoryToClipboard(int e_start, int e_end, int r_start, int r_end)
 {
+    if (e_start < 0 || e_end >= m_nChannels || e_start > e_end ||
+        r_start < 0 || r_end >= m_measurementModel->rowCount() || r_start > r_end)    {
+        qDebug() << "DataSource::copyHistoryToClipboard() wrong parameters";
+        return;
+    }
+
+    auto m0 = m_measurementModel->get(m_zeroIndex);
+    if (m_useZeroSignal && !m0) {
+        qDebug() << "m_measurementModel->get(" << m_zeroIndex << ") returned 0";
+        return;
+    }
+    auto b0 = m0->getBuffer();
+
     if (m_mimeData)   {
         try {
             delete m_mimeData;
         }
         catch (...) {
-
+            qDebug() << "unable to delete m_mimeData";
         }
     }
     m_mimeData = new QMimeData();
@@ -396,29 +411,33 @@ void DataSource::copyHistoryToClipboard()
     QByteArray itemData;
     QTextStream dataStream(&itemData, QIODevice::WriteOnly);
 
-    if(_measurementModel->rowCount() <= 0)   {
+    if(m_measurementModel->rowCount() <= 0)   {
         return;
     }
 
-    auto m = _measurementModel->get(0);
+    auto m = m_measurementModel->get(0);
     auto b = m->getBuffer();
 
-    auto m0 = _measurementModel->get(_zeroIndex);
-    auto b0 = m0->getBuffer();
 
 
 
 
-    for(int d=0; d<(*b)[m_currentUnitIndex].length(); d++) {
-        for(int r=0; r<_measurementModel->rowCount(); r++) {
-            b = _measurementModel->get(r)->getBuffer();
-            QString str = QString::number(fabs(fabs((*b)[m_currentUnitIndex][d]) - fabs((m_useZeroSignal?((*b0)[m_currentUnitIndex][d]):0))));
-            dataStream << str;
-            if (r < _measurementModel->rowCount()-1) {
-                dataStream << ',';
-            }
-            else {
-                dataStream << '\n';
+
+    for(int e=e_start; e<=e_end; e++)   {
+        for(int r=r_start; r<=r_end; r++) {
+            QString str = QString::number(e);
+            dataStream << str << ( (r == r_end && e==e_end) ?'\n':',');
+        }
+        for(int r=r_start; r<=r_end; r++) {
+            auto m=m_measurementModel->get(r);
+            QString str = QString::number(m->getValue());
+            dataStream << str << ( (r == r_end && e==e_end) ?'\n':',');
+        }
+        for(int d=0; d<(*b)[e].length(); d++) {
+            for(int r=r_start; r<=r_end; r++) {
+                b = m_measurementModel->get(r)->getBuffer();
+                QString str = QString::number(fabs(fabs((*b)[e][d]) - fabs((m_useZeroSignal?((*b0)[e][d]):0))));
+                dataStream << str << ( (r == r_end && e==e_end) ?'\n':',');
             }
         }
     }
@@ -453,6 +472,28 @@ void DataSource::copyToSharedMemory()
 void DataSource::setSurface3DScanStep(int step)
 {
     m_surface3DScanStep = step;
+}
+
+int DataSource::getNChannels()
+{
+    return m_nChannels;
+}
+
+void DataSource::setFilterParameters(bool hpOn, int hpFOrd, double hpFc, double hpTd, bool lpOn, int lpFOrd, double lpFc, double lpTd, bool bpOn, int bpFOrd, double bpFc, double bpTd, double bpDeltaF)
+{
+    m_hpOn = hpOn;
+    m_hpFOrd = hpFOrd;
+    m_hpFc = hpFc;
+    m_hpTd = hpTd;
+    m_lpOn = lpOn;
+    m_lpFOrd = lpFOrd;
+    m_lpFc = lpFc;
+    m_lpTd = lpTd;
+    m_bpOn = bpOn;
+    m_bpFOrd = bpFOrd;
+    m_bpFc = bpFc;
+    m_bpTd = bpTd;
+    m_bpDeltaF = bpDeltaF;
 }
 
 void DataSource::calcCorrelationFunc(QVector <double> &in, QVector <double> &out, float *corrfunct, int n__corr, int numsmpl)
@@ -619,7 +660,7 @@ void DataSource::processSignal(Measurement *m)
 
 void DataSource::processSignal()
 {
-    for(int r=0; r< _measurementModel->rowCount(); r++) {
+    for(int r=0; r< m_measurementModel->rowCount(); r++) {
 
     }
 }
@@ -931,7 +972,7 @@ void DataSource::updateListView()
 
 void DataSource::setMeasurementModel(MeasurementModel *mm)
 {
-    this->_measurementModel = mm;
+    this->m_measurementModel = mm;
 }
 
 int DataSource::getMaxCorrelationShift(QVector<double> a, QVector<double> b)
@@ -988,9 +1029,9 @@ int DataSource::_getUnitIndex(int buffer_part, QByteArray *buffer, QHostAddress 
     return AddressProvider::getUnitIndex(_ipNum + i + buffer_part);
 }
 
-void DataSource::_clearMeasurementModel()
+void DataSource::m_clearMeasurementModel()
 {
-    this->_measurementModel->clear();
+    this->m_measurementModel->clear();
 }
 
 void DataSource::compareToData(int channel)
@@ -1110,7 +1151,7 @@ void DataSource::m_increaseHistoryIndex()
 
 void DataSource::copyToHistory()
 {            
-    auto m = new Measurement();
+    auto m = new Measurement(distance);
 
     auto b = m->getBuffer();
 
@@ -1145,7 +1186,7 @@ void DataSource::copyToHistory()
 
 
 
-    _measurementModel->add(m);
+    m_measurementModel->add(m);
 
     m_increaseHistoryIndex();
 
@@ -1156,8 +1197,8 @@ void DataSource::saveMMAndHistory()
     if (m_pointfile && m_pointfile->open(QIODevice::Append/* | QIODevice::Append*/)) {
         QDataStream out(m_pointfile);
         out.setVersion(QDataStream::Qt_5_9);
-        for(auto i=0; i<_measurementModel->rowCount(); i++)  {
-            _measurementModel->get(i)->writeTo(out);
+        for(auto i=0; i<m_measurementModel->rowCount(); i++)  {
+            m_measurementModel->get(i)->writeTo(out);
         }
         m_pointfile->close();
     }
@@ -1184,7 +1225,7 @@ void DataSource::loadHistoryFromFile(QString fname)
             m->setBuffer( &(m_historyScanData[m_historyIndex]));
             m_increaseHistoryIndex();
             m->readFrom(in);
-            _measurementModel->add(m);
+            m_measurementModel->add(m);
         }
 
         file.close();
@@ -1201,8 +1242,8 @@ void DataSource::SetDistance(float distance)
 void DataSource::m_setCurrentSet_0()
 {
     m_currentSet0 = nullptr;
-    if (_measurementModel->rowCount() > _zeroIndex) {
-        auto m = _measurementModel->get(_zeroIndex);
+    if (m_measurementModel->rowCount() > m_zeroIndex) {
+        auto m = m_measurementModel->get(m_zeroIndex);
         if (m)  {
             m_currentSet0 = m->getBuffer();
         }
@@ -1245,9 +1286,9 @@ void DataSource::textChanged(QString text)
 
 
     if (text.indexOf("zeroIndex=", 0, Qt::CaseSensitive) == 0){
-        _zeroIndex =  text.right(text.length()-10).toInt();
+        m_zeroIndex =  text.right(text.length()-10).toInt();
         m_setCurrentSet_0();
-        qDebug() << "zeroIndex=" << _zeroIndex;
+        qDebug() << "zeroIndex=" << m_zeroIndex;
     }
 
 

@@ -87,7 +87,7 @@ double MeasurementModel::getDistance(int channel)
                                  {
                                      return a->_corr[channel] < b->_corr[channel];
                                  } );
-    return (*max)?(*max)->distance:0;
+    return (*max)?(*max)->m_value:0;
 }
 
 float MeasurementModel::getValue(int i, int e, int d)

@@ -11,10 +11,10 @@ class Measurement : public QObject
 {
     Q_OBJECT
 public:
-    explicit Measurement(QObject *parent = nullptr);
+    explicit Measurement(double value=0, QObject *parent = nullptr);
 
     ~Measurement();
-    double distance;
+    double m_value;
     QVector<double> _sqerr;
     QVector<double> _corr;
 
@@ -28,6 +28,7 @@ public:
 
     int getSize();
 
+    double getValue();
 signals:
 
 public slots:

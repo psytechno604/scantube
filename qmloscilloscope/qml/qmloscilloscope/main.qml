@@ -131,7 +131,7 @@ Item {
                     id: textFieldFullscanCountdownStart
 
                     width: 40
-                    text: qsTr("3")
+                    text: appSettings.fullscanCountdownStart
                     selectByMouse: true
                     MouseArea {
                         anchors.leftMargin: 0
@@ -145,6 +145,7 @@ Item {
                 }
             }
             Row {
+                width: parent.width
                 spacing: 1
                 /*ComboBox {
                     id: comboBoxAccumulation
@@ -164,12 +165,14 @@ Item {
                 }*/
                 Button {
                     text : "Clear"
+                    width: parent.width/2
                     onClicked: {
 
                     }
                 }
                 Button {
                     text : "Copy to shared memory"
+                    width: parent.width/2
                     onClicked: {
                         dataSource.copyToSharedMemory();
                     }
@@ -415,20 +418,65 @@ Item {
                 }
             }
             Row {
-                Button {
+                spacing: 1
+                width: parent.width
+                Button {                    
                     id: button_copyToClipboard
-                    width: 82
+                    width: parent.width /3
+
                     height: 40
                     text: qsTr("Copy")
                     checkable: false
                     checked: false
                     font.pointSize: 8
                     onClicked: {
-                        dataSource.copyHistoryToClipboard();
+                        var i = dataSource.getCurrentUnitIndex();
+                        dataSource.copyHistoryToClipboard(i, i, 0, listViewMeasurements.model.rowCount()-1);
+                    }
+                }
+                Button {
+                    id: button_copyAllToClipboard
+                    width: parent.width /3
+                    height: 40
+                    text: qsTr("Copy all")
+                    checkable: false
+                    checked: false
+                    font.pointSize: 8
+                    onClicked: {
+                        dataSource.copyHistoryToClipboard(0, dataSource.getNChannels()-1, 0, listViewMeasurements.model.rowCount()-1);
                     }
                 }
 
             }
+            Row {
+                spacing: 1
+                width: parent.width
+                TextField {
+                    id: r_start
+                    width: parent.width /3
+                    ToolTip.visible: hovered
+                    ToolTip.text: qsTr("First measurement to copy");
+                }
+                TextField {
+                    id: r_end
+                    width: parent.width /3
+                    ToolTip.visible: hovered
+                    ToolTip.text: qsTr("Last measurement to copy");
+                }
+                Button {
+                    id: button_copySpecialToClipboard
+                    width: parent.width /3
+                    height: 40
+                    text: qsTr("Copy special")
+                    checkable: false
+                    checked: false
+                    font.pointSize: 8
+                    onClicked: {
+                        dataSource.copyHistoryToClipboard(0, dataSource.getNChannels()-1, r_start.text, r_end.text);
+                    }
+                }
+            }
+
             Row {
                 Text {
                     text: qsTr("Slice 0")
@@ -598,7 +646,10 @@ Item {
                     onCurrentItemChanged: {
                         //dataSource.showByIndex(listViewMeasurements.currentIndex);
                     }
-
+                    onCountChanged: {
+                        r_start.text = model.rowCount()-1;
+                        r_end.text = model.rowCount()-1;
+                    }
                 }
             }
             /*
@@ -1035,16 +1086,42 @@ Item {
                     height: parent.height - tabBar.height - row_selectReceiver.height
                     currentIndex: tabBar.currentIndex
                     Item {
+                        id: filterControl
                         anchors.fill: parent
+
+
                         Row {
                             anchors.fill: parent
                             Column {
+                                property int inputPosition: 150
                                 width: parent.width/3
                                 Row {
-                                    CheckBox {}
-                                    Text { text: "HP" }
+                                    Text {
+                                        text: "HP"
+                                        font.pixelSize: 17
+                                    }
+                                }
+
+                                Row {
+                                    id: hP_mainrow
+                                    onChildrenChanged: {
+                                        console.log("hehe");
+                                    }
+
+                                    Text {
+                                        text: "on:"
+                                        width: 40
+                                    }
+                                    CheckBox {
+                                        id: hP_on
+                                        checked: appSettings.hP_on
+                                    }
+                                    Text {
+                                        text: "filter order:"
+                                    }
                                     ComboBox {
                                         id: hP_order
+                                        enabled: hP_on.checked
                                         currentIndex: appSettings.hP_order_index
                                         model: ["1", "2", "3", "4", "5", "6", "7", "8"]
                                         onActivated: {
@@ -1052,32 +1129,166 @@ Item {
                                         }
                                     }
                                 }
-                            }
-                            Column {
-                                width: parent.width/3
                                 Row {
-                                    CheckBox {}
-                                    Text { text: "LP" }
-                                    ComboBox {
-                                        id: lP_order
-                                        model: ["1", "2", "3", "4", "5", "6", "7", "8"]
-                                        onActivated: {
 
-                                        }
+                                    Text {
+                                        id: hP_Td_txt
+                                        text: qsTr("Td:")
+                                        width: 40
+                                    }
+                                    TextField {
+                                        id: hP_Td
+                                        text: appSettings.hP_Td
+                                        enabled: hP_on.checked
+                                        width: hP_mainrow.width - hP_Td_txt.width
+                                    }
+                                }
+                                Row {
+
+                                    Text {
+                                        id: hP_fc_txt
+                                        text: qsTr("fc:")
+                                        width: 40
+                                    }
+                                    TextField {
+                                        id: hP_fc
+                                        text: appSettings.hP_fc
+                                        enabled: hP_on.checked
+                                        width: hP_mainrow.width - hP_fc_txt.width
                                     }
                                 }
                             }
                             Column {
                                 width: parent.width/3
                                 Row {
-                                    CheckBox {}
-                                    Text { text: "BP" }
+                                    Text {
+                                        text: "LP"
+                                        font.pixelSize: 17
+                                    }
+                                }
+                                Row {
+                                    id: lP_mainrow
+                                    Text {
+                                        text: "on:"
+                                        width: 40
+                                    }
+                                    CheckBox {
+                                        id: lP_on
+                                        checked: appSettings.lP_on
+                                    }
+                                    Text {
+                                        text: "filter order:"
+                                    }
                                     ComboBox {
-                                        id: bP_order
+                                        id: lP_order
                                         model: ["1", "2", "3", "4", "5", "6", "7", "8"]
+                                        enabled: lP_on.checked
+                                        currentIndex: appSettings.lP_order_index
                                         onActivated: {
 
                                         }
+                                    }
+                                }
+                                Row {
+
+                                    Text {
+                                        id: lP_Td_txt
+                                        text: qsTr("Td:")
+                                        width: 40
+                                    }
+                                    TextField {
+                                        id: lP_Td
+                                        text: appSettings.lP_Td
+                                        enabled: lP_on.checked
+                                        width: lP_mainrow.width - lP_Td_txt.width
+                                    }
+                                }
+                                Row {
+
+                                    Text {
+                                        id: lP_fc_txt
+                                        text: qsTr("fc:")
+                                        width: 40
+                                    }
+                                    TextField {
+                                        id: lP_fc
+                                        text: appSettings.lP_fc
+                                        enabled: lP_on.checked
+                                        width: lP_mainrow.width - lP_fc_txt.width
+                                    }
+                                }
+                            }
+                            Column {
+                                width: parent.width/3
+                                Row {
+                                    Text {
+                                        text: "BP"
+                                        font.pixelSize: 17
+                                    }
+                                }
+                                Row {
+                                    id: bP_mainrow
+                                    Text {
+                                        text: "on:"
+                                        width: 40
+                                    }
+                                    CheckBox {
+                                        id: bP_on
+                                        checked: appSettings.bP_on
+                                    }
+                                    Text {
+                                        text: "filter order:"
+                                    }
+                                    ComboBox {
+                                        id: bP_order
+                                        model: ["1", "2", "3", "4", "5", "6", "7", "8"]
+                                        enabled: bP_on.checked
+                                        currentIndex: appSettings.bP_order_index
+                                        onActivated: {
+
+                                        }
+                                    }
+                                }
+                                Row {
+
+                                    Text {
+                                        id: bP_Td_txt
+                                        text: qsTr("Td:")
+                                        width: 40
+                                    }
+                                    TextField {
+                                        id: bP_Td
+                                        text: appSettings.bP_Td
+                                        enabled: bP_on.checked
+                                        width: bP_mainrow.width - bP_Td_txt.width
+                                    }
+                                }
+                                Row {
+
+                                    Text {
+                                        id: bP_fc_txt
+                                        text: qsTr("fc:")
+                                        width: 40
+                                    }
+                                    TextField {
+                                        id: bP_fc
+                                        text: appSettings.bP_fc
+                                        enabled: bP_on.checked
+                                        width: bP_mainrow.width - bP_fc_txt.width
+                                    }
+                                }
+                                Row {
+
+                                    Text {
+                                        id: bP_deltaf_txt
+                                        text: qsTr("deltaf:")
+                                        width: 40
+                                    }
+                                    TextField {
+                                        id: bP_deltaf
+                                        text: appSettings.bP_deltaf
+                                        enabled: bP_on.checked
+                                        width: bP_mainrow.width - bP_fc_txt.width
                                     }
                                 }
                             }
@@ -1109,16 +1320,19 @@ Item {
                                         width: parent.width/3
                                         id: surface3d_x_name
                                         text: appSettings.surface3d_x_name
+                                        selectByMouse: true
                                     }
                                     TextField {
                                         width: parent.width/3
                                         id: surface3d_y_name
                                         text: appSettings.surface3d_y_name
+                                        selectByMouse: true
                                     }
                                     TextField {
                                         width: parent.width/3
                                         id: surface3d_z_name
                                         text: appSettings.surface3d_z_name
+                                        selectByMouse: true
                                     }
                                 }
                                 Row {
@@ -1127,16 +1341,19 @@ Item {
                                         width: parent.width/3
                                         id: surface3d_x_min
                                         text: appSettings.surface3d_x_min
+                                        selectByMouse: true
                                     }
                                     TextField {
                                         width: parent.width/3
                                         id: surface3d_y_min
                                         text: appSettings.surface3d_y_min
+                                        selectByMouse: true
                                     }
                                     TextField {
                                         width: parent.width/3
                                         id: surface3d_z_min
                                         text: appSettings.surface3d_z_min
+                                        selectByMouse: true
                                     }
                                 }
                                 Row {
@@ -1145,16 +1362,19 @@ Item {
                                         width: parent.width/3
                                         id: surface3d_x_max
                                         text: appSettings.surface3d_x_max
+                                        selectByMouse: true
                                     }
                                     TextField {
                                         width: parent.width/3
                                         id: surface3d_y_max
                                         text: appSettings.surface3d_y_max
+                                        selectByMouse: true
                                     }
                                     TextField {
                                         width: parent.width/3
                                         id: surface3d_z_max
                                         text: appSettings.surface3d_z_max
+                                        selectByMouse: true
                                     }
                                 }
                             }
@@ -1170,6 +1390,7 @@ Item {
                                     width: parent.width/3
                                     id: surface3d_scanStep
                                     text: appSettings.surface3d_scanStep
+                                    selectByMouse: true
                                     onAccepted: {
                                         dataSource.setSurface3DScanStep(appSettings.surface3d_scanStep);
                                     }
@@ -1223,6 +1444,7 @@ Item {
     Component.onCompleted: {
 
         _intercom.setTimeout(appSettings.dataReceiveTimeout);
+        _intercom.setFullscanCountdownStart(appSettings.fullscanCountdownStart);
         setSingleWaveformDistanceText(0);
         setPacketsReceived(0, 0, 0, 0);
         dataSource.setWriteHistory(appSettings.writeHistory);
@@ -1241,6 +1463,13 @@ Item {
     Settings {
         id: appSettings
 
+
+
+
+
+
+        property alias fullscanCountdownStart: textFieldFullscanCountdownStart.text
+
         property alias surface3d_scanStep: surface3d_scanStep.text
 
         property alias surface3d_x_name: surface3d_x_name.text
@@ -1256,8 +1485,21 @@ Item {
         property alias surface3d_z_max: surface3d_z_max.text
 
 
+        property alias hP_on: hP_on.checked
         property alias hP_order_index: hP_order.currentIndex
+        property alias hP_Td: hP_Td.text
+        property alias hP_fc: hP_fc.text
+
+        property alias lP_on: lP_on.checked
         property alias lP_order_index: lP_order.currentIndex
+        property alias lP_Td: lP_Td.text
+        property alias lP_fc: lP_fc.text
+
+        property alias bP_on: bP_on.checked
+        property alias bP_order_index: bP_order.currentIndex
+        property alias bP_Td: bP_Td.text
+        property alias bP_fc: bP_fc.text
+        property alias bP_deltaf: bP_deltaf.text
 
         property alias maxSignalLevel: maxSignalLevel.text
         property alias useAbsoluteValues: useAbsoluteValues.checked
@@ -1296,7 +1538,14 @@ Item {
         height: 768
         visible: false
         z: 100
-
+        Button {
+            text: qsTr("X")
+            width: height
+            x: parent.width - width
+            onClicked: {
+                parent.visible = false;
+            }
+        }
 
         STReceiverWidget {
             unitIndex: 0
@@ -1683,6 +1932,9 @@ Item {
             }
         }
     }
+    function updateSurface3D ()     {
+        dataSource.updateSurface3D(surfaceSeries);
+    }
 
     function setSingleWaveformDistanceText (distance) {
         single_waveform_distance.text = "Distance = " + distance;
@@ -1759,7 +2011,7 @@ Item {
 
         updateSingleWaveform();
         dataSource.updateSurface3D(surfaceSeries);
-        dataSource.updateCorrelationChart(surfaceSeriesCorr);
+        //dataSource.updateCorrelationChart(surfaceSeriesCorr);
     }
     function getBtnX(x0, R, N) {
         return x0 + R * Math.sin(Math.PI / 32 + N * Math.PI / 16);
