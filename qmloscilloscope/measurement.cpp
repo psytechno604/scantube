@@ -141,7 +141,18 @@ double Measurement::getValue()
 
 Measurement::~Measurement()
 {
+    /*
+    QVector<QVector<float>> *buffer {nullptr};
+    QVector<QVector<float>> *processed_buffer {nullptr};
+    */
     /*for(auto c=0; c<buffer.length(); c++)   {
        // delete buffer[c];
     }*/
+    if (buffer) {
+        delete buffer;
+    }
+    if (processed_buffer)
+    {
+        delete processed_buffer;
+    }
 }

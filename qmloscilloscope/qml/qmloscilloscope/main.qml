@@ -167,7 +167,7 @@ Item {
                     text : "Clear"
                     width: parent.width/2
                     onClicked: {
-
+                        dataSource.clearData();
                     }
                 }
                 Button {

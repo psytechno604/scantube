@@ -306,7 +306,7 @@ void DataSource::updateCorrelationChart(QtDataVisualization::QAbstract3DSeries *
     //auto sampleCountX = 101;
     //qDebug() << history_scan_data[0].length();
 
-    if (m_historyScanData[0].length() == 0 || (m_useZeroSignal && !m_currentSet0))   {
+    if (/*m_historyScanData[0].length() == 0 ||*/ (m_useZeroSignal && !m_currentSet0))   {
         return;
     }
 
@@ -494,6 +494,11 @@ void DataSource::setFilterParameters(bool hpOn, int hpFOrd, double hpFc, double 
     m_bpFc = bpFc;
     m_bpTd = bpTd;
     m_bpDeltaF = bpDeltaF;
+}
+
+void DataSource::clearData()
+{
+    m_measurementModel->clear();
 }
 
 void DataSource::calcCorrelationFunc(QVector <double> &in, QVector <double> &out, float *corrfunct, int n__corr, int numsmpl)
@@ -1222,7 +1227,7 @@ void DataSource::loadHistoryFromFile(QString fname)
 
         while(!in.atEnd())  {
             auto m = new Measurement();
-            m->setBuffer( &(m_historyScanData[m_historyIndex]));
+            //m->setBuffer( &(m_historyScanData[m_historyIndex]));
             m_increaseHistoryIndex();
             m->readFrom(in);
             m_measurementModel->add(m);

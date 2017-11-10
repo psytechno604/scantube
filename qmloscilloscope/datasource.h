@@ -196,6 +196,8 @@ public slots:
     Q_INVOKABLE void setFilterParameters(bool hpOn, int hpFOrd, double hpFc, double hpTd,
                                          bool lpOn, int lpFOrd, double lpFc, double lpTd,
                                          bool bpOn, int bpFOrd, double bpFc, double bpTd, double bpDeltaF);
+
+    Q_INVOKABLE void clearData();
 private:
     bool m_hpOn;
     int m_hpFOrd;
@@ -261,15 +263,9 @@ private:
     //int m_maxScanIndex {m_bufferSize * 8};
 
     int m_scanIndex {0};
-    //QVector<QVector<int>> m_maxIndexStat;
+
     QVector<QVector<float>> m_scanData;
-    //QVector<QVector<float>> m_scanData0;
-    //QVector<QVector<float>> m_processedData;
 
-    //QVector<float> m_distanceFromMeasurements;
-    //QVector<float> m_distanceWeightFromMeasurements;
-
-    //QVector<QVector<float>> *m_currentSet {nullptr};
     QVector<QVector<float>> *m_currentSet0 {nullptr};
     QVector<QVector<int>> *m_currentMaxIndexStat {nullptr};
 
