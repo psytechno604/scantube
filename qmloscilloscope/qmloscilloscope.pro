@@ -12,6 +12,8 @@ HEADERS += \
     interfacehelper.h \
     measurementmodel.h \
     scantube.h \
+
+
     measurement.h \
     timeline3d.h \
     addressprovider.h \
