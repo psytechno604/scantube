@@ -277,33 +277,10 @@ private:
     int m_maxChange {2000};
     QVector<float> m_lastGoodValue;
 
-    //QVector<QVector<Peak>> peak_data;
-    //QVector<QVector<Peak>> *current_peak_data{nullptr};
 
-    //QVector<QVector<float>> distance_data;
-    //QVector<QVector<float>> distance_data_0;
-    // 0 - distance from raw data
-    // 1 - distance saved as 0
-    //bool use_distance_0 {false};
-
-    //double zero_distance {0.1};
-
-    //double receiver_multiplier {0.04};
-
-    //int distance_index {0};
-    //int saved_level_index {1};
-    //int raw_level_index {2};
-
-    //QVector<double> _sumOfValues;
-
-    //QVector<double> zero_receiver_levels;
 
     bool m_useZeroSignal {false};
 
-    //QVector<bool> channel_data_received;
-
-    //QVector<QVector<double>> X, Y;
-    //int _inputsPerReceiver {8};
 
     int _getUnitIndex(int buffer_part, QByteArray *buffer, QHostAddress sender);
     //int _maxChannels {32};

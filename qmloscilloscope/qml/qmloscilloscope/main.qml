@@ -1104,9 +1104,6 @@ Item {
 
                                 Row {
                                     id: hP_mainrow
-                                    onChildrenChanged: {
-                                        console.log("hehe");
-                                    }
 
                                     Text {
                                         text: "on:"
@@ -1993,11 +1990,10 @@ Item {
     function uncheck_checkBox_saveAsZeroSignal()    {
         checkBox_saveAsZeroSignal.checked = 0;
     }
-    function setFilterValues () {
-        //main.textChanged("fc="+textField_fc.text);
-        //main.textChanged("deltaf="+textField_deltaf.text);
-        //main.textChanged("ford="+textField_ford.text);
-        //main.textChanged("Td="+textField_Td.text);
+    function setFilterParameters () {
+        dataSource.setFilterParameters(hP_on.checked, hP_order.currentText, hP_fc.text, hP_Td.text,
+                                       lP_on.checked, lP_order.currentText, lP_fc.text, lP_Td.text,
+                                       bP_on.checked, bP_order.currentText, bP_fc.text, bP_Td.text, bP_deltaf.text);
     }
     function buttonOnCircleClicked(index) {
         rect_circleSelector.visible = false;
@@ -2019,5 +2015,6 @@ Item {
     function getBtnY(y0, R, N) {
         return y0 - R * Math.cos(Math.PI / 32 + N * Math.PI / 16);
     }
+
 }
 
