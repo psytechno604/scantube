@@ -258,7 +258,8 @@ Item {
                     id: useAbsoluteValues
                     checked: appSettings.useAbsoluteValues
                     onCheckedChanged: {
-
+                        dataSource.setUseAbsoluteValues(checked);
+                        updateSingleWaveform();
                     }
                 }
                 Text {
@@ -827,6 +828,15 @@ Item {
                                     text: appSettings.maxSignalLevel
                                     selectByMouse: true
                                 }
+                                TextField {
+                                    x: scopeView.width - width
+                                    y: 0
+                                    id: maxProcessedLevel
+                                    width: 55
+                                    height: 36
+                                    text: appSettings.maxProcessedLevel
+                                    selectByMouse: true
+                                }
                             }
                             Item {
                                 id: all_waveforms
@@ -1112,6 +1122,9 @@ Item {
                                     CheckBox {
                                         id: hP_on
                                         checked: appSettings.hP_on
+                                        onCheckedChanged: {
+                                            setFilterParameters();
+                                        }
                                     }
                                     Text {
                                         text: "filter order:"
@@ -1122,7 +1135,7 @@ Item {
                                         currentIndex: appSettings.hP_order_index
                                         model: ["1", "2", "3", "4", "5", "6", "7", "8"]
                                         onActivated: {
-
+                                            setFilterParameters();
                                         }
                                     }
                                 }
@@ -1138,6 +1151,7 @@ Item {
                                         text: appSettings.hP_Td
                                         enabled: hP_on.checked
                                         width: hP_mainrow.width - hP_Td_txt.width
+                                        onTextChanged: setFilterParameters();
                                     }
                                 }
                                 Row {
@@ -1152,6 +1166,7 @@ Item {
                                         text: appSettings.hP_fc
                                         enabled: hP_on.checked
                                         width: hP_mainrow.width - hP_fc_txt.width
+                                        onTextChanged: setFilterParameters();
                                     }
                                 }
                             }
@@ -1172,6 +1187,7 @@ Item {
                                     CheckBox {
                                         id: lP_on
                                         checked: appSettings.lP_on
+                                        onCheckedChanged: setFilterParameters();
                                     }
                                     Text {
                                         text: "filter order:"
@@ -1182,7 +1198,7 @@ Item {
                                         enabled: lP_on.checked
                                         currentIndex: appSettings.lP_order_index
                                         onActivated: {
-
+                                            setFilterParameters();
                                         }
                                     }
                                 }
@@ -1198,6 +1214,7 @@ Item {
                                         text: appSettings.lP_Td
                                         enabled: lP_on.checked
                                         width: lP_mainrow.width - lP_Td_txt.width
+                                        onTextChanged: setFilterParameters();
                                     }
                                 }
                                 Row {
@@ -1212,6 +1229,7 @@ Item {
                                         text: appSettings.lP_fc
                                         enabled: lP_on.checked
                                         width: lP_mainrow.width - lP_fc_txt.width
+                                        onTextChanged: setFilterParameters();
                                     }
                                 }
                             }
@@ -1232,6 +1250,7 @@ Item {
                                     CheckBox {
                                         id: bP_on
                                         checked: appSettings.bP_on
+                                        onCheckedChanged: setFilterParameters();
                                     }
                                     Text {
                                         text: "filter order:"
@@ -1242,7 +1261,7 @@ Item {
                                         enabled: bP_on.checked
                                         currentIndex: appSettings.bP_order_index
                                         onActivated: {
-
+                                            setFilterParameters();
                                         }
                                     }
                                 }
@@ -1258,6 +1277,7 @@ Item {
                                         text: appSettings.bP_Td
                                         enabled: bP_on.checked
                                         width: bP_mainrow.width - bP_Td_txt.width
+                                        onTextChanged: setFilterParameters();
                                     }
                                 }
                                 Row {
@@ -1272,6 +1292,7 @@ Item {
                                         text: appSettings.bP_fc
                                         enabled: bP_on.checked
                                         width: bP_mainrow.width - bP_fc_txt.width
+                                        onTextChanged: setFilterParameters();
                                     }
                                 }
                                 Row {
@@ -1286,6 +1307,7 @@ Item {
                                         text: appSettings.bP_deltaf
                                         enabled: bP_on.checked
                                         width: bP_mainrow.width - bP_fc_txt.width
+                                        onTextChanged: setFilterParameters();
                                     }
                                 }
                             }
@@ -1499,6 +1521,8 @@ Item {
         property alias bP_deltaf: bP_deltaf.text
 
         property alias maxSignalLevel: maxSignalLevel.text
+        property alias maxProcessedLevel: maxProcessedLevel.text
+
         property alias useAbsoluteValues: useAbsoluteValues.checked
         property alias useZeroSignal: useZeroSignal.checked
         property int dataReceiveTimeout: 400

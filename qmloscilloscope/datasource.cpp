@@ -169,14 +169,14 @@ void DataSource::update(bool show, int r, int i_max, int i_slice, int i_proc)
         auto b = m->getBuffer();
         if (show && s && b && b->length()>m_currentUnitIndex)  {
             for (int d=0; d<(*b)[m_currentUnitIndex].length(); d++)   {
-                points.append(QPointF(d, (*b)[m_currentUnitIndex][d]));
+                points.append(QPointF(d, theValue((*b)[m_currentUnitIndex][d])));
             }
 
         }
         s->replace(points);
     }
 
-    return; // TODO !!!
+    //return; // TODO !!!
 
     auto p = static_cast<QSplineSeries *>(procSeries);
     if (!p) {
@@ -185,7 +185,7 @@ void DataSource::update(bool show, int r, int i_max, int i_slice, int i_proc)
     else {
         QVector<QPointF> points;
         if (show) {
-            processSignal(m);
+            processSignal(m, m_currentUnitIndex);
             auto b = m->getPBuffer();
             if (show && p && b && b->length()>m_currentUnitIndex)  {
 
@@ -436,7 +436,8 @@ void DataSource::copyHistoryToClipboard(int e_start, int e_end, int r_start, int
         for(int d=0; d<(*b)[e].length(); d++) {
             for(int r=r_start; r<=r_end; r++) {
                 b = m_measurementModel->get(r)->getBuffer();
-                QString str = QString::number(fabs(fabs((*b)[e][d]) - fabs((m_useZeroSignal?((*b0)[e][d]):0))));
+                //QString str = QString::number(fabs(fabs((*b)[e][d]) - fabs((m_useZeroSignal?((*b0)[e][d]):0))));
+                QString str = QString::number((*b)[e][d] - (m_useZeroSignal?((*b0)[e][d]):0));
                 dataStream << str << ( (r == r_end && e==e_end) ?'\n':',');
             }
         }
@@ -499,6 +500,11 @@ void DataSource::setFilterParameters(bool hpOn, int hpFOrd, double hpFc, double 
 void DataSource::clearData()
 {
     m_measurementModel->clear();
+}
+
+void DataSource::setUseAbsoluteValues(bool flag)
+{
+    m_useAbsoluteValues = flag;
 }
 
 void DataSource::calcCorrelationFunc(QVector <double> &in, QVector <double> &out, float *corrfunct, int n__corr, int numsmpl)
@@ -570,11 +576,11 @@ void DataSource::processSignal(QVector <double> &in, QVector <double> &out)
 
 
 
-    if(1)
+    if(m_bpOn)
     {
         //MakeLPButterworthFilter(H, _LP0_Td,_LP0_fc, _LP0_ford);
 
-        Make_BP_ButterworthFilter(H, m_fc, m_deltaf, m_ford, m_Td);
+        Make_BP_ButterworthFilter(H, m_bpFc, m_bpDeltaF, m_bpFOrd, m_bpTd);
 
         for(j=0;j<ndaln2;j++) dblbubl[j]=complexd(0,0);
         for(j=0;j<in.length();j++) dblbubl[j] = complexd( out[j],0 );
@@ -591,9 +597,9 @@ void DataSource::processSignal(QVector <double> &in, QVector <double> &out)
     //----
 
     //---- фильтр ВЧ (для убирания пост. составл. в сигнале)
-    if(0)
+    if(m_hpOn)
     {
-        MakeHPButterworthFilter(H, _HP0_Td,_HP0_fc, _HP0_ford);
+        MakeHPButterworthFilter(H, m_hpTd, m_hpFc, m_hpFOrd);
 
         for(j=0;j<ndaln2;j++) dblbubl[j]=complexd(0,0);
         for(j=0;j<in.length();j++) dblbubl[j] = complexd( out[j],0 );
@@ -609,31 +615,31 @@ void DataSource::processSignal(QVector <double> &in, QVector <double> &out)
     }
     //----
     //---- включим "диод" (вычислим модуль сигнала
-    if(1)
+    /*if(1)
     {
         for(j=0;j<out.length();j++) out[j] = fabs(out[j]);
-    }
+    }*/
     //----
 //    //---- фильтр НЧ для огибающей
-//    if(0)
-//    {
-//        MakeLPButterworthFilter(H, _LP1_Td,_LP1_fc, _LP1_ford);
+    if(m_lpOn)
+    {
+        MakeLPButterworthFilter(H, m_lpTd, m_lpFc, m_lpFOrd);
 
-//        for(j=0;j<ndaln2;j++) dblbubl[j]=complexd(0,0);
-//        for(j=0;j<in.length();j++) dblbubl[j] = complexd( out[j],0 );
+        for(j=0;j<ndaln2;j++) dblbubl[j]=complexd(0,0);
+        for(j=0;j<in.length();j++) dblbubl[j] = complexd( out[j],0 );
 
-//        cfft(dblbubl);
-//        for(x=0;x<ndaln2;x++) dblbubl[x] *= H[x];
-//        reverse(dblbubl.begin(),dblbubl.end());
-//        for(x=0;x<ndaln2;x++) dblbubl[x] *= H[x];
-//        reverse(dblbubl.begin(),dblbubl.end());
-//        icfft(dblbubl);
+        cfft(dblbubl);
+        for(x=0;x<ndaln2;x++) dblbubl[x] *= H[x];
+        reverse(dblbubl.begin(),dblbubl.end());
+        for(x=0;x<ndaln2;x++) dblbubl[x] *= H[x];
+        reverse(dblbubl.begin(),dblbubl.end());
+        icfft(dblbubl);
 
-//        for(x=0;x<in.length();x++)
-//        {
-//            out[x] = 1 * dblbubl[x].real();
-//        }
-//    }
+        for(x=0;x<in.length();x++)
+        {
+            out[x] = 1 * dblbubl[x].real();
+        }
+    }
 }
 
 void DataSource::processSignal(Measurement *m)
@@ -652,7 +658,7 @@ void DataSource::processSignal(Measurement *m)
         }
         QVector<double> in;
         for (auto d=0; d<(*b)[e].length(); d++) {
-            in.push_back((*b)[e][d]);
+            in.push_back(theValue((*b)[e][d]));
         }
         QVector<double> out;
         processSignal(in, out);
@@ -661,6 +667,33 @@ void DataSource::processSignal(Measurement *m)
             (*pb)[e][d] = out[d];
         }
     }
+}
+
+void DataSource::processSignal(Measurement *m, int e)
+{
+    if (!m)
+        return;
+
+    auto b = m->getBuffer();
+    auto pb = m->getPBuffer();
+    if (pb->length()<b->length())   {
+        pb->resize(b->length());
+    }
+
+    if ((*pb)[e].length() < (*b)[e].length()) {
+        (*pb)[e].resize((*b)[e].length());
+    }
+    QVector<double> in;
+    for (auto d=0; d<(*b)[e].length(); d++) {
+        in.push_back(theValue((*b)[e][d]));
+    }
+    QVector<double> out;
+    processSignal(in, out);
+
+    for (auto d=0; d<out.length(); d++)  {
+        (*pb)[e][d] = out[d];
+    }
+
 }
 
 void DataSource::processSignal()

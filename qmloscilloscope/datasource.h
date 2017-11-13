@@ -97,6 +97,9 @@ typedef struct {
     QVector<double *> buffer;
 } measurement;*/
 
+
+#define theValue(x) (m_useAbsoluteValues?fabs(x):x)
+
 class DataSource : public QObject
 {
     Q_OBJECT
@@ -124,6 +127,7 @@ public slots:
 
     void processSignal(QVector <double> &in, QVector <double> &out);
     void processSignal(Measurement *m);
+    void processSignal(Measurement *m, int e);
     void processSignal();
 
     void savePoint(double distance, int nf, int saveAsZeroSignal);
@@ -198,6 +202,8 @@ public slots:
                                          bool bpOn, int bpFOrd, double bpFc, double bpTd, double bpDeltaF);
 
     Q_INVOKABLE void clearData();
+
+    Q_INVOKABLE void setUseAbsoluteValues(bool flag);
 private:
     bool m_hpOn;
     int m_hpFOrd;
@@ -276,6 +282,7 @@ private:
 
 
     bool m_useZeroSignal {false};
+    //bool m_useAbsoluteValues {false};
 
 
     int _getUnitIndex(int buffer_part, QByteArray *buffer, QHostAddress sender);

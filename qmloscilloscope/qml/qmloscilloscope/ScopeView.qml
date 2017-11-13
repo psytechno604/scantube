@@ -85,8 +85,8 @@ ChartView {
     }
     ValueAxis {
         id: axisY2
-        min:-100
-        max:100
+        min:-appSettings.maxProcessedLevel
+        max:appSettings.maxProcessedLevel
     }
 
 
@@ -154,7 +154,7 @@ ChartView {
         visible: show_i1_1.checked
         name: "Processed " + appSettings.i1
         axisX: axisX
-        axisYRight: axisY
+        axisYRight: axisY2
         useOpenGL: chartView.openGL
         color: color1_1
     }
@@ -163,7 +163,7 @@ ChartView {
         visible: show_i2_1.checked
         name: "Processed " + appSettings.i2
         axisX: axisX
-        axisYRight: axisY
+        axisYRight: axisY2
         useOpenGL: chartView.openGL
         color: color2_1
     }
