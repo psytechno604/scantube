@@ -1,7 +1,7 @@
 #ifndef CONSTANTS_H
 #define CONSTANTS_H
 
-static int _ADCNumSteps=8;
+static int _ADCNumSteps=3;
 static int _halfPacketSize=363;
 static int _ADCShiftBlockSize=16;
 static int _ADCBlocksPerStep=22;

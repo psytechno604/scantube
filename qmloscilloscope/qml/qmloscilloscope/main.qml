@@ -1103,8 +1103,45 @@ Item {
                         Row {
                             anchors.fill: parent
                             Column {
+                                width: parent.width/4
+                                Row {
+                                    Text {
+                                        text: "avg"
+                                        font.pixelSize: 17
+                                    }
+                                }
+
+                                Row {
+                                    id: avg_mainrow
+
+                                    Text {
+                                        text: "on:"
+                                        width: 40
+                                    }
+                                    CheckBox {
+                                        id: avg_on
+                                        checked: appSettings.avg_on
+                                        onCheckedChanged: {
+                                            setFilterParameters();
+                                        }
+                                    }
+                                    Text {
+                                        text: "step:"
+                                    }
+                                    TextField {
+                                        id: avg_Step
+                                        enabled: avg_on.checked
+                                        text:appSettings.avg_Step
+                                        onTextChanged: {
+                                            setFilterParameters();
+                                        }
+                                    }
+                                }
+                            }
+
+                            Column {
                                 property int inputPosition: 150
-                                width: parent.width/3
+                                width: parent.width/4
                                 Row {
                                     Text {
                                         text: "HP"
@@ -1171,7 +1208,7 @@ Item {
                                 }
                             }
                             Column {
-                                width: parent.width/3
+                                width: parent.width/4
                                 Row {
                                     Text {
                                         text: "LP"
@@ -1234,7 +1271,7 @@ Item {
                                 }
                             }
                             Column {
-                                width: parent.width/3
+                                width: parent.width/4
                                 Row {
                                     Text {
                                         text: "BP"
@@ -1469,6 +1506,8 @@ Item {
         dataSource.setWriteHistory(appSettings.writeHistory);
 
         dataSource.setSurface3DScanStep(appSettings.surface3d_scanStep);
+
+        setFilterParameters();
     }
     Connections {
         target: dataSource
@@ -1519,6 +1558,9 @@ Item {
         property alias bP_Td: bP_Td.text
         property alias bP_fc: bP_fc.text
         property alias bP_deltaf: bP_deltaf.text
+
+        property alias avg_on: avg_on.checked
+        property alias avg_Step: avg_Step.text
 
         property alias maxSignalLevel: maxSignalLevel.text
         property alias maxProcessedLevel: maxProcessedLevel.text
@@ -2017,7 +2059,7 @@ Item {
     function setFilterParameters () {
         dataSource.setFilterParameters(hP_on.checked, hP_order.currentText, hP_fc.text, hP_Td.text,
                                        lP_on.checked, lP_order.currentText, lP_fc.text, lP_Td.text,
-                                       bP_on.checked, bP_order.currentText, bP_fc.text, bP_Td.text, bP_deltaf.text);
+                                       bP_on.checked, bP_order.currentText, bP_fc.text, bP_Td.text, bP_deltaf.text, avg_on.checked, avg_Step.text);
     }
     function buttonOnCircleClicked(index) {
         rect_circleSelector.visible = false;

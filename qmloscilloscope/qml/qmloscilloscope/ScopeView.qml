@@ -85,7 +85,7 @@ ChartView {
     }
     ValueAxis {
         id: axisY2
-        min:-appSettings.maxProcessedLevel
+        min:(appSettings.useAbsoluteValues?0:(-appSettings.maxProcessedLevel))
         max:appSettings.maxProcessedLevel
     }
 

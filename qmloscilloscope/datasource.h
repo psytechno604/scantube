@@ -98,7 +98,11 @@ typedef struct {
 } measurement;*/
 
 
-#define theValue(x) (m_useAbsoluteValues?fabs(x):x)
+#define theValue(x, e, d) (m_useZeroSignal?(m_useAbsoluteValues?fabs(fabs(x)-fabs((*(m_measurementModel->get(m_zeroIndex)->getBuffer()))[e][d])):(x-(*(m_measurementModel->get(m_zeroIndex)->getBuffer()))[e][d])):(m_useAbsoluteValues?fabs(x):x))
+
+/*m_useZeroSignal
+m_zeroIndex
+m_measurementModel->get(m_zeroIndex)*/
 
 class DataSource : public QObject
 {
@@ -199,7 +203,7 @@ public slots:
 
     Q_INVOKABLE void setFilterParameters(bool hpOn, int hpFOrd, double hpFc, double hpTd,
                                          bool lpOn, int lpFOrd, double lpFc, double lpTd,
-                                         bool bpOn, int bpFOrd, double bpFc, double bpTd, double bpDeltaF);
+                                         bool bpOn, int bpFOrd, double bpFc, double bpTd, double bpDeltaF, bool m_avgOn, int m_avgStep);
 
     Q_INVOKABLE void clearData();
 
@@ -220,6 +224,9 @@ private:
     double m_bpFc;
     double m_bpTd;
     double m_bpDeltaF;
+
+    bool m_avgOn;
+    int m_avgStep;
 
 
     int m_surface3DScanStep {10};

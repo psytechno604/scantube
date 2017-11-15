@@ -169,7 +169,7 @@ void DataSource::update(bool show, int r, int i_max, int i_slice, int i_proc)
         auto b = m->getBuffer();
         if (show && s && b && b->length()>m_currentUnitIndex)  {
             for (int d=0; d<(*b)[m_currentUnitIndex].length(); d++)   {
-                points.append(QPointF(d, theValue((*b)[m_currentUnitIndex][d])));
+                points.append(QPointF(d, theValue((*b)[m_currentUnitIndex][d], m_currentUnitIndex, d)));
             }
 
         }
@@ -480,7 +480,9 @@ int DataSource::getNChannels()
     return m_nChannels;
 }
 
-void DataSource::setFilterParameters(bool hpOn, int hpFOrd, double hpFc, double hpTd, bool lpOn, int lpFOrd, double lpFc, double lpTd, bool bpOn, int bpFOrd, double bpFc, double bpTd, double bpDeltaF)
+void DataSource::setFilterParameters(bool hpOn, int hpFOrd, double hpFc, double hpTd, bool lpOn,
+                                     int lpFOrd, double lpFc, double lpTd, bool bpOn, int bpFOrd,
+                                     double bpFc, double bpTd, double bpDeltaF, bool avgOn, int avgStep)
 {
     m_hpOn = hpOn;
     m_hpFOrd = hpFOrd;
@@ -495,6 +497,8 @@ void DataSource::setFilterParameters(bool hpOn, int hpFOrd, double hpFc, double 
     m_bpFc = bpFc;
     m_bpTd = bpTd;
     m_bpDeltaF = bpDeltaF;
+    m_avgOn = avgOn;
+    m_avgStep = avgStep;
 }
 
 void DataSource::clearData()
@@ -574,6 +578,18 @@ void DataSource::processSignal(QVector <double> &in, QVector <double> &out)
         out[i] = in[i];
     }
 
+    if(m_avgOn) {
+        auto j=-m_avgStep;
+        double avg = 0;
+        for (auto i=0; i<in.length(); i++)    {
+            avg += in[i];
+            if (j>=0) {
+                avg -= in[j];
+            }
+            out[i] = avg / m_avgStep;
+            j++;
+        }
+    }
 
 
     if(m_bpOn)
@@ -658,7 +674,7 @@ void DataSource::processSignal(Measurement *m)
         }
         QVector<double> in;
         for (auto d=0; d<(*b)[e].length(); d++) {
-            in.push_back(theValue((*b)[e][d]));
+            in.push_back(theValue((*b)[e][d], e, d));
         }
         QVector<double> out;
         processSignal(in, out);
@@ -685,7 +701,7 @@ void DataSource::processSignal(Measurement *m, int e)
     }
     QVector<double> in;
     for (auto d=0; d<(*b)[e].length(); d++) {
-        in.push_back(theValue((*b)[e][d]));
+        in.push_back(theValue((*b)[e][d], e, d));
     }
     QVector<double> out;
     processSignal(in, out);

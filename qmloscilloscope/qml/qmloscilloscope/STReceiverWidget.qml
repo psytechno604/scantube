@@ -12,7 +12,7 @@ Item {
 
     Button {
         id: mybtn
-        text: dataSource.getReceiverName(unitIndex)
+        text: unitIndex//dataSource.getReceiverName(unitIndex)
         width: 40
         height: 40
         x: getBtnX(parent.width/2 - width/2, getRadius(unitIndex) * parent.width/2, getSector(unitIndex))
