@@ -30,7 +30,6 @@ public:
     Q_INVOKABLE void add(Measurement *_M);
     void emitDataChanged();
     Measurement * get(int i);
-    double getDistance(int channel);
 
     float getValue(int i, int e, int d);
     void setValue(int i, int e, int d, float value);

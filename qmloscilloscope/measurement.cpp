@@ -26,7 +26,7 @@ QVector<double> operator*(QVector<double> a, QVector<double> b)
 {
 
 }*/
-Measurement::Measurement(double value, QObject *parent) : QObject(parent), m_value(value)
+Measurement::Measurement(QString value, QObject *parent) : QObject(parent), m_value(value)
 {
     timestmp = QDateTime::currentDateTime();
 
@@ -41,7 +41,7 @@ Measurement::Measurement(double value, QObject *parent) : QObject(parent), m_val
 /**/
 QString Measurement::getText()
 {
-    QString ret = ":" + QString::number(m_value) + ":" + timestmp.toString("yyyyMMdd hh:mm:ss");
+    QString ret = ":" + m_value + ":" + timestmp.toString("yyyyMMdd hh:mm:ss");
     /*for(auto c=0; c<_sqerr.length(); c++) {
         ret = ret + QString::number(_corr[c])+":";
     }*/
@@ -68,6 +68,10 @@ void Measurement::readFrom(QDataStream &ds)
     int nchannels, buffer_size;
 
     ds >> nchannels;
+
+    if (nchannels<=0)   {
+        return;
+    }
 
     buffer->resize(nchannels);
 
@@ -134,7 +138,7 @@ int Measurement::getSize()
     return sz;
 }
 
-double Measurement::getValue()
+QString Measurement::getValue()
 {
     return m_value;
 }

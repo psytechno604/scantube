@@ -208,7 +208,17 @@ public slots:
     Q_INVOKABLE void clearData();
 
     Q_INVOKABLE void setUseAbsoluteValues(bool flag);
+
+    Q_INVOKABLE void setPhysicalParameter0(QString val);
+    Q_INVOKABLE QString getPhysicalParameter0();
+
+    Q_INVOKABLE void setCutoffParameters(bool m_cutoffOn, double m_cutoffLevel);
 private:
+    bool m_cutoffOn;
+    double m_cutoffLevel;
+
+    QString m_physicalParameter0;
+
     bool m_hpOn;
     int m_hpFOrd;
     double m_hpFc;
@@ -358,6 +368,7 @@ private:
     static void MakeHPButterworthFilter(vectorc& H, double m_Td, double m_fc, unsigned short m_ford);
     static void MakeLPButterworthFilter(vectorc& H, double m_Td, double m_fc, unsigned short m_ford);
     static void Make_BP_ButterworthFilter(vectorc& H, double m_fc, double m_deltaf, unsigned short m_ford, double m_Td);
+    static void MakeSimpleCutoffFilter(vectorc& H, double cutoff);
     void cfft(vectorc& a);
     void icfft(vectorc& a);
 

@@ -430,7 +430,7 @@ void DataSource::copyHistoryToClipboard(int e_start, int e_end, int r_start, int
         }
         for(int r=r_start; r<=r_end; r++) {
             auto m=m_measurementModel->get(r);
-            QString str = QString::number(m->getValue());
+            QString str = m->getValue();
             dataStream << str << ( (r == r_end && e==e_end) ?'\n':',');
         }
         for(int d=0; d<(*b)[e].length(); d++) {
@@ -509,6 +509,22 @@ void DataSource::clearData()
 void DataSource::setUseAbsoluteValues(bool flag)
 {
     m_useAbsoluteValues = flag;
+}
+
+void DataSource::setPhysicalParameter0(QString val)
+{
+    m_physicalParameter0 = val;
+}
+
+QString DataSource::getPhysicalParameter0()
+{
+    return m_physicalParameter0;
+}
+
+void DataSource::setCutoffParameters(bool cutoffOn, double cutoffLevel)
+{
+    m_cutoffOn = cutoffOn;
+    m_cutoffLevel = cutoffLevel;
 }
 
 void DataSource::calcCorrelationFunc(QVector <double> &in, QVector <double> &out, float *corrfunct, int n__corr, int numsmpl)
@@ -591,6 +607,20 @@ void DataSource::processSignal(QVector <double> &in, QVector <double> &out)
         }
     }
 
+    if (m_cutoffOn) {
+        MakeSimpleCutoffFilter(H, m_cutoffLevel);
+        for(j=0;j<ndaln2;j++) dblbubl[j]=complexd(0,0);
+        for(j=0;j<in.length();j++) dblbubl[j] = complexd( out[j],0 );
+
+        cfft(dblbubl);
+        for(x=0;x<ndaln2;x++) dblbubl[x] *= H[x];
+        icfft(dblbubl);
+
+        for(x=0;x<ndaln2;x++)
+        {
+            if(x<in.length()) out[x] = 1 * dblbubl[x].real();
+        }
+    }
 
     if(m_bpOn)
     {
@@ -773,17 +803,7 @@ double DataSource::getValue(QString name)
 
 void DataSource::setValue(QString name, double value)
 {
-    if (name == "textField_LP0_Td") { _LP0_Td = value; return; }
-    if (name == "textField_LP0_fc") { _LP0_fc = value; return; }
-    if (name == "textField_LP0_ford") { _LP0_ford = value; return; }
-
-    if (name == "textField_HP0_Td") { _HP0_Td = value; return; }
-    if (name == "textField_HP0_fc") { _HP0_fc = value; return; }
-    if (name == "textField_HP0_ford") { _HP0_ford = value; return; }
-
-    if (name == "textField_LP1_Td") { _LP1_Td = value; return; }
-    if (name == "textField_LP1_fc") { _LP1_fc = value; return; }
-    if (name == "textField_LP1_ford") { _LP1_ford = value; return; }
+    if (name == "physicalParameter0") { m_physicalParameter0 = value; return; }
 }
 
 void DataSource::showByIndex(int index)
@@ -942,7 +962,19 @@ void DataSource::Make_BP_ButterworthFilter(vectorc& H, double fc, double deltaf,
     // теперь получм значение ПФ дискр фильтра
     H[x] = (x == 0) ? complexd(0,0) : G0 / K;
   }
-//#undef cv
+  //#undef cv
+}
+
+void DataSource::MakeSimpleCutoffFilter(vectorc &H, double cutoff)
+{
+    for(int i=0; i<H.length(); i++) {
+        if (i < cutoff * H.length())    {
+            H[i] = complexd(1, 0);
+        }
+        else {
+            H[i] = complexd(0, 0);
+        }
+    }
 }
 void DataSource::cfft(vectorc& a)
 {
@@ -1205,7 +1237,7 @@ void DataSource::m_increaseHistoryIndex()
 
 void DataSource::copyToHistory()
 {            
-    auto m = new Measurement(distance);
+    auto m = new Measurement(m_physicalParameter0);
 
     auto b = m->getBuffer();
 

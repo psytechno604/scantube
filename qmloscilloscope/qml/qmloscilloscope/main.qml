@@ -599,6 +599,15 @@ Item {
                 }
             }
             Row {
+                TextField {
+                    id: physicalParameter0
+                    text: appSettings.physicalParameter0
+                    onTextChanged: {
+                        dataSource.setPhysicalParameter0(text);
+                    }
+                }
+            }
+            Row {
                 height: parent.height - y
                 //width: parent.width
                 ListView {
@@ -653,6 +662,8 @@ Item {
                     }
                 }
             }
+
+
             /*
             ComboBox {
                 id: comboBoxMyIP
@@ -777,9 +788,9 @@ Item {
                             }
 
                             Text {
-                                id: single_waveform_distance
+                                id: single_waveform_message
                                 text: qsTr("---")
-                                font.pixelSize: 12
+                                font.pixelSize: 24
                                 color: outputTextColor
 
                             }
@@ -1113,10 +1124,11 @@ Item {
 
                                 Row {
                                     id: avg_mainrow
-
+                                    width: parent.width
                                     Text {
+                                        id: avg_on_
                                         text: "on:"
-                                        width: 40
+
                                     }
                                     CheckBox {
                                         id: avg_on
@@ -1126,12 +1138,50 @@ Item {
                                         }
                                     }
                                     Text {
+                                        id: avg_step_
                                         text: "step:"
                                     }
                                     TextField {
                                         id: avg_Step
                                         enabled: avg_on.checked
                                         text:appSettings.avg_Step
+                                        width: 40
+                                        onTextChanged: {
+                                            setFilterParameters();
+                                        }
+                                    }
+                                }
+                                Row {
+                                    Text {
+                                        text: "cutoff"
+                                        font.pixelSize: 17
+                                    }
+                                }
+
+                                Row {
+                                    id: cutoff_mainrow
+
+                                    Text {
+                                        id: cutoff_on_
+                                        text: "on:"
+
+                                    }
+                                    CheckBox {
+                                        id: cutoff_on
+                                        checked: appSettings.cutoff_on
+                                        onCheckedChanged: {
+                                            setFilterParameters();
+                                        }
+                                    }
+                                    Text {
+                                        id: cutoff_step_
+                                        text: "level:"
+                                    }
+                                    TextField {
+                                        id: cutoff_Level
+                                        enabled: cutoff_on.checked
+                                        text:appSettings.cutoff_Level
+                                        width: 40
                                         onTextChanged: {
                                             setFilterParameters();
                                         }
@@ -1151,10 +1201,10 @@ Item {
 
                                 Row {
                                     id: hP_mainrow
-
+                                    width: parent.width
                                     Text {
                                         text: "on:"
-                                        width: 40
+
                                     }
                                     CheckBox {
                                         id: hP_on
@@ -1170,6 +1220,7 @@ Item {
                                         id: hP_order
                                         enabled: hP_on.checked
                                         currentIndex: appSettings.hP_order_index
+                                        width:60
                                         model: ["1", "2", "3", "4", "5", "6", "7", "8"]
                                         onActivated: {
                                             setFilterParameters();
@@ -1181,7 +1232,7 @@ Item {
                                     Text {
                                         id: hP_Td_txt
                                         text: qsTr("Td:")
-                                        width: 40
+
                                     }
                                     TextField {
                                         id: hP_Td
@@ -1196,7 +1247,7 @@ Item {
                                     Text {
                                         id: hP_fc_txt
                                         text: qsTr("fc:")
-                                        width: 40
+
                                     }
                                     TextField {
                                         id: hP_fc
@@ -1217,9 +1268,10 @@ Item {
                                 }
                                 Row {
                                     id: lP_mainrow
+                                    width: parent.width
                                     Text {
                                         text: "on:"
-                                        width: 40
+
                                     }
                                     CheckBox {
                                         id: lP_on
@@ -1234,6 +1286,7 @@ Item {
                                         model: ["1", "2", "3", "4", "5", "6", "7", "8"]
                                         enabled: lP_on.checked
                                         currentIndex: appSettings.lP_order_index
+                                        width:60
                                         onActivated: {
                                             setFilterParameters();
                                         }
@@ -1244,7 +1297,7 @@ Item {
                                     Text {
                                         id: lP_Td_txt
                                         text: qsTr("Td:")
-                                        width: 40
+
                                     }
                                     TextField {
                                         id: lP_Td
@@ -1259,7 +1312,7 @@ Item {
                                     Text {
                                         id: lP_fc_txt
                                         text: qsTr("fc:")
-                                        width: 40
+
                                     }
                                     TextField {
                                         id: lP_fc
@@ -1280,9 +1333,10 @@ Item {
                                 }
                                 Row {
                                     id: bP_mainrow
+                                    width: parent.width
                                     Text {
                                         text: "on:"
-                                        width: 40
+
                                     }
                                     CheckBox {
                                         id: bP_on
@@ -1297,6 +1351,7 @@ Item {
                                         model: ["1", "2", "3", "4", "5", "6", "7", "8"]
                                         enabled: bP_on.checked
                                         currentIndex: appSettings.bP_order_index
+                                        width:60
                                         onActivated: {
                                             setFilterParameters();
                                         }
@@ -1307,7 +1362,7 @@ Item {
                                     Text {
                                         id: bP_Td_txt
                                         text: qsTr("Td:")
-                                        width: 40
+
                                     }
                                     TextField {
                                         id: bP_Td
@@ -1322,7 +1377,7 @@ Item {
                                     Text {
                                         id: bP_fc_txt
                                         text: qsTr("fc:")
-                                        width: 40
+
                                     }
                                     TextField {
                                         id: bP_fc
@@ -1337,7 +1392,7 @@ Item {
                                     Text {
                                         id: bP_deltaf_txt
                                         text: qsTr("deltaf:")
-                                        width: 40
+
                                     }
                                     TextField {
                                         id: bP_deltaf
@@ -1501,18 +1556,21 @@ Item {
 
         _intercom.setTimeout(appSettings.dataReceiveTimeout);
         _intercom.setFullscanCountdownStart(appSettings.fullscanCountdownStart);
-        setSingleWaveformDistanceText(0);
+        setSingleWaveformMessageText("Receiver " + dataSource.getCurrentUnitIndex());
         setPacketsReceived(0, 0, 0, 0);
         dataSource.setWriteHistory(appSettings.writeHistory);
 
         dataSource.setSurface3DScanStep(appSettings.surface3d_scanStep);
 
         setFilterParameters();
+
+        dataSource.setPhysicalParameter0(appSettings.physicalParameter0);
     }
     Connections {
         target: dataSource
         onCurrentUnitIndexChanged: {
             updateSingleWaveform();
+            setSingleWaveformMessageText("Receiver " + dataSource.getCurrentUnitIndex());
         }
         onFileLoaded: {
             updateSingleWaveform();
@@ -1521,8 +1579,10 @@ Item {
     Settings {
         id: appSettings
 
+        property alias cutoff_on: cutoff_on.checked
+        property alias cutoff_level: cutoff_Level.text
 
-
+        property alias physicalParameter0: physicalParameter0.text
 
 
 
@@ -1999,8 +2059,8 @@ Item {
         dataSource.updateSurface3D(surfaceSeries);
     }
 
-    function setSingleWaveformDistanceText (distance) {
-        single_waveform_distance.text = "Distance = " + distance;
+    function setSingleWaveformMessageText (text) {
+        single_waveform_message.text = text;
     }
     function updateAllWaveforms (){
 
@@ -2059,7 +2119,10 @@ Item {
     function setFilterParameters () {
         dataSource.setFilterParameters(hP_on.checked, hP_order.currentText, hP_fc.text, hP_Td.text,
                                        lP_on.checked, lP_order.currentText, lP_fc.text, lP_Td.text,
-                                       bP_on.checked, bP_order.currentText, bP_fc.text, bP_Td.text, bP_deltaf.text, avg_on.checked, avg_Step.text);
+                                       bP_on.checked, bP_order.currentText, bP_fc.text, bP_Td.text, bP_deltaf.text,
+                                       avg_on.checked, avg_Step.text);
+        dataSource.setCutoffParameters(cutoff_on.checked, cutoff_Level.text);
+        updateSingleWaveform();
     }
     function buttonOnCircleClicked(index) {
         rect_circleSelector.visible = false;

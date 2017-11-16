@@ -80,15 +80,6 @@ Measurement * MeasurementModel::get(int i)
     return _data[i];
 }
 
-double MeasurementModel::getDistance(int channel)
-{
-    auto max = std::max_element( _data.begin(), _data.end(),
-                                 [channel]( Measurement *a, const Measurement  *b )
-                                 {
-                                     return a->_corr[channel] < b->_corr[channel];
-                                 } );
-    return (*max)?(*max)->m_value:0;
-}
 
 float MeasurementModel::getValue(int i, int e, int d)
 {
