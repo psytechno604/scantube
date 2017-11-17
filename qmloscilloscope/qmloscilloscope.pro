@@ -41,5 +41,6 @@ RESOURCES += \
 
 DISTFILES += \
     qml/qmloscilloscope/* \
-    qml/qmloscilloscope/STReceiverWidget.qml
+    qml/qmloscilloscope/STReceiverWidget.qml \
+    qml/qmloscilloscope/settings.js
 

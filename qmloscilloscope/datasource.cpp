@@ -140,10 +140,12 @@ DataSource::~DataSource()
 
 
 
-void DataSource::update(bool show, int r, int i_max, int i_slice, int i_proc)
+void DataSource::update(bool show, int r, int i_max, int i_slice, int i_proc, int d1, int d2)
 {
-
-
+    if (d1==0 || d2 == 0 || d1 >= d2) {
+        d1 = 10;
+        d2 = 20;
+    }
     auto m = m_measurementModel->get(r);
     if (!m) {
         qDebug() << "DataSource::update: invalid r = " << r;
@@ -169,7 +171,7 @@ void DataSource::update(bool show, int r, int i_max, int i_slice, int i_proc)
         auto b = m->getBuffer();
         if (show && s && b && b->length()>m_currentUnitIndex)  {
             for (int d=0; d<(*b)[m_currentUnitIndex].length(); d++)   {
-                points.append(QPointF(d, theValue((*b)[m_currentUnitIndex][d], m_currentUnitIndex, d)));
+                points.append(QPointF(10.0+double(d-d1)/double(d2-d1)*10.0, theValue((*b)[m_currentUnitIndex][d], m_currentUnitIndex, d)));
             }
 
         }
@@ -186,17 +188,31 @@ void DataSource::update(bool show, int r, int i_max, int i_slice, int i_proc)
         QVector<QPointF> points;
         if (show) {
             processSignal(m, m_currentUnitIndex);
+            m->setProcessed(m_currentUnitIndex, true);
             auto b = m->getPBuffer();
             if (show && p && b && b->length()>m_currentUnitIndex)  {
 
                 for (int d=0; d<(*b)[m_currentUnitIndex].length(); d++)   {
-                    points.append(QPointF(d, (*b)[m_currentUnitIndex][d]));
+                    points.append(QPointF(10.0+double(d-d1)/double(d2-d1)*10.0, (*b)[m_currentUnitIndex][d]));
                 }
 
             }
         }
         p->replace(points);
     }
+}
+
+int DataSource::getMaxDistance(int measurementIndex, int receiverIndex)
+{
+    int ret = -1;
+    auto m = m_measurementModel->get(measurementIndex);
+    if (m) {
+        auto b = m->getBuffer();
+        if (b->length()>receiverIndex) {
+            ret = (*b)[receiverIndex].length();
+        }
+    }
+    return ret;
 }
 void DataSource::updateAllWaveforms(QAbstractSeries *series, int set)
 {
@@ -527,6 +543,56 @@ void DataSource::setCutoffParameters(bool cutoffOn, double cutoffLevel)
     m_cutoffLevel = cutoffLevel;
 }
 
+void DataSource::setCutoff0Parameters(bool cutoffOn, double cutoffLevel)
+{
+    m_cutoff0On = cutoffOn;
+    m_cutoff0Level = cutoffLevel;
+}
+
+QPointF DataSource::getMaxAt(int measurementIndex, int receiverIndex, int setIndex, int dStart, int dEnd)
+{
+    QPointF ret(-DBL_MAX, -1);
+    auto m = m_measurementModel->get(measurementIndex);
+    if (m) {
+
+        QVector<QVector<float> > *b;
+        if (setIndex == 0) {//TODO: it is some kind of hardcode
+            b = m->getBuffer();
+            if(b) {
+                if (b->length()>receiverIndex) {
+                    for (int d=dStart; d<=dEnd && d<(*b)[receiverIndex].length(); d++)  {
+
+                        if(theValue((*b)[receiverIndex][d], receiverIndex, d)>ret.x()) {
+                            ret.setX(theValue((*b)[receiverIndex][d], receiverIndex, d));
+                            ret.setY(d);
+                        }
+                    }
+                }
+            }
+        }
+        if (setIndex == 1) {//TODO: it is some kind of hardcode
+            //if (!m->getProcessed(receiverIndex)) {
+                processSignal(m, receiverIndex);
+            //    m->setProcessed(receiverIndex, true);
+            //}
+            b = m->getPBuffer();
+            if (b) {
+                if (b->length()>receiverIndex) {
+                    for (int d=dStart; d<=dEnd && d<(*b)[receiverIndex].length(); d++)  {
+
+                        if((*b)[receiverIndex][d]>ret.x()) {
+                            ret.setX((*b)[receiverIndex][d]);
+                            ret.setY(d);
+                        }
+                    }
+                }
+            }
+        }
+
+    }
+    return ret;
+}
+
 void DataSource::calcCorrelationFunc(QVector <double> &in, QVector <double> &out, float *corrfunct, int n__corr, int numsmpl)
 {
     int i, j, offs;
@@ -606,7 +672,20 @@ void DataSource::processSignal(QVector <double> &in, QVector <double> &out)
             j++;
         }
     }
+    if (m_cutoff0On) {
+        MakeSimpleCutoff0Filter(H, m_cutoff0Level);
+        for(j=0;j<ndaln2;j++) dblbubl[j]=complexd(0,0);
+        for(j=0;j<in.length();j++) dblbubl[j] = complexd( out[j],0 );
 
+        cfft(dblbubl);
+        for(x=0;x<ndaln2;x++) dblbubl[x] *= H[x];
+        icfft(dblbubl);
+
+        for(x=0;x<ndaln2;x++)
+        {
+            if(x<in.length()) out[x] = 1 * dblbubl[x].real();
+        }
+    }
     if (m_cutoffOn) {
         MakeSimpleCutoffFilter(H, m_cutoffLevel);
         for(j=0;j<ndaln2;j++) dblbubl[j]=complexd(0,0);
@@ -973,6 +1052,18 @@ void DataSource::MakeSimpleCutoffFilter(vectorc &H, double cutoff)
         }
         else {
             H[i] = complexd(0, 0);
+        }
+    }
+}
+
+void DataSource::MakeSimpleCutoff0Filter(vectorc &H, double cutoff0)
+{
+    for(int i=0; i<H.length(); i++) {
+        if (i < cutoff0 * H.length())    {
+            H[i] = complexd(0, 0);
+        }
+        else {
+            H[i] = complexd(1, 1);
         }
     }
 }

@@ -19,9 +19,9 @@ Item {
         y: getBtnY(parent.height/2 - height/2, getRadius(unitIndex) * parent.height/2, getSector(unitIndex))
 
         onClicked: {            
+            appSettings.currentUnitIndex = unitIndex;
             dataSource.setCurrentUnitIndex(unitIndex);
             parent.clicked();
-
         }
 
 

@@ -37,6 +37,8 @@ Measurement::Measurement(QString value, QObject *parent) : QObject(parent), m_va
 
     processed_buffer = new QVector<QVector<float>>(_nChannels);
     processed_buffer->fill(tmp);
+
+    m_processed.resize(_nChannels);
 }
 /**/
 QString Measurement::getText()
@@ -125,6 +127,21 @@ void Measurement::setBuffer(QVector<QVector<float> > *b)
         _corr.resize(b->length());
         _corr.fill(0);
     }
+}
+
+void Measurement::setProcessed(int e, bool v)
+{
+    if (e<m_processed.length()) {
+        m_processed[e] = v;
+    }
+}
+
+bool Measurement::getProcessed(int e)
+{
+    if (e<m_processed.length()) {
+        return m_processed[e];
+    }
+    return false;
 }
 
 int Measurement::getSize()

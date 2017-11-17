@@ -48,6 +48,8 @@ import com.example.Timeline3D 1.0
 
 import Qt.labs.settings 1.0
 
+import QtQuick.LocalStorage 2.0
+import "settings.js" as Settings
 
 Item {
     id: main
@@ -62,6 +64,8 @@ Item {
     property alias text_currentShift: text_currentShift.text
 
     signal textChanged(string msg);
+
+    property real maxFor_i0: appSettings.maxSignalLevel
 
     z:-1
 
@@ -486,7 +490,8 @@ Item {
                     id: show_i0
                     checked: appSettings.show_i0
                     onCheckedChanged: {
-                        dataSource.update(show_i0.checked, appSettings.i0, 0, 3, 6);
+                        //dataSource.update(show_i0.checked, appSettings.i0, 0, 3, 6);
+                        updateSingleWaveform();
                     }
                     background: Rectangle {color: scopeView.color0}
                 }
@@ -509,7 +514,8 @@ Item {
                         anchors.fill: parent
                     }
                     onTextChanged: {
-                        dataSource.update(show_i0.checked, appSettings.i0, 0, 3, 6);
+                        //dataSource.update(show_i0.checked, appSettings.i0, 0, 3, 6);
+                        updateSingleWaveform();
                     }
                 }
                 CheckBox {
@@ -526,7 +532,8 @@ Item {
                     id: show_i1
                     checked: appSettings.show_i1
                     onCheckedChanged: {
-                        dataSource.update(show_i1.checked, appSettings.i1, 1, 4, 7);
+                        //dataSource.update(show_i1.checked, appSettings.i1, 1, 4, 7);
+                        updateSingleWaveform();
                     }
                     background: Rectangle {color: scopeView.color1}
                 }
@@ -549,7 +556,8 @@ Item {
                         anchors.fill: parent
                     }
                     onTextChanged: {
-                        dataSource.update(show_i1.checked, appSettings.i1, 1, 4, 7);
+                        //dataSource.update(show_i1.checked, appSettings.i1, 1, 4, 7);
+                        updateSingleWaveform();
                     }
                 }
                 CheckBox {
@@ -566,7 +574,8 @@ Item {
                     id: show_i2
                     checked: appSettings.show_i2
                     onCheckedChanged: {
-                        dataSource.update(show_i2.checked, appSettings.i2, 2, 5, 8);
+                        //dataSource.update(show_i2.checked, appSettings.i2, 2, 5, 8);
+                        updateSingleWaveform();
                     }
                     background: Rectangle {color: scopeView.color2}
                 }
@@ -589,7 +598,8 @@ Item {
                         anchors.fill: parent
                     }
                     onTextChanged: {
-                        dataSource.update(show_i2.checked, text, 2, 5, 8);
+                        //dataSource.update(show_i2.checked, text, 2, 5, 8);
+                        updateSingleWaveform();
                     }
                 }
                 CheckBox {
@@ -752,7 +762,7 @@ Item {
                         }
                         Row {
                             id: row_selectReceiver
-                            ComboBox {
+                            /*ComboBox {
                                 id: comboBox_selectIP
                                 model: ["1", "2", "3", "4"]
                                 currentIndex: model.indexOf(dataSource.getIP())
@@ -778,7 +788,7 @@ Item {
                                     dataSource.selectRow(currentText);
                                     updateSingleWaveform();
                                 }
-                            }
+                            }*/
                             Button {
                                 id: button_selectOnCircle
                                 text: qsTr("Select...")
@@ -793,6 +803,91 @@ Item {
                                 font.pixelSize: 24
                                 color: outputTextColor
 
+                            }
+                            TextField {
+                                id: prolazPosition
+                                text: Settings.get("receiverProperties["+appSettings.currentUnitIndex+"].prolazPosition", 0)
+                                width:60
+                                selectByMouse: true
+                                ToolTip.visible: hovered
+                                ToolTip.text: qsTr("Direct signal position")
+                                MouseArea {
+                                    anchors.fill: parent
+                                    acceptedButtons: Qt.NoButton
+                                    onDoubleClicked: {
+                                        var p0max = dataSource.getMaxAt(appSettings.i0, appSettings.currentUnitIndex, 1, 0, 500);
+                                        parent.text = p0max.y;
+                                    }
+                                }
+                            }
+                            TextField {
+                                id: reflection10Position
+                                text: Settings.get("receiverProperties["+appSettings.currentUnitIndex+"].reflection10Position", 0)
+                                width:60
+                                selectByMouse: true
+                                ToolTip.visible: hovered
+                                ToolTip.text: qsTr("10cm distance position")
+                                MouseArea {
+                                    anchors.fill: parent
+                                    acceptedButtons: Qt.NoButton
+                                    onDoubleClicked: {
+                                        var p0max = dataSource.getMaxAt(appSettings.i0, appSettings.currentUnitIndex, 1, 0, 500);
+                                        parent.text = p0max.y;
+                                    }
+                                }
+                            }
+                            TextField {
+                                id: reflection20Position
+                                text: Settings.get("receiverProperties["+appSettings.currentUnitIndex+"].reflection20Position", 0)
+                                width:60
+                                selectByMouse: true
+                                ToolTip.visible: hovered
+                                ToolTip.text: qsTr("20cm distance position")
+
+                                MouseArea {
+                                    anchors.fill: parent
+                                    propagateComposedEvents: true
+                                    acceptedButtons: Qt.NoButton
+                                    onDoubleClicked: {
+                                        var p0max = dataSource.getMaxAt(appSettings.i0, appSettings.currentUnitIndex, 1, 0, 500);
+                                        parent.text = p0max.y;
+                                    }
+                                }
+                            }
+                            TextField {
+                                id: simpleLPCutoff
+                                text: Settings.get("receiverProperties["+appSettings.currentUnitIndex+"].simpleLPCutoff", 0)
+                                width:60
+                                selectByMouse: true
+                                ToolTip.visible: hovered
+                                ToolTip.text: qsTr("simple LP Cutoff")
+                            }
+                            Button {
+                                id: saveReceiverProperties
+                                text: "Save"
+                                onClicked: {
+                                    Settings.set("receiverProperties["+appSettings.currentUnitIndex+"].prolazPosition", prolazPosition.text);
+                                    Settings.set("receiverProperties["+appSettings.currentUnitIndex+"].reflection10Position", reflection10Position.text);
+                                    Settings.set("receiverProperties["+appSettings.currentUnitIndex+"].reflection20Position", reflection20Position.text);
+                                    Settings.set("receiverProperties["+appSettings.currentUnitIndex+"].simpleLPCutoff", simpleLPCutoff.text);
+
+                                }
+                                width:60
+                            }
+                            Button {
+                                id: saveReceiverProperties0
+                                text: "Save all as [0]"
+                                onClicked: {
+                                    for(var i=0; i<64; i++) {
+                                        var p0max = dataSource.getMaxAt(appSettings.i0, i, 1, 0, 500);
+                                        Settings.set("receiverProperties["+i+"].prolazPosition", p0max.y);
+                                    /*Settings.set("receiverProperties["+i+"].reflection10Position", reflection10Position.text);
+                                    Settings.set("receiverProperties["+i+"].reflection20Position", reflection20Position.text);
+                                    Settings.set("receiverProperties["+i+"].simpleLPCutoff", simpleLPCutoff.text);*/
+                                    }
+
+                                }
+                                width:60
                             }
                         }
                         StackLayout {
@@ -1151,13 +1246,13 @@ Item {
                                         }
                                     }
                                 }
+
                                 Row {
                                     Text {
                                         text: "cutoff"
                                         font.pixelSize: 17
                                     }
                                 }
-
                                 Row {
                                     id: cutoff_mainrow
 
@@ -1181,6 +1276,42 @@ Item {
                                         id: cutoff_Level
                                         enabled: cutoff_on.checked
                                         text:appSettings.cutoff_Level
+                                        width: 40
+                                        onTextChanged: {
+                                            setFilterParameters();
+                                        }
+                                    }
+                                }
+
+                                Row {
+                                    Text {
+                                        text: "cutoff0"
+                                        font.pixelSize: 17
+                                    }
+                                }
+                                Row {
+                                    id: cutoff0_mainrow
+
+                                    Text {
+                                        id: cutoff0_on_
+                                        text: "on:"
+
+                                    }
+                                    CheckBox {
+                                        id: cutoff0_on
+                                        checked: appSettings.cutoff0_on
+                                        onCheckedChanged: {
+                                            setFilterParameters();
+                                        }
+                                    }
+                                    Text {
+                                        id: cutoff0_step_
+                                        text: "level:"
+                                    }
+                                    TextField {
+                                        id: cutoff0_Level
+                                        enabled: cutoff0_on.checked
+                                        text:appSettings.cutoff0_Level
                                         width: 40
                                         onTextChanged: {
                                             setFilterParameters();
@@ -1565,12 +1696,21 @@ Item {
         setFilterParameters();
 
         dataSource.setPhysicalParameter0(appSettings.physicalParameter0);
+
+        console.log(Settings.get("test setting", 0));
+
+        Settings.set("test setting", 666);
     }
     Connections {
         target: dataSource
         onCurrentUnitIndexChanged: {
             updateSingleWaveform();
             setSingleWaveformMessageText("Receiver " + dataSource.getCurrentUnitIndex());
+
+            prolazPosition.text = Settings.get("receiverProperties["+appSettings.currentUnitIndex+"].prolazPosition", 0);
+            reflection10Position.text = Settings.get("receiverProperties["+appSettings.currentUnitIndex+"].reflection10Position", 0);
+            reflection20Position.text = Settings.get("receiverProperties["+appSettings.currentUnitIndex+"].reflection20Position", 0);
+            simpleLPCutoff.text = Settings.get("receiverProperties["+appSettings.currentUnitIndex+"].simpleLPCutoff", 0);
         }
         onFileLoaded: {
             updateSingleWaveform();
@@ -1579,8 +1719,16 @@ Item {
     Settings {
         id: appSettings
 
+        property int currentUnitIndex: 0
+
+        property var receiverProperties: []
+
+
         property alias cutoff_on: cutoff_on.checked
-        property alias cutoff_level: cutoff_Level.text
+        property alias cutoff_Level: cutoff_Level.text
+
+        property alias cutoff0_on: cutoff0_on.checked
+        property alias cutoff0_Level: cutoff0_Level.text
 
         property alias physicalParameter0: physicalParameter0.text
 
@@ -2074,9 +2222,28 @@ Item {
         textField_slider4_level.text = dataSource.getReceiverLevel(3).toFixed(0);
     }
     function updateSingleWaveform() {
-        dataSource.update(appSettings.show_i0, appSettings.i0, 0, 3, 6);
-        dataSource.update(appSettings.show_i1, appSettings.i1, 1, 4, 7);
-        dataSource.update(appSettings.show_i2, appSettings.i2, 2, 5, 8);
+        var p10 = 1.0*Settings.get("receiverProperties["+appSettings.currentUnitIndex+"].reflection10Position", 10.0);
+        var p20 = 1.0*Settings.get("receiverProperties["+appSettings.currentUnitIndex+"].reflection20Position", 20.0);
+        dataSource.update(appSettings.show_i0, appSettings.i0, 0, 3, 6, p10, p20);
+        dataSource.update(appSettings.show_i1, appSettings.i1, 1, 4, 7, p10, p20);
+        dataSource.update(appSettings.show_i2, appSettings.i2, 2, 5, 8, p10, p20);
+
+        var s0max = dataSource.getMaxAt(appSettings.i0, appSettings.currentUnitIndex, 0, 0, 500);
+        var p0max = dataSource.getMaxAt(appSettings.i0, appSettings.currentUnitIndex, 1, 0, 500);
+        var s1max = dataSource.getMaxAt(appSettings.i1, appSettings.currentUnitIndex, 0, 0, 500);
+        var p1max = dataSource.getMaxAt(appSettings.i1, appSettings.currentUnitIndex, 1, 0, 500);
+        var s2max = dataSource.getMaxAt(appSettings.i2, appSettings.currentUnitIndex, 0, 0, 500);
+        var p2max = dataSource.getMaxAt(appSettings.i2, appSettings.currentUnitIndex, 1, 0, 500);
+
+        appSettings.maxSignalLevel = s0max.x>s1max.x?s0max.x:s1max.x;
+        appSettings.maxSignalLevel = s2max.x>appSettings.maxSignalLevel?s2max.x:appSettings.maxSignalLevel;
+
+        appSettings.maxProcessedLevel = p0max.x>p1max.x?p0max.x:p1max.x;
+        appSettings.maxProcessedLevel = p2max.x>appSettings.maxProcessedLevel?p2max.x:appSettings.maxProcessedLevel;
+
+        appSettings.dN = 10.0 + 1.0*(dataSource.getMaxDistance(appSettings.i0, appSettings.currentUnitIndex) - p10)/(p20-p10)*10.0;
+        appSettings.d0 = 10.0 + 1.0*(0 - p10)/(p20-p10)*10.0;
+
     }
     function clearListElements(){
 
@@ -2122,6 +2289,7 @@ Item {
                                        bP_on.checked, bP_order.currentText, bP_fc.text, bP_Td.text, bP_deltaf.text,
                                        avg_on.checked, avg_Step.text);
         dataSource.setCutoffParameters(cutoff_on.checked, cutoff_Level.text);
+        dataSource.setCutoff0Parameters(cutoff0_on.checked, cutoff0_Level.text);
         updateSingleWaveform();
     }
     function buttonOnCircleClicked(index) {

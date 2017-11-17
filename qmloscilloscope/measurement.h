@@ -25,7 +25,8 @@ public:
     QVector<QVector<float> > *getBuffer();
     QVector<QVector<float> > *getPBuffer();
     void setBuffer(QVector<QVector<float>> *b);
-
+    void setProcessed(int e, bool v);
+    bool getProcessed(int e);
     int getSize();
 
     QString getValue();
@@ -33,6 +34,7 @@ signals:
 
 public slots:
 private:
+    QVector<bool> m_processed;
     int size {371101};
     QDateTime timestmp;
     QVector<QVector<float>> *buffer {nullptr};

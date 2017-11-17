@@ -5,5 +5,6 @@
         <file>qml/qmloscilloscope/ScopeView.qml</file>
         <file>qml/qmloscilloscope/MultiButton.qml</file>
         <file>qml/qmloscilloscope/STReceiverWidget.qml</file>
+        <file>qml/qmloscilloscope/settings.js</file>
     </qresource>
 </RCC>

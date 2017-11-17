@@ -120,7 +120,9 @@ public slots:
     Q_INVOKABLE int getCurrentUnitIndex();
 
     void readData(int buffer_part, QByteArray *buffer, QHostAddress sender);
-    Q_INVOKABLE void update(bool show, int r, int i_max, int i_slice, int i_proc);
+    Q_INVOKABLE void update(bool show, int r, int i_max, int i_slice, int i_proc, int d1=10, int d2=20);
+    Q_INVOKABLE int getMaxDistance(int measurementIndex, int receiverIndex);
+
     void updateAllWaveforms(QAbstractSeries *m_series, int set);
     void updateAllWaveforms();
     void updateDistances(QAbstractSeries *m_series, int i, int set);
@@ -212,8 +214,15 @@ public slots:
     Q_INVOKABLE void setPhysicalParameter0(QString val);
     Q_INVOKABLE QString getPhysicalParameter0();
 
-    Q_INVOKABLE void setCutoffParameters(bool m_cutoffOn, double m_cutoffLevel);
+    Q_INVOKABLE void setCutoffParameters(bool cutoffOn, double cutoffLevel);
+     Q_INVOKABLE void setCutoff0Parameters(bool cutoffOn, double cutoffLevel);
+
+    Q_INVOKABLE QPointF getMaxAt(int measurementIndex, int receiverIndex, int setIndex, int dStart, int dEnd);
+   //Q_INVOKABLE int getMaxIndexAt(int measurementIndex, int receiverIndex, int setIndex, int dStart, int dEnd);
 private:
+    bool m_cutoff0On;
+    double m_cutoff0Level;
+
     bool m_cutoffOn;
     double m_cutoffLevel;
 
@@ -369,6 +378,7 @@ private:
     static void MakeLPButterworthFilter(vectorc& H, double m_Td, double m_fc, unsigned short m_ford);
     static void Make_BP_ButterworthFilter(vectorc& H, double m_fc, double m_deltaf, unsigned short m_ford, double m_Td);
     static void MakeSimpleCutoffFilter(vectorc& H, double cutoff);
+    static void MakeSimpleCutoff0Filter(vectorc& H, double cutoff0);
     void cfft(vectorc& a);
     void icfft(vectorc& a);
 
