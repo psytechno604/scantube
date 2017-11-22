@@ -73,6 +73,7 @@ int main(int argc, char *argv[])
 {
     //auto m = new Measurement();
 
+
     qDebug() << QThread::currentThreadId();
 
     AddressProvider::initAll();
@@ -81,6 +82,7 @@ int main(int argc, char *argv[])
 
     // Qt Charts uses Qt Graphics View Framework for drawing, therefore QApplication must be used.
     QApplication app(argc, argv);
+
     app.setOrganizationName("KaTech");
     app.setOrganizationDomain("KaTech.ru");
     app.setApplicationName("ScanTube");
@@ -139,6 +141,8 @@ int main(int argc, char *argv[])
     viewer.setResizeMode(QQuickView::SizeRootObjectToView);
     viewer.setColor(QColor("#404040"));
 
+    //viewer.
+
     QObject::connect((QObject *)viewer.rootObject(), SIGNAL(textChanged(QString)), &dataSource, SLOT(textChanged(QString)));
 
     viewer.show();
@@ -150,6 +154,9 @@ int main(int argc, char *argv[])
     networkThread->start();*/
 
     QMetaObject::invokeMethod((QObject*)viewer.rootObject(), "setFilterValues");
+
+
+    qDebug() << viewer.engine()->offlineStoragePath();
 
     auto ret = app.exec();
     _intercom->off();    

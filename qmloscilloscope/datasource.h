@@ -131,7 +131,7 @@ public slots:
 
     void initCorrelationParameters(float  sigTau, float Fdskr);
 
-    void processSignal(QVector <double> &in, QVector <double> &out);
+    void processSignal(QVector <double> &in, QVector <double> &out, int index);
     void processSignal(Measurement *m);
     void processSignal(Measurement *m, int e);
     void processSignal();
@@ -169,6 +169,7 @@ public slots:
     Q_INVOKABLE void setAllWaveformsSeries(QAbstractSeries *m_series, int set);
     Q_INVOKABLE void setSeries(QAbstractSeries *m_series, int i);
     Q_INVOKABLE void setDistanceSeries(QAbstractSeries *m_series, int i);
+    Q_INVOKABLE void setSignificanceSeries(QAbstractSeries *m_series, int i);
 
     Q_INVOKABLE double getScanValue(QVector<float> *data, QVector<float> *data0, int i, bool m_useAbsoluteValues);
 
@@ -197,6 +198,8 @@ public slots:
     Q_INVOKABLE void collapseMMAndHistory(int block_size);
 
     Q_INVOKABLE void copyHistoryToClipboard(int e_start, int e_end, int r_start, int r_end);
+    Q_INVOKABLE void copyTextToClipboard(QString txt);
+
     Q_INVOKABLE void setWriteHistory(bool wh);
 
     Q_INVOKABLE void copyToSharedMemory();
@@ -217,14 +220,27 @@ public slots:
     Q_INVOKABLE void setCutoffParameters(bool cutoffOn, double cutoffLevel);
      Q_INVOKABLE void setCutoff0Parameters(bool cutoffOn, double cutoffLevel);
 
+    Q_INVOKABLE void setCutoffParameters(bool cutoffOn, double cutoffLevel, int index);
+    Q_INVOKABLE void setCutoff0Parameters(bool cutoffOn, double cutoffLevel, int index);
+
     Q_INVOKABLE QPointF getMaxAt(int measurementIndex, int receiverIndex, int setIndex, int dStart, int dEnd);
    //Q_INVOKABLE int getMaxIndexAt(int measurementIndex, int receiverIndex, int setIndex, int dStart, int dEnd);
+
+    Q_INVOKABLE void updateSignificance(double step, int measurementIndex, int receiverIndex, int setIndex, int dStart, int dEnd);
+
+    Q_INVOKABLE double getSignificance1(QPointF maximum, double x, int measurementIndex, int receiverIndex, int dStart, int dEnd);
 private:
+    double getSignificance(QPointF maximum, double x, QVector<QVector<float>> *b, int receiverIndex, int dStart, int dEnd);
+
     bool m_cutoff0On;
     double m_cutoff0Level;
+    QVector<bool> m_cutoff0Ons;
+    QVector<double> m_cutoff0Levels;
 
     bool m_cutoffOn;
     double m_cutoffLevel;
+    QVector<bool> m_cutoffOns;
+    QVector<double> m_cutoffLevels;
 
     QString m_physicalParameter0;
 
@@ -272,6 +288,7 @@ private:
     QVector<QAbstractSeries *> m_series;
     QVector<QAbstractSeries *> m_distanceSeries;
     QVector<QAbstractSeries *> m_allWaveformsSeries;
+    QVector<QAbstractSeries *> m_significanceSeries;
 
     QVector<float> m_receiverLevels;
 

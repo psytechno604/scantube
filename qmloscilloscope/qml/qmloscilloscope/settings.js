@@ -1,7 +1,7 @@
 
 
 function getDatabase() {
-     return LocalStorage.openDatabaseSync("appname", "0.1", "SettingsDatabase", 100);
+     return LocalStorage.openDatabaseSync("appname", "0.1", "SettingsDatabase", 100);    
 }
 
 function set(setting, value) {

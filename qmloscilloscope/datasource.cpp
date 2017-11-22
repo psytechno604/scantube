@@ -65,6 +65,8 @@ DataSource::DataSource(QQuickView *appViewer, QObject *parent) :
     m_allWaveformsSeries.resize(2);
     m_distanceSeries.resize(6);
 
+    m_significanceSeries.resize(1);
+
     if (!_object)
         _object = m_appViewer->rootObject();
 
@@ -86,6 +88,12 @@ DataSource::DataSource(QQuickView *appViewer, QObject *parent) :
     }
 
     //emit changeText("button clicked");
+
+    m_cutoff0Levels.resize(_nChannels);
+    m_cutoffLevels.resize(_nChannels);
+
+    m_cutoffOns.resize(_nChannels);
+    m_cutoff0Ons.resize(_nChannels);
 
     m_scanData.resize(_nChannels);
     m_scanData.fill(QVector<float>(_scanBufferSize));
@@ -211,6 +219,9 @@ int DataSource::getMaxDistance(int measurementIndex, int receiverIndex)
         if (b->length()>receiverIndex) {
             ret = (*b)[receiverIndex].length();
         }
+    }
+    else {
+        ret = _scanBufferSize;
     }
     return ret;
 }
@@ -463,6 +474,22 @@ void DataSource::copyHistoryToClipboard(int e_start, int e_end, int r_start, int
     QApplication::clipboard()->setMimeData(m_mimeData);
 }
 
+void DataSource::copyTextToClipboard(QString txt)
+{
+    if (m_mimeData)   {
+        try {
+            delete m_mimeData;
+        }
+        catch (...) {
+            qDebug() << "unable to delete m_mimeData";
+        }
+    }
+    m_mimeData = new QMimeData();
+
+    m_mimeData->setData("csv", txt.toUtf8());
+    QApplication::clipboard()->setMimeData(m_mimeData);
+}
+
 void DataSource::setWriteHistory(bool wh)
 {
     m_writeHistory = wh;
@@ -549,6 +576,18 @@ void DataSource::setCutoff0Parameters(bool cutoffOn, double cutoffLevel)
     m_cutoff0Level = cutoffLevel;
 }
 
+void DataSource::setCutoffParameters(bool cutoffOn, double cutoffLevel, int index)
+{
+    m_cutoffLevels[index] = cutoffLevel;
+    m_cutoffOns[index] = cutoffOn;
+}
+
+void DataSource::setCutoff0Parameters(bool cutoffOn, double cutoffLevel, int index)
+{
+    m_cutoff0Levels[index] = cutoffLevel;
+    m_cutoff0Ons[index] = cutoffOn;
+}
+
 QPointF DataSource::getMaxAt(int measurementIndex, int receiverIndex, int setIndex, int dStart, int dEnd)
 {
     QPointF ret(-DBL_MAX, -1);
@@ -562,9 +601,9 @@ QPointF DataSource::getMaxAt(int measurementIndex, int receiverIndex, int setInd
                 if (b->length()>receiverIndex) {
                     for (int d=dStart; d<=dEnd && d<(*b)[receiverIndex].length(); d++)  {
 
-                        if(theValue((*b)[receiverIndex][d], receiverIndex, d)>ret.x()) {
-                            ret.setX(theValue((*b)[receiverIndex][d], receiverIndex, d));
-                            ret.setY(d);
+                        if(theValue((*b)[receiverIndex][d], receiverIndex, d)>ret.y()) {
+                            ret.setY(theValue((*b)[receiverIndex][d], receiverIndex, d));
+                            ret.setX(d);
                         }
                     }
                 }
@@ -580,9 +619,9 @@ QPointF DataSource::getMaxAt(int measurementIndex, int receiverIndex, int setInd
                 if (b->length()>receiverIndex) {
                     for (int d=dStart; d<=dEnd && d<(*b)[receiverIndex].length(); d++)  {
 
-                        if((*b)[receiverIndex][d]>ret.x()) {
-                            ret.setX((*b)[receiverIndex][d]);
-                            ret.setY(d);
+                        if((*b)[receiverIndex][d]>ret.y()) {
+                            ret.setY((*b)[receiverIndex][d]);
+                            ret.setX(d);
                         }
                     }
                 }
@@ -590,7 +629,60 @@ QPointF DataSource::getMaxAt(int measurementIndex, int receiverIndex, int setInd
         }
 
     }
+    else {
+        ret.setY(1000);
+        ret.setX(0);
+    }
     return ret;
+}
+
+void DataSource::updateSignificance(double step, int measurementIndex, int receiverIndex, int setIndex, int dStart, int dEnd)
+{
+    if (step > 0 && step < 1)   {
+        auto seriesIndex = 0;
+        auto m = m_measurementModel->get(measurementIndex);
+        if (m)  {
+            auto b = m->getPBuffer();
+            if (b && b->length()>receiverIndex) {
+                auto s = static_cast<QLineSeries *>(m_significanceSeries[seriesIndex]);
+                if (s)  {
+                    QVector<QPointF> points;
+                    QPointF maximum = getMaxAt(measurementIndex, receiverIndex, setIndex, dStart, dEnd);
+                    for (double x=0; x<=1; x+=step) {
+                        points.append(QPointF(x, getSignificance(maximum, x, b, receiverIndex, dStart, dEnd)));
+                    }
+                    s->replace(points);
+                }
+            }
+        }
+    }
+}
+
+double DataSource::getSignificance1(QPointF maximum, double x, int measurementIndex, int receiverIndex, int dStart, int dEnd)
+{
+    auto m = m_measurementModel->get(measurementIndex);
+    if (m)  {
+        auto b = m->getPBuffer();
+        if (b) {
+            return getSignificance(maximum, x, b, receiverIndex, dStart, dEnd);
+        }
+    }
+    return 0;
+}
+
+double DataSource::getSignificance(QPointF maximum, double x, QVector<QVector<float>> *b, int receiverIndex, int dStart, int dEnd)
+{
+    double ret = 0.0;
+    if (b && (*b).length()>receiverIndex && dStart<dEnd && dStart>=0 && dEnd<(*b)[receiverIndex].length())   {
+        for (int i = dStart; i < dEnd; i++) {
+            //if (theValue((*b)[receiverIndex][i], receiverIndex, i) > maximum.y() * x) {
+            if ((*b)[receiverIndex][i] > maximum.y() * x) {
+                ret ++;
+            }
+        }
+        ret = ret / (dEnd - dStart);
+    }
+    return 1.0 - ret;
 }
 
 void DataSource::calcCorrelationFunc(QVector <double> &in, QVector <double> &out, float *corrfunct, int n__corr, int numsmpl)
@@ -638,7 +730,7 @@ bool DataSource::IsPowerOfTwo(ulong x)
 {
     return (x != 0) && ((x & (x - 1)) == 0);
 }
-void DataSource::processSignal(QVector <double> &in, QVector <double> &out)
+void DataSource::processSignal(QVector <double> &in, QVector <double> &out, int index)
 {
     int i,j,x;
 
@@ -672,8 +764,8 @@ void DataSource::processSignal(QVector <double> &in, QVector <double> &out)
             j++;
         }
     }
-    if (m_cutoff0On) {
-        MakeSimpleCutoff0Filter(H, m_cutoff0Level);
+    if (m_cutoff0Ons[index]) {
+        MakeSimpleCutoff0Filter(H, m_cutoff0Levels[index]);
         for(j=0;j<ndaln2;j++) dblbubl[j]=complexd(0,0);
         for(j=0;j<in.length();j++) dblbubl[j] = complexd( out[j],0 );
 
@@ -686,8 +778,8 @@ void DataSource::processSignal(QVector <double> &in, QVector <double> &out)
             if(x<in.length()) out[x] = 1 * dblbubl[x].real();
         }
     }
-    if (m_cutoffOn) {
-        MakeSimpleCutoffFilter(H, m_cutoffLevel);
+    if (m_cutoffOns[index]) {
+        MakeSimpleCutoffFilter(H, m_cutoffLevels[index]);
         for(j=0;j<ndaln2;j++) dblbubl[j]=complexd(0,0);
         for(j=0;j<in.length();j++) dblbubl[j] = complexd( out[j],0 );
 
@@ -786,7 +878,7 @@ void DataSource::processSignal(Measurement *m)
             in.push_back(theValue((*b)[e][d], e, d));
         }
         QVector<double> out;
-        processSignal(in, out);
+        processSignal(in, out, e);
 
         for (auto d=0; d<out.length(); d++)  {
             (*pb)[e][d] = out[d];
@@ -813,7 +905,7 @@ void DataSource::processSignal(Measurement *m, int e)
         in.push_back(theValue((*b)[e][d], e, d));
     }
     QVector<double> out;
-    processSignal(in, out);
+    processSignal(in, out, e);
 
     for (auto d=0; d<out.length(); d++)  {
         (*pb)[e][d] = out[d];
@@ -1251,6 +1343,11 @@ void DataSource::setSeries(QAbstractSeries *series, int i)
 void DataSource::setDistanceSeries(QAbstractSeries *series, int i)
 {
     this->m_distanceSeries[i] = series;
+}
+
+void DataSource::setSignificanceSeries(QAbstractSeries *m_series, int i)
+{
+    this->m_significanceSeries[i] = m_series;
 }
 
 double DataSource::getScanValue(QVector<float> *data, QVector<float> *data0, int i, bool use_abs)

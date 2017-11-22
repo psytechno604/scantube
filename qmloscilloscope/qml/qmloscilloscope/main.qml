@@ -35,7 +35,7 @@ import QtQuick.Controls 2.2
 
 import QtQuick.Layouts 1.3
 
-import QtCharts 2.2
+import QtCharts 2.1
 import QtDataVisualization 1.2
 
 import Qt3D.Core 2.0
@@ -50,6 +50,9 @@ import Qt.labs.settings 1.0
 
 import QtQuick.LocalStorage 2.0
 import "settings.js" as Settings
+
+import Qt.labs.platform 1.0
+
 
 Item {
     id: main
@@ -66,6 +69,8 @@ Item {
     signal textChanged(string msg);
 
     property real maxFor_i0: appSettings.maxSignalLevel
+
+    property int nchannels;
 
     z:-1
 
@@ -440,15 +445,15 @@ Item {
                     }
                 }
                 Button {
-                    id: button_copyAllToClipboard
+                    id: button_copyControlValues
                     width: parent.width /3
                     height: 40
-                    text: qsTr("Copy all")
+                    text: qsTr("Copy control values")
                     checkable: false
                     checked: false
                     font.pointSize: 8
                     onClicked: {
-                        dataSource.copyHistoryToClipboard(0, dataSource.getNChannels()-1, 0, listViewMeasurements.model.rowCount()-1);
+                        copyControlValues();
                     }
                 }
 
@@ -751,7 +756,7 @@ Item {
                                 text: qsTr("All waveforms")
                             }
                             TabButton {
-                                text: qsTr("Distances diagram")
+                                text: qsTr("Significance")
                             }
                             TabButton {
                                 text: qsTr("Timeline 3D")
@@ -762,33 +767,7 @@ Item {
                         }
                         Row {
                             id: row_selectReceiver
-                            /*ComboBox {
-                                id: comboBox_selectIP
-                                model: ["1", "2", "3", "4"]
-                                currentIndex: model.indexOf(dataSource.getIP())
-                                onActivated: {
-                                    dataSource.selectIP(currentText);
-                                    updateSingleWaveform();
-                                }
-                            }
-                            ComboBox {
-                                id: comboBox_selectEmitter
-                                model: ["0", "1", "2", "3", "4", "5", "6", "7"]
-                                currentIndex: model.indexOf(dataSource.getEmitter())
-                                onActivated: {
-                                    dataSource.selectEmitter(currentText);
-                                    updateSingleWaveform();
-                                }
-                            }
-                            ComboBox {
-                                id: comboBox_selectRow
-                                model: ["0", "1"]
-                                currentIndex: model.indexOf(dataSource.getRow())
-                                onActivated: {
-                                    dataSource.selectRow(currentText);
-                                    updateSingleWaveform();
-                                }
-                            }*/
+
                             Button {
                                 id: button_selectOnCircle
                                 text: qsTr("Select...")
@@ -804,64 +783,148 @@ Item {
                                 color: outputTextColor
 
                             }
-                            TextField {
-                                id: prolazPosition
-                                text: Settings.get("receiverProperties["+appSettings.currentUnitIndex+"].prolazPosition", 0)
-                                width:60
-                                selectByMouse: true
-                                ToolTip.visible: hovered
-                                ToolTip.text: qsTr("Direct signal position")
-                                MouseArea {
-                                    anchors.fill: parent
-                                    acceptedButtons: Qt.NoButton
-                                    onDoubleClicked: {
+                            Column {
+                                TextField {
+                                    id: prolazPosition
+                                    text: Settings.get("receiverProperties["+appSettings.currentUnitIndex+"].prolazPosition", 0)
+                                    width:60
+                                    selectByMouse: true
+                                    ToolTip.visible: hovered
+                                    ToolTip.text: qsTr("Direct signal position")
+                                }
+                                Button {
+                                    height: 10
+                                    width: prolazPosition.width
+                                    onClicked: {
                                         var p0max = dataSource.getMaxAt(appSettings.i0, appSettings.currentUnitIndex, 1, 0, 500);
-                                        parent.text = p0max.y;
+                                        prolazPosition.text = p0max.x;
                                     }
                                 }
                             }
-                            TextField {
-                                id: reflection10Position
-                                text: Settings.get("receiverProperties["+appSettings.currentUnitIndex+"].reflection10Position", 0)
-                                width:60
-                                selectByMouse: true
-                                ToolTip.visible: hovered
-                                ToolTip.text: qsTr("10cm distance position")
-                                MouseArea {
-                                    anchors.fill: parent
-                                    acceptedButtons: Qt.NoButton
-                                    onDoubleClicked: {
-                                        var p0max = dataSource.getMaxAt(appSettings.i0, appSettings.currentUnitIndex, 1, 0, 500);
-                                        parent.text = p0max.y;
-                                    }
-                                }
-                            }
-                            TextField {
-                                id: reflection20Position
-                                text: Settings.get("receiverProperties["+appSettings.currentUnitIndex+"].reflection20Position", 0)
-                                width:60
-                                selectByMouse: true
-                                ToolTip.visible: hovered
-                                ToolTip.text: qsTr("20cm distance position")
+                            Column {
+                                TextField {
+                                    id: reflection10Position
+                                    text: Settings.get("receiverProperties["+appSettings.currentUnitIndex+"].reflection10Position", 0)
+                                    width:60
+                                    selectByMouse: true
+                                    ToolTip.visible: hovered
+                                    ToolTip.text: qsTr("10cm distance position")
 
-                                MouseArea {
-                                    anchors.fill: parent
-                                    propagateComposedEvents: true
-                                    acceptedButtons: Qt.NoButton
-                                    onDoubleClicked: {
+                                }
+                                Button {
+                                    height: 10
+                                    width: reflection10Position.width
+                                    onClicked: {
                                         var p0max = dataSource.getMaxAt(appSettings.i0, appSettings.currentUnitIndex, 1, 0, 500);
-                                        parent.text = p0max.y;
+                                        reflection10Position.text = p0max.x;
                                     }
                                 }
                             }
-                            TextField {
-                                id: simpleLPCutoff
-                                text: Settings.get("receiverProperties["+appSettings.currentUnitIndex+"].simpleLPCutoff", 0)
-                                width:60
-                                selectByMouse: true
-                                ToolTip.visible: hovered
-                                ToolTip.text: qsTr("simple LP Cutoff")
+                            Column {
+                                TextField {
+                                    id: reflection20Position
+                                    text: Settings.get("receiverProperties["+appSettings.currentUnitIndex+"].reflection20Position", 0)
+                                    width:60
+                                    selectByMouse: true
+                                    ToolTip.visible: hovered
+                                    ToolTip.text: qsTr("20cm distance position")
+
+                                }
+                                Button {
+                                    height: 10
+                                    width: reflection20Position.width
+                                    onClicked: {
+                                        var p0max = dataSource.getMaxAt(appSettings.i0, appSettings.currentUnitIndex, 1, 0, 500);
+                                        reflection20Position.text = p0max.x;
+                                    }
+                                }
                             }
+                            Column {
+                                CheckBox {
+                                    id: simpleLPCutoffOn
+                                    width:60
+                                    ToolTip.visible: hovered
+                                    ToolTip.text: qsTr("simple LP Cutoff ON/OFF")
+                                    onCheckedChanged: {
+                                        dataSource.setCutoffParameters(simpleLPCutoffOn.checked, simpleLPCutoff.text, appSettings.currentUnitIndex);
+                                    }
+                                }
+                                Button {
+                                    height: 10
+                                    width: simpleLPCutoffOn.width
+                                    onClicked: {
+                                        simpleLPCutoffOn.checked = cutoff_on.checked;
+                                    }
+                                }
+                            }
+                            Column {
+                                enabled: simpleLPCutoffOn.checked
+                                TextField {
+                                    id: simpleLPCutoff
+                                    text: Settings.get("receiverProperties["+appSettings.currentUnitIndex+"].simpleLPCutoff", "")
+                                    width:60
+                                    selectByMouse: true
+                                    ToolTip.visible: hovered
+                                    ToolTip.text: qsTr("simple LP Cutoff")
+                                    onTextChanged: {
+                                        dataSource.setCutoffParameters(simpleLPCutoffOn.checked, simpleLPCutoff.text, appSettings.currentUnitIndex);
+                                    }
+                                }
+                                Button {
+                                    height: 10
+                                    width: simpleLPCutoff.width
+                                    onClicked: {
+                                        simpleLPCutoff.text = cutoff_Level.text;
+                                    }
+                                }
+                            }
+                            Column {
+                                CheckBox {
+                                    id: simpleLPCutoff0On
+                                    width:60
+                                    ToolTip.visible: hovered
+                                    ToolTip.text: qsTr("simple LP Cutoff0 ON/OFF")
+                                    onCheckedChanged: {
+                                        dataSource.setCutoff0Parameters(simpleLPCutoff0On.checked, simpleLPCutoff0.text, appSettings.currentUnitIndex);
+                                    }
+                                }
+                                Button {
+                                    height: 10
+                                    width: simpleLPCutoff0On.width
+                                    onClicked: {
+                                        simpleLPCutoff0On.checked = cutoff0_on.checked;
+                                    }
+                                }
+                            }
+                            Column {
+                                enabled: simpleLPCutoff0On.checked
+                                TextField {
+                                    id: simpleLPCutoff0
+                                    text: Settings.get("receiverProperties["+appSettings.currentUnitIndex+"].simpleLPCutoff0", "")
+                                    width:60
+                                    selectByMouse: true
+                                    ToolTip.visible: hovered
+                                    ToolTip.text: qsTr("simple LP Cutoff0")
+                                    onTextChanged: {
+                                        dataSource.setCutoff0Parameters(simpleLPCutoff0On.checked, simpleLPCutoff0.text, appSettings.currentUnitIndex);
+                                    }
+                                }
+                                Button {
+                                    height: 10
+                                    width: simpleLPCutoff0.width
+                                    onClicked: {
+                                        simpleLPCutoff0.text = cutoff0_Level.text;
+                                    }
+                                }
+                            }
+                            CheckBox {
+                                id: useCentimeters
+                                checked: appSettings.useCentimeters
+                                onCheckedChanged: {
+                                    updateSingleWaveform();
+                                }
+                            }
+
                             Button {
                                 id: saveReceiverProperties
                                 text: "Save"
@@ -869,8 +932,10 @@ Item {
                                     Settings.set("receiverProperties["+appSettings.currentUnitIndex+"].prolazPosition", prolazPosition.text);
                                     Settings.set("receiverProperties["+appSettings.currentUnitIndex+"].reflection10Position", reflection10Position.text);
                                     Settings.set("receiverProperties["+appSettings.currentUnitIndex+"].reflection20Position", reflection20Position.text);
+                                    Settings.set("receiverProperties["+appSettings.currentUnitIndex+"].simpleLPCutoff0On", simpleLPCutoff0On.checked);
+                                    Settings.set("receiverProperties["+appSettings.currentUnitIndex+"].simpleLPCutoff0", simpleLPCutoff0.text);
+                                    Settings.set("receiverProperties["+appSettings.currentUnitIndex+"].simpleLPCutoffOn", simpleLPCutoffOn.checked);
                                     Settings.set("receiverProperties["+appSettings.currentUnitIndex+"].simpleLPCutoff", simpleLPCutoff.text);
-
                                 }
                                 width:60
                             }
@@ -878,16 +943,26 @@ Item {
                                 id: saveReceiverProperties0
                                 text: "Save all as [0]"
                                 onClicked: {
-                                    for(var i=0; i<64; i++) {
-                                        var p0max = dataSource.getMaxAt(appSettings.i0, i, 1, 0, 500);
-                                        Settings.set("receiverProperties["+i+"].prolazPosition", p0max.y);
-                                    /*Settings.set("receiverProperties["+i+"].reflection10Position", reflection10Position.text);
-                                    Settings.set("receiverProperties["+i+"].reflection20Position", reflection20Position.text);
-                                    Settings.set("receiverProperties["+i+"].simpleLPCutoff", simpleLPCutoff.text);*/
-                                    }
-
+                                    msgDialog_saveReceiverProperties0.visible = true;
                                 }
                                 width:60
+                            }
+                            MessageDialog {
+                                id: msgDialog_saveReceiverProperties0
+                                title: "Dangerous operation"
+                                buttons: MessageDialog.Ok | MessageDialog.Cancel
+                                text: "Are you sure to set all direct signals positions automatically?"
+
+                                onOkClicked: {
+                                    console.log("ok");
+                                    for(var i=0; i<64; i++) {
+                                        var p0max = dataSource.getMaxAt(appSettings.i0, i, 1, 0, 500);
+                                        Settings.set("receiverProperties["+i+"].prolazPosition", p0max.x);
+                                    }
+                                }
+                                onCancelClicked: {
+                                    console.log("cancel");
+                                }
                             }
                         }
                         StackLayout {
@@ -1098,9 +1173,34 @@ Item {
                                 id: distances_diagram
                                 width: parent.width
                                 height: parent.height
-                                Row {
+                                Column {
                                     width: parent.width
                                     height: parent.height
+                                    Row {
+                                        width: parent.width
+                                        height: parent.height
+                                        ChartView {
+                                            width: parent.width
+                                            height: parent.height//-40
+                                            id: significanceChart
+                                            ValueAxis {
+                                                id: significance_axisX
+                                                min: 0
+                                                max: 1
+                                            }
+                                            ValueAxis {
+                                                id: significance_axisY
+                                                min: 0
+                                                max: 1
+                                            }
+                                            LineSeries {
+                                                id: significanceLineSeries;
+                                                name: "Significance of measurement " + appSettings.i0 + ", current unit index =" + appSettings.currentUnitIndex
+                                                axisX: significance_axisX
+                                                axisY: significance_axisY
+                                            }
+                                        }
+                                    }
 
                                 }
                             }
@@ -1540,7 +1640,28 @@ Item {
 
                     }
                     Item {
+                        Row {
+                            width: parent.width
+                            height: 40
+                            TextField {
+                                id: significanceChartStep
+                                text: appSettings.significanceChartStep
+                            }
 
+                            Button {
+                                id: significance_Button
+                                text: "Refresh"
+                                onClicked: {
+                                    dataSource.updateSignificance(appSettings.significanceChartStep,
+                                                                  appSettings.i0,
+                                                                  appSettings.currentUnitIndex,
+                                                                  1,
+                                                                  0,
+                                                                  500);
+                                }
+                            }
+
+                        }
                     }
                     Item {
                         Button {
@@ -1663,6 +1784,8 @@ Item {
             }
         }
     }
+
+
     FileDialog {
         id: fileDialog
         title: "Please choose a file"
@@ -1670,9 +1793,9 @@ Item {
         onAccepted: {
             //C:\Users\RazumovSA\Source\Repos\ScanTube\qmloscilloscope
 
-            console.log("You chose: " + fileDialog.fileUrl)
+            console.log("You chose: " + fileDialog.file)
 
-            dataSource.loadHistoryFromFile(fileDialog.fileUrl.toString().replace("file:///", ""))
+            dataSource.loadHistoryFromFile(fileDialog.file.toString().replace("file:///", ""))
             //Qt.quit()
         }
         onRejected: {
@@ -1700,6 +1823,15 @@ Item {
         console.log(Settings.get("test setting", 0));
 
         Settings.set("test setting", 666);
+
+        dataSource.setCurrentUnitIndex(appSettings.currentUnitIndex);
+        console.log("current unit index=" + appSettings.currentUnitIndex);
+
+        dataSource.setSignificanceSeries(significanceLineSeries, 0);
+
+        nchannels = dataSource.getNChannels();
+
+        setCutoffParameters();
     }
     Connections {
         target: dataSource
@@ -1707,10 +1839,15 @@ Item {
             updateSingleWaveform();
             setSingleWaveformMessageText("Receiver " + dataSource.getCurrentUnitIndex());
 
-            prolazPosition.text = Settings.get("receiverProperties["+appSettings.currentUnitIndex+"].prolazPosition", 0);
-            reflection10Position.text = Settings.get("receiverProperties["+appSettings.currentUnitIndex+"].reflection10Position", 0);
-            reflection20Position.text = Settings.get("receiverProperties["+appSettings.currentUnitIndex+"].reflection20Position", 0);
-            simpleLPCutoff.text = Settings.get("receiverProperties["+appSettings.currentUnitIndex+"].simpleLPCutoff", 0);
+            prolazPosition.text = Settings.get("receiverProperties["+appSettings.currentUnitIndex+"].prolazPosition", "");
+            reflection10Position.text = Settings.get("receiverProperties["+appSettings.currentUnitIndex+"].reflection10Position", "");
+            reflection20Position.text = Settings.get("receiverProperties["+appSettings.currentUnitIndex+"].reflection20Position", "");
+
+            simpleLPCutoffOn.checked = Settings.get("receiverProperties["+appSettings.currentUnitIndex+"].simpleLPCutoffOn", false);
+            simpleLPCutoff.text = Settings.get("receiverProperties["+appSettings.currentUnitIndex+"].simpleLPCutoff", "");
+
+            simpleLPCutoff0On.checked = Settings.get("receiverProperties["+appSettings.currentUnitIndex+"].simpleLPCutoff0On", false);
+            simpleLPCutoff0.text = Settings.get("receiverProperties["+appSettings.currentUnitIndex+"].simpleLPCutoff0", "");
         }
         onFileLoaded: {
             updateSingleWaveform();
@@ -1718,6 +1855,8 @@ Item {
     }
     Settings {
         id: appSettings
+        property alias significanceChartStep: significanceChartStep.text
+        property alias useCentimeters: useCentimeters.checked
 
         property int currentUnitIndex: 0
 
@@ -2203,6 +2342,41 @@ Item {
             }
         }
     }
+    function copyControlValues() {
+        var str = "ID,cutoff0_on,cutoff0,cutoff_on,cutoff,prolaz,p10,p20,max level,significance 0.25,significance 0.5,significance 0.75,max orig level\n";
+        for (var i=0; i<nchannels; i++) {
+            var prolaz = Settings.get("receiverProperties["+i+"].prolazPosition", "");
+            var p10 = Settings.get("receiverProperties["+i+"].reflection10Position", "");
+            var p20 = Settings.get("receiverProperties["+i+"].reflection20Position", "");
+
+            var cutoff_on = Settings.get("receiverProperties["+i+"].simpleLPCutoffOn", false);
+            var cutoff = Settings.get("receiverProperties["+i+"].simpleLPCutoff", "");
+
+            var cutoff0_on = Settings.get("receiverProperties["+i+"].simpleLPCutoff0On", false);
+            var cutoff0 = Settings.get("receiverProperties["+i+"].simpleLPCutoff0", "");
+
+            var s0max = dataSource.getMaxAt(appSettings.i0, i, 0, 0, 500);
+            var p0max = dataSource.getMaxAt(appSettings.i0, i, 1, 0, 500);
+
+            var s025 = dataSource.getSignificance1(p0max, 0.25, appSettings.i0, i, 0, 500);
+            var s050 = dataSource.getSignificance1(p0max, 0.5, appSettings.i0, i, 0, 500);
+            var s075 = dataSource.getSignificance1(p0max, 0.75, appSettings.i0, i, 0, 500);
+
+            str = str + i + ","+cutoff0_on+","+cutoff0+","+cutoff_on+","+cutoff+","+prolaz+","+p10+","+p20+","+p0max.y+","+s025+","+s050+","+s075+","+s0max.y+"\n";
+        }
+
+        dataSource.copyTextToClipboard(str);
+    }
+
+    function setCutoffParameters()  {
+        for (var i=0; i<nchannels; i++) {
+            var val = Settings.get("receiverProperties["+i+"].simpleLPCutoff", "");
+            dataSource.setCutoffParameters(true, val, i);
+            val = Settings.get("receiverProperties["+i+"].simpleLPCutoff0", "");
+            dataSource.setCutoff0Parameters(true, val, i);
+        }
+    }
+
     function updateSurface3D ()     {
         dataSource.updateSurface3D(surfaceSeries);
     }
@@ -2222,11 +2396,8 @@ Item {
         textField_slider4_level.text = dataSource.getReceiverLevel(3).toFixed(0);
     }
     function updateSingleWaveform() {
-        var p10 = 1.0*Settings.get("receiverProperties["+appSettings.currentUnitIndex+"].reflection10Position", 10.0);
-        var p20 = 1.0*Settings.get("receiverProperties["+appSettings.currentUnitIndex+"].reflection20Position", 20.0);
-        dataSource.update(appSettings.show_i0, appSettings.i0, 0, 3, 6, p10, p20);
-        dataSource.update(appSettings.show_i1, appSettings.i1, 1, 4, 7, p10, p20);
-        dataSource.update(appSettings.show_i2, appSettings.i2, 2, 5, 8, p10, p20);
+
+
 
         var s0max = dataSource.getMaxAt(appSettings.i0, appSettings.currentUnitIndex, 0, 0, 500);
         var p0max = dataSource.getMaxAt(appSettings.i0, appSettings.currentUnitIndex, 1, 0, 500);
@@ -2235,15 +2406,26 @@ Item {
         var s2max = dataSource.getMaxAt(appSettings.i2, appSettings.currentUnitIndex, 0, 0, 500);
         var p2max = dataSource.getMaxAt(appSettings.i2, appSettings.currentUnitIndex, 1, 0, 500);
 
-        appSettings.maxSignalLevel = s0max.x>s1max.x?s0max.x:s1max.x;
-        appSettings.maxSignalLevel = s2max.x>appSettings.maxSignalLevel?s2max.x:appSettings.maxSignalLevel;
+        appSettings.maxSignalLevel = s0max.y>s1max.y?s0max.y:s1max.y;
+        appSettings.maxSignalLevel = s2max.y>appSettings.maxSignalLevel?s2max.y:appSettings.maxSignalLevel;
 
-        appSettings.maxProcessedLevel = p0max.x>p1max.x?p0max.x:p1max.x;
-        appSettings.maxProcessedLevel = p2max.x>appSettings.maxProcessedLevel?p2max.x:appSettings.maxProcessedLevel;
+        appSettings.maxProcessedLevel = p0max.y>p1max.y?p0max.y:p1max.y;
+        appSettings.maxProcessedLevel = p2max.y>appSettings.maxProcessedLevel?p2max.y:appSettings.maxProcessedLevel;
 
+        var p10, p20;
+        if (appSettings.useCentimeters) {
+            p10 = 1.0*Settings.get("receiverProperties["+appSettings.currentUnitIndex+"].reflection10Position", 10.0);
+            p20 = 1.0*Settings.get("receiverProperties["+appSettings.currentUnitIndex+"].reflection20Position", 20.0);
+        }
+        else {
+            p10 = 10;
+            p20 = 20;
+        }
+        dataSource.update(appSettings.show_i0, appSettings.i0, 0, 3, 6, p10, p20);
+        dataSource.update(appSettings.show_i1, appSettings.i1, 1, 4, 7, p10, p20);
+        dataSource.update(appSettings.show_i2, appSettings.i2, 2, 5, 8, p10, p20);
         appSettings.dN = 10.0 + 1.0*(dataSource.getMaxDistance(appSettings.i0, appSettings.currentUnitIndex) - p10)/(p20-p10)*10.0;
         appSettings.d0 = 10.0 + 1.0*(0 - p10)/(p20-p10)*10.0;
-
     }
     function clearListElements(){
 
