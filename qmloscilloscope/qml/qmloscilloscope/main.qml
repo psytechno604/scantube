@@ -258,6 +258,7 @@ Item {
                     }
                     onTextChanged: {
                         main.textChanged("zeroIndex=" + text);
+                        updateSingleWaveform();
                     }
                 }
 
@@ -488,9 +489,7 @@ Item {
             }
 
             Row {
-                Text {
-                    text: qsTr("Slice 0")
-                }
+
                 CheckBox {
                     id: show_i0
                     checked: appSettings.show_i0
@@ -500,9 +499,7 @@ Item {
                     }
                     background: Rectangle {color: scopeView.color0}
                 }
-                Text {
-                    text: qsTr("index=")
-                }
+
                 TextField {
                     id: textField_i0
 
@@ -528,11 +525,16 @@ Item {
                     checked: appSettings.show_i0_1
                     background: Rectangle {color: scopeView.color0_1}
                 }
+                Button {
+                    text: qsTr("Fix")
+                    width: 40
+                    onClicked: {
+                        setControlValues(0, appSettings.i0);
+                    }
+                }
             }
             Row {
-                Text {
-                    text: qsTr("Slice 1")
-                }
+
                 CheckBox {
                     id: show_i1
                     checked: appSettings.show_i1
@@ -542,9 +544,7 @@ Item {
                     }
                     background: Rectangle {color: scopeView.color1}
                 }
-                Text {
-                    text: qsTr("index=")
-                }
+
                 TextField {
                     id: textField_i1
 
@@ -572,9 +572,7 @@ Item {
                 }
             }
             Row {
-                Text {
-                    text: qsTr("Slice 2")
-                }
+
                 CheckBox {
                     id: show_i2
                     checked: appSettings.show_i2
@@ -584,9 +582,7 @@ Item {
                     }
                     background: Rectangle {color: scopeView.color2}
                 }
-                Text {
-                    text: qsTr("index=")
-                }
+
                 TextField {
                     id: textField_i2
 
@@ -847,6 +843,7 @@ Item {
                                     ToolTip.text: qsTr("simple LP Cutoff ON/OFF")
                                     onCheckedChanged: {
                                         dataSource.setCutoffParameters(simpleLPCutoffOn.checked, simpleLPCutoff.text, appSettings.currentUnitIndex);
+                                        updateSingleWaveform();
                                     }
                                 }
                                 Button {
@@ -868,6 +865,7 @@ Item {
                                     ToolTip.text: qsTr("simple LP Cutoff")
                                     onTextChanged: {
                                         dataSource.setCutoffParameters(simpleLPCutoffOn.checked, simpleLPCutoff.text, appSettings.currentUnitIndex);
+                                        updateSingleWaveform();
                                     }
                                 }
                                 Button {
@@ -886,6 +884,7 @@ Item {
                                     ToolTip.text: qsTr("simple LP Cutoff0 ON/OFF")
                                     onCheckedChanged: {
                                         dataSource.setCutoff0Parameters(simpleLPCutoff0On.checked, simpleLPCutoff0.text, appSettings.currentUnitIndex);
+                                        updateSingleWaveform();
                                     }
                                 }
                                 Button {
@@ -907,6 +906,7 @@ Item {
                                     ToolTip.text: qsTr("simple LP Cutoff0")
                                     onTextChanged: {
                                         dataSource.setCutoff0Parameters(simpleLPCutoff0On.checked, simpleLPCutoff0.text, appSettings.currentUnitIndex);
+                                        updateSingleWaveform();
                                     }
                                 }
                                 Button {
@@ -1832,6 +1832,8 @@ Item {
         nchannels = dataSource.getNChannels();
 
         setCutoffParameters();
+
+
     }
     Connections {
         target: dataSource
@@ -1855,6 +1857,9 @@ Item {
     }
     Settings {
         id: appSettings
+
+        property alias maxMainControlValue: maxMainControlValue.text
+
         property alias significanceChartStep: significanceChartStep.text
         property alias useCentimeters: useCentimeters.checked
 
@@ -1948,6 +1953,11 @@ Item {
         height: 768
         visible: false
         z: 100
+        TextField {
+            id: maxMainControlValue
+            text: appSettings.maxMainControlValue
+        }
+
         Button {
             text: qsTr("X")
             width: height
@@ -1956,392 +1966,20 @@ Item {
                 parent.visible = false;
             }
         }
-
-        STReceiverWidget {
-            unitIndex: 0
-            onClicked: {
-                buttonOnCircleClicked(unitIndex)
-            }
-        }
-        STReceiverWidget {
-            unitIndex: 1
-            onClicked: {
-                buttonOnCircleClicked(unitIndex)
-            }
-        }
-        STReceiverWidget {
-            unitIndex: 2
-            onClicked: {
-                buttonOnCircleClicked(unitIndex)
-            }
-        }
-        STReceiverWidget {
-            unitIndex: 3
-            onClicked: {
-                buttonOnCircleClicked(unitIndex)
-            }
-        }
-        STReceiverWidget {
-            unitIndex: 4
-            onClicked: {
-                buttonOnCircleClicked(unitIndex)
-            }
-        }
-        STReceiverWidget {
-            unitIndex: 5
-            onClicked: {
-                buttonOnCircleClicked(unitIndex)
-            }
-        }
-        STReceiverWidget {
-            unitIndex: 6
-            onClicked: {
-                buttonOnCircleClicked(unitIndex)
-            }
-        }
-        STReceiverWidget {
-            unitIndex: 7
-            onClicked: {
-                buttonOnCircleClicked(unitIndex)
-            }
-        }
-        STReceiverWidget {
-            unitIndex: 8
-            onClicked: {
-                buttonOnCircleClicked(unitIndex)
-            }
-        }
-        STReceiverWidget {
-            unitIndex: 9
-            onClicked: {
-                buttonOnCircleClicked(unitIndex)
-            }
-        }
-        STReceiverWidget {
-            unitIndex: 10
-            onClicked: {
-                buttonOnCircleClicked(unitIndex)
-            }
-        }
-        STReceiverWidget {
-            unitIndex: 11
-            onClicked: {
-                buttonOnCircleClicked(unitIndex)
-            }
-        }
-        STReceiverWidget {
-            unitIndex: 12
-            onClicked: {
-                buttonOnCircleClicked(unitIndex)
-            }
-        }
-        STReceiverWidget {
-            unitIndex: 13
-            onClicked: {
-                buttonOnCircleClicked(unitIndex)
-            }
-        }
-        STReceiverWidget {
-            unitIndex: 14
-            onClicked: {
-                buttonOnCircleClicked(unitIndex)
-            }
-        }
-        STReceiverWidget {
-            unitIndex: 15
-            onClicked: {
-                buttonOnCircleClicked(unitIndex)
-            }
-        }
-        STReceiverWidget {
-            unitIndex: 16
-            onClicked: {
-                buttonOnCircleClicked(unitIndex)
-            }
-        }
-        STReceiverWidget {
-            unitIndex: 17
-            onClicked: {
-                buttonOnCircleClicked(unitIndex)
-            }
-        }
-        STReceiverWidget {
-            unitIndex: 18
-            onClicked: {
-                buttonOnCircleClicked(unitIndex)
-            }
-        }
-        STReceiverWidget {
-            unitIndex: 19
-            onClicked: {
-                buttonOnCircleClicked(unitIndex)
-            }
-        }
-        STReceiverWidget {
-            unitIndex: 20
-            onClicked: {
-                buttonOnCircleClicked(unitIndex)
-            }
-        }
-        STReceiverWidget {
-            unitIndex: 21
-            onClicked: {
-                buttonOnCircleClicked(unitIndex)
-            }
-        }
-        STReceiverWidget {
-            unitIndex: 22
-            onClicked: {
-                buttonOnCircleClicked(unitIndex)
-            }
-        }
-        STReceiverWidget {
-            unitIndex: 23
-            onClicked: {
-                buttonOnCircleClicked(unitIndex)
-            }
-        }
-        STReceiverWidget {
-            unitIndex: 24
-            onClicked: {
-                buttonOnCircleClicked(unitIndex)
-            }
-        }
-        STReceiverWidget {
-            unitIndex: 25
-            onClicked: {
-                buttonOnCircleClicked(unitIndex)
-            }
-        }
-        STReceiverWidget {
-            unitIndex: 26
-            onClicked: {
-                buttonOnCircleClicked(unitIndex)
-            }
-        }
-        STReceiverWidget {
-            unitIndex: 27
-            onClicked: {
-                buttonOnCircleClicked(unitIndex)
-            }
-        }
-        STReceiverWidget {
-            unitIndex: 28
-            onClicked: {
-                buttonOnCircleClicked(unitIndex)
-            }
-        }
-        STReceiverWidget {
-            unitIndex: 29
-            onClicked: {
-                buttonOnCircleClicked(unitIndex)
-            }
-        }
-        STReceiverWidget {
-            unitIndex: 30
-            onClicked: {
-                buttonOnCircleClicked(unitIndex)
-            }
-        }
-        STReceiverWidget {
-            unitIndex: 31
-            onClicked: {
-                buttonOnCircleClicked(unitIndex)
-            }
-        }
-        STReceiverWidget {
-            unitIndex: 32
-            onClicked: {
-                buttonOnCircleClicked(unitIndex)
-            }
-        }
-        STReceiverWidget {
-            unitIndex: 33
-            onClicked: {
-                buttonOnCircleClicked(unitIndex)
-            }
-        }
-        STReceiverWidget {
-            unitIndex: 34
-            onClicked: {
-                buttonOnCircleClicked(unitIndex)
-            }
-        }
-        STReceiverWidget {
-            unitIndex: 35
-            onClicked: {
-                buttonOnCircleClicked(unitIndex)
-            }
-        }
-        STReceiverWidget {
-            unitIndex: 36
-            onClicked: {
-                buttonOnCircleClicked(unitIndex)
-            }
-        }
-        STReceiverWidget {
-            unitIndex: 37
-            onClicked: {
-                buttonOnCircleClicked(unitIndex)
-            }
-        }
-        STReceiverWidget {
-            unitIndex: 38
-            onClicked: {
-                buttonOnCircleClicked(unitIndex)
-            }
-        }
-        STReceiverWidget {
-            unitIndex: 39
-            onClicked: {
-                buttonOnCircleClicked(unitIndex)
-            }
-        }
-        STReceiverWidget {
-            unitIndex: 40
-            onClicked: {
-                buttonOnCircleClicked(unitIndex)
-            }
-        }
-        STReceiverWidget {
-            unitIndex: 41
-            onClicked: {
-                buttonOnCircleClicked(unitIndex)
-            }
-        }
-        STReceiverWidget {
-            unitIndex: 42
-            onClicked: {
-                buttonOnCircleClicked(unitIndex)
-            }
-        }
-        STReceiverWidget {
-            unitIndex: 43
-            onClicked: {
-                buttonOnCircleClicked(unitIndex)
-            }
-        }
-        STReceiverWidget {
-            unitIndex: 44
-            onClicked: {
-                buttonOnCircleClicked(unitIndex)
-            }
-        }
-        STReceiverWidget {
-            unitIndex: 45
-            onClicked: {
-                buttonOnCircleClicked(unitIndex)
-            }
-        }
-        STReceiverWidget {
-            unitIndex: 46
-            onClicked: {
-                buttonOnCircleClicked(unitIndex)
-            }
-        }
-        STReceiverWidget {
-            unitIndex: 47
-            onClicked: {
-                buttonOnCircleClicked(unitIndex)
-            }
-        }
-        STReceiverWidget {
-            unitIndex: 48
-            onClicked: {
-                buttonOnCircleClicked(unitIndex)
-            }
-        }
-        STReceiverWidget {
-            unitIndex: 49
-            onClicked: {
-                buttonOnCircleClicked(unitIndex)
-            }
-        }
-        STReceiverWidget {
-            unitIndex: 50
-            onClicked: {
-                buttonOnCircleClicked(unitIndex)
-            }
-        }
-        STReceiverWidget {
-            unitIndex: 51
-            onClicked: {
-                buttonOnCircleClicked(unitIndex)
-            }
-        }
-        STReceiverWidget {
-            unitIndex: 52
-            onClicked: {
-                buttonOnCircleClicked(unitIndex)
-            }
-        }
-        STReceiverWidget {
-            unitIndex: 53
-            onClicked: {
-                buttonOnCircleClicked(unitIndex)
-            }
-        }
-        STReceiverWidget {
-            unitIndex: 54
-            onClicked: {
-                buttonOnCircleClicked(unitIndex)
-            }
-        }
-        STReceiverWidget {
-            unitIndex: 55
-            onClicked: {
-                buttonOnCircleClicked(unitIndex)
-            }
-        }
-        STReceiverWidget {
-            unitIndex: 56
-            onClicked: {
-                buttonOnCircleClicked(unitIndex)
-            }
-        }
-        STReceiverWidget {
-            unitIndex: 57
-            onClicked: {
-                buttonOnCircleClicked(unitIndex)
-            }
-        }
-        STReceiverWidget {
-            unitIndex: 58
-            onClicked: {
-                buttonOnCircleClicked(unitIndex)
-            }
-        }
-        STReceiverWidget {
-            unitIndex: 59
-            onClicked: {
-                buttonOnCircleClicked(unitIndex)
-            }
-        }
-        STReceiverWidget {
-            unitIndex: 60
-            onClicked: {
-                buttonOnCircleClicked(unitIndex)
-            }
-        }
-        STReceiverWidget {
-            unitIndex: 61
-            onClicked: {
-                buttonOnCircleClicked(unitIndex)
-            }
-        }
-        STReceiverWidget {
-            unitIndex: 62
-            onClicked: {
-                buttonOnCircleClicked(unitIndex)
-            }
-        }
-        STReceiverWidget {
-            unitIndex: 63
-            onClicked: {
-                buttonOnCircleClicked(unitIndex)
+        Repeater {
+            id: stReceiverWidgets
+            model: 64
+            STReceiverWidget {
+                unitIndex: index
             }
         }
     }
+    function updateWidgets()    {
+        for(var i=0; i<nchannels; i++)  {
+            stReceiverWidgets.itemAt(i).mainControlValue = dataSource.getChannelMainControlValue(i);
+        }
+    }
+
     function copyControlValues() {
         var str = "ID,cutoff0_on,cutoff0,cutoff_on,cutoff,prolaz,p10,p20,max level,significance 0.25,significance 0.5,significance 0.75,max orig level\n";
         for (var i=0; i<nchannels; i++) {
@@ -2363,9 +2001,34 @@ Item {
             var s075 = dataSource.getSignificance1(p0max, 0.75, appSettings.i0, i, 0, 500);
 
             str = str + i + ","+cutoff0_on+","+cutoff0+","+cutoff_on+","+cutoff+","+prolaz+","+p10+","+p20+","+p0max.y+","+s025+","+s050+","+s075+","+s0max.y+"\n";
+
+            dataSource.setControlValues(1, i, [cutoff0_on, cutoff0, cutoff_on, cutoff, prolaz, p10, p20, p0max.y, s025, s050, s075, s0max.y]);
         }
 
         dataSource.copyTextToClipboard(str);
+    }
+    function setControlValues(layer, measurementIndex) {
+        for (var i=0; i<nchannels; i++) {
+            var prolaz = Settings.get("receiverProperties["+i+"].prolazPosition", "");
+            var p10 = Settings.get("receiverProperties["+i+"].reflection10Position", "");
+            var p20 = Settings.get("receiverProperties["+i+"].reflection20Position", "");
+
+            var cutoff_on = Settings.get("receiverProperties["+i+"].simpleLPCutoffOn", false);
+            var cutoff = Settings.get("receiverProperties["+i+"].simpleLPCutoff", "");
+
+            var cutoff0_on = Settings.get("receiverProperties["+i+"].simpleLPCutoff0On", false);
+            var cutoff0 = Settings.get("receiverProperties["+i+"].simpleLPCutoff0", "");
+
+            var s0max = dataSource.getMaxAt(measurementIndex, i, 0, 0, 500);
+            var p0max = dataSource.getMaxAt(measurementIndex, i, 1, 0, 500);
+
+            var s025 = dataSource.getSignificance1(p0max, 0.25, measurementIndex, i, 0, 500);
+            var s050 = dataSource.getSignificance1(p0max, 0.5, measurementIndex, i, 0, 500);
+            var s075 = dataSource.getSignificance1(p0max, 0.75, measurementIndex, i, 0, 500);
+
+            dataSource.setControlValues(layer, i, [cutoff0_on, cutoff0, cutoff_on, cutoff, prolaz, p10, p20, p0max.y, s025, s050, s075, s0max.y]);
+        }
+        updateWidgets();
     }
 
     function setCutoffParameters()  {
@@ -2477,11 +2140,11 @@ Item {
     function buttonOnCircleClicked(index) {
         rect_circleSelector.visible = false;
 
-        comboBox_selectIP.currentIndex = comboBox_selectIP.model.indexOf(dataSource.getIP());
+        //comboBox_selectIP.currentIndex = comboBox_selectIP.model.indexOf(dataSource.getIP());
         //dataSource.selectIP(ip);
-        comboBox_selectEmitter.currentIndex = comboBox_selectEmitter.model.indexOf(dataSource.getEmitter());
+        //comboBox_selectEmitter.currentIndex = comboBox_selectEmitter.model.indexOf(dataSource.getEmitter());
         //dataSource.selectEmitter(emitter);
-        comboBox_selectRow.currentIndex = comboBox_selectRow.model.indexOf(dataSource.getRow());
+        //comboBox_selectRow.currentIndex = comboBox_selectRow.model.indexOf(dataSource.getRow());
         //dataSource.selectRow(row);*/
 
         updateSingleWaveform();

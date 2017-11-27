@@ -61,6 +61,9 @@ DataSource::DataSource(QQuickView *appViewer, QObject *parent) :
     m_appViewer(appViewer),
     sharedMemory("ScanTube")
 {
+    m_controlValues.resize(2);
+    m_controlValues.fill(QVector<QVector<double>>(m_controlNValues).fill(QVector<double>(_nChannels)));
+
     m_series.resize(4);
     m_allWaveformsSeries.resize(2);
     m_distanceSeries.resize(6);
@@ -668,6 +671,42 @@ double DataSource::getSignificance1(QPointF maximum, double x, int measurementIn
         }
     }
     return 0;
+}
+
+void DataSource::setControlValues(int layer, int receiver, QList<double> data)
+{
+    if (layer >= m_controlNLayers || layer >= m_controlValues.length())  {
+        return;
+    }
+    if (receiver >= _nChannels) {
+        return;
+    }
+    for(int i=0; i<m_controlNValues && i<data.length() && i<m_controlValues[layer].length(); i++)   {
+        m_controlValues[layer][i][receiver] = data[i];
+    }
+}
+
+double DataSource::getChannelMainControlValue(int receiver)
+{
+    if (m_controlValues[0][7][receiver] == 0) {
+        return 0;
+    }
+
+    auto w = QVector<double>(3);
+    w[0] = 5;
+    w[1] = 2;
+    w[2] = 1;
+    auto sumw = w[0] + w[1] + w[2];
+
+    auto max_level_change = m_controlValues[1][7][receiver] / m_controlValues[0][7][receiver] - 1;
+
+    auto s025_change = m_controlValues[1][8][receiver] - m_controlValues[0][8][receiver];
+    auto s050_change = m_controlValues[1][9][receiver] - m_controlValues[0][9][receiver];
+    auto s075_change = m_controlValues[1][10][receiver] - m_controlValues[0][10][receiver];
+
+    auto ws_change = w[0] * s025_change + w[1] * s050_change + w[2]  * s075_change;
+
+    return max_level_change * ws_change;
 }
 
 double DataSource::getSignificance(QPointF maximum, double x, QVector<QVector<float>> *b, int receiverIndex, int dStart, int dEnd)
@@ -1630,4 +1669,9 @@ void DataSource::setCurrentUnitIndex(int index)
 }
 int DataSource::getCurrentUnitIndex() {
     return m_currentUnitIndex;
+}
+
+int DataSource::getLastUnitIndex()
+{
+    return m_measurementModel->rowCount() - 1;
 }

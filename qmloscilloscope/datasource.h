@@ -118,6 +118,7 @@ signals:
     void fileLoaded();
 public slots:
     Q_INVOKABLE int getCurrentUnitIndex();
+    Q_INVOKABLE int getLastUnitIndex();
 
     void readData(int buffer_part, QByteArray *buffer, QHostAddress sender);
     Q_INVOKABLE void update(bool show, int r, int i_max, int i_slice, int i_proc, int d1=10, int d2=20);
@@ -229,7 +230,14 @@ public slots:
     Q_INVOKABLE void updateSignificance(double step, int measurementIndex, int receiverIndex, int setIndex, int dStart, int dEnd);
 
     Q_INVOKABLE double getSignificance1(QPointF maximum, double x, int measurementIndex, int receiverIndex, int dStart, int dEnd);
+
+    Q_INVOKABLE void setControlValues(int layer, int receiver, QList<double> data);
+    Q_INVOKABLE double getChannelMainControlValue(int receiver);
 private:
+    QVector<QVector<QVector<double>>> m_controlValues;
+    int m_controlNLayers {2};
+    int m_controlNValues {12};
+
     double getSignificance(QPointF maximum, double x, QVector<QVector<float>> *b, int receiverIndex, int dStart, int dEnd);
 
     bool m_cutoff0On;

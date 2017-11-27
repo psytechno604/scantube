@@ -200,6 +200,10 @@ void intercom::endScan(int flag)
 
             m_dataSource->copyToHistory();
 
+            auto lastIndex = m_dataSource->getLastUnitIndex();
+
+            QMetaObject::invokeMethod((QObject*)m_object, "setControlValues", Q_ARG(QVariant, 1), Q_ARG(QVariant, lastIndex));
+
             QMetaObject::invokeMethod((QObject*)m_object, "updateSurface3D");
 
             //_dataSource->calcDistances();
