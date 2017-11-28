@@ -706,7 +706,36 @@ double DataSource::getChannelMainControlValue(int receiver)
 
     auto ws_change = w[0] * s025_change + w[1] * s050_change + w[2]  * s075_change;
 
+    m_controlValues[1][12][receiver] = max_level_change * ws_change;
+
     return max_level_change * ws_change;
+}
+
+double DataSource::getMainControlDirection()
+{
+    if (m_controlValues.length()<m_controlNLayers && m_controlValues[1].length() < m_controlNValues)    {
+        return 0.0;
+    }
+    double phi, x = 0, y = 0;
+    for(int i=0; i<_nChannels && i<m_controlValues[1][12].length(); i++) {
+        phi = 2 * M_PI * (floor(i/2) + 0.5) / (_nChannels/2);
+        x += m_controlValues[1][12][i] * sin (phi);
+        y += m_controlValues[1][12][i] * cos (phi);
+    }
+
+    x /= _nChannels;
+    y /= _nChannels;
+
+    std::complex<double> a(x, y);
+
+    double im_a = arg(a);
+
+    if (im_a > 0) {
+        return 5 * M_PI / 2 - im_a;
+    }
+    else {
+        return M_PI / 2 - im_a;
+    }
 }
 
 double DataSource::getSignificance(QPointF maximum, double x, QVector<QVector<float>> *b, int receiverIndex, int dStart, int dEnd)

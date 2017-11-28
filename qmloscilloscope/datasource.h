@@ -233,10 +233,12 @@ public slots:
 
     Q_INVOKABLE void setControlValues(int layer, int receiver, QList<double> data);
     Q_INVOKABLE double getChannelMainControlValue(int receiver);
+
+    Q_INVOKABLE double getMainControlDirection();
 private:
     QVector<QVector<QVector<double>>> m_controlValues;
     int m_controlNLayers {2};
-    int m_controlNValues {12};
+    int m_controlNValues {13};
 
     double getSignificance(QPointF maximum, double x, QVector<QVector<float>> *b, int receiverIndex, int dStart, int dEnd);
 

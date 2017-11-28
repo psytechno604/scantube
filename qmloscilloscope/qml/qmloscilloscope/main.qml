@@ -1957,6 +1957,22 @@ Item {
             id: maxMainControlValue
             text: appSettings.maxMainControlValue
         }
+        Rectangle {
+            property real phi: 0
+            id: mainMark
+            height: 10
+            width: 40
+            color: "red"
+
+            x: getMainMarkX(parent.width/2 - width/2, parent.width * 0.45, phi);
+            y: getMainMarkY(parent.height/2 - height/2, parent.height * 0.45, phi);
+
+            transform: Rotation {
+                origin.x: mainMark.width/2
+                origin.y: mainMark.height/2
+                angle: mainMark.phi * 180 / Math.PI
+            }
+        }
 
         Button {
             text: qsTr("X")
@@ -1974,10 +1990,18 @@ Item {
             }
         }
     }
+    function getMainMarkX(x0, R, phi) {
+        return x0 + R * Math.sin(phi);
+    }
+    function getMainMarkY(y0, R, phi) {
+        return y0 - R * Math.cos(phi);
+    }
+
     function updateWidgets()    {
         for(var i=0; i<nchannels; i++)  {
             stReceiverWidgets.itemAt(i).mainControlValue = dataSource.getChannelMainControlValue(i);
         }
+        mainMark.phi = dataSource.getMainControlDirection();
     }
 
     function copyControlValues() {
