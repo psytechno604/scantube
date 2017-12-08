@@ -59,6 +59,8 @@ Item {
     width: 1024
     height: 768
 
+
+
     property string backgroundColor: "#888888"
     property string outputTextColor: "#ffdd00"
     property string staticTextColor: "#000000"
@@ -616,6 +618,7 @@ Item {
                     onTextChanged: {
                         dataSource.setPhysicalParameter0(text);
                     }
+                    selectByMouse: true
                 }
             }
             Row {
@@ -792,7 +795,7 @@ Item {
                                     height: 10
                                     width: prolazPosition.width
                                     onClicked: {
-                                        var p0max = dataSource.getMaxAt(appSettings.i0, appSettings.currentUnitIndex, 1, 0, 500);
+                                        var p0max = dataSource.getMaxAt(appSettings.i0, appSettings.currentUnitIndex, 1, appSettings.d0, appSettings.dN);
                                         prolazPosition.text = p0max.x;
                                     }
                                 }
@@ -811,7 +814,7 @@ Item {
                                     height: 10
                                     width: reflection10Position.width
                                     onClicked: {
-                                        var p0max = dataSource.getMaxAt(appSettings.i0, appSettings.currentUnitIndex, 1, 0, 500);
+                                        var p0max = dataSource.getMaxAt(appSettings.i0, appSettings.currentUnitIndex, 1, appSettings.d0, appSettings.dN);
                                         reflection10Position.text = p0max.x;
                                     }
                                 }
@@ -830,7 +833,7 @@ Item {
                                     height: 10
                                     width: reflection20Position.width
                                     onClicked: {
-                                        var p0max = dataSource.getMaxAt(appSettings.i0, appSettings.currentUnitIndex, 1, 0, 500);
+                                        var p0max = dataSource.getMaxAt(appSettings.i0, appSettings.currentUnitIndex, 1, appSettings.d0, appSettings.dN);
                                         reflection20Position.text = p0max.x;
                                     }
                                 }
@@ -1309,7 +1312,7 @@ Item {
                         Row {
                             anchors.fill: parent
                             Column {
-                                width: parent.width/4
+                                width: parent.width/5
                                 Row {
                                     Text {
                                         text: "avg"
@@ -1422,7 +1425,7 @@ Item {
 
                             Column {
                                 property int inputPosition: 150
-                                width: parent.width/4
+                                width: parent.width/5
                                 Row {
                                     Text {
                                         text: "HP"
@@ -1490,7 +1493,7 @@ Item {
                                 }
                             }
                             Column {
-                                width: parent.width/4
+                                width: parent.width/5
                                 Row {
                                     Text {
                                         text: "LP"
@@ -1555,7 +1558,7 @@ Item {
                                 }
                             }
                             Column {
-                                width: parent.width/4
+                                width: parent.width/5
                                 Row {
                                     Text {
                                         text: "BP"
@@ -1632,6 +1635,37 @@ Item {
                                         width: bP_mainrow.width - bP_fc_txt.width
                                         onTextChanged: setFilterParameters();
                                     }
+                                }
+                            }
+                            Column {
+                                width: parent.width / 5
+                                TextField {
+                                    id: minD
+                                    text: appSettings.minD
+                                    ToolTip.visible: hovered
+                                    ToolTip.text: qsTr("min distance to search for peak")
+                                }
+                                TextField {
+                                    id: maxD
+                                    text: appSettings.maxD
+                                    ToolTip.visible: hovered
+                                    ToolTip.text: qsTr("max distance to search for peak")
+                                }
+                                TextField {
+                                    id: daln1
+                                    text: appSettings.daln1
+                                    ToolTip.visible: hovered
+                                    ToolTip.text: qsTr("real distance for peak 1 (cm)")
+                                }
+                                TextField {
+                                    id: daln2
+                                    text: appSettings.daln2
+                                    ToolTip.visible: hovered
+                                    ToolTip.text: qsTr("real distance for peak 2 (cm)")
+                                }
+                                Text {
+                                    id: daln
+                                    text: "---"
                                 }
                             }
                         }
@@ -1789,23 +1823,14 @@ Item {
     FileDialog {
         id: fileDialog
         title: "Please choose a file"
-        //folder: shortcuts.home
         onAccepted: {
-            //C:\Users\RazumovSA\Source\Repos\ScanTube\qmloscilloscope
-
             console.log("You chose: " + fileDialog.file)
-
             dataSource.loadHistoryFromFile(fileDialog.file.toString().replace("file:///", ""))
-            //Qt.quit()
         }
         onRejected: {
             console.log("Canceled")
-            //Qt.quit()
         }
-        //Component.onCompleted: visible = true
     }
-
-    //![2]
     Component.onCompleted: {
 
         _intercom.setTimeout(appSettings.dataReceiveTimeout);
@@ -1857,6 +1882,12 @@ Item {
     }
     Settings {
         id: appSettings
+
+        property alias daln1: daln1.text
+        property alias daln2: daln2.text
+
+        property alias minD: minD.text
+        property alias maxD: maxD.text
 
         property alias maxMainControlValue: maxMainControlValue.text
 
@@ -2086,12 +2117,12 @@ Item {
 
 
 
-        var s0max = dataSource.getMaxAt(appSettings.i0, appSettings.currentUnitIndex, 0, 0, 500);
-        var p0max = dataSource.getMaxAt(appSettings.i0, appSettings.currentUnitIndex, 1, 0, 500);
-        var s1max = dataSource.getMaxAt(appSettings.i1, appSettings.currentUnitIndex, 0, 0, 500);
-        var p1max = dataSource.getMaxAt(appSettings.i1, appSettings.currentUnitIndex, 1, 0, 500);
-        var s2max = dataSource.getMaxAt(appSettings.i2, appSettings.currentUnitIndex, 0, 0, 500);
-        var p2max = dataSource.getMaxAt(appSettings.i2, appSettings.currentUnitIndex, 1, 0, 500);
+        var s0max = dataSource.getMaxAt(appSettings.i0, appSettings.currentUnitIndex, 0, appSettings.d0, appSettings.dN);
+        var p0max = dataSource.getMaxAt(appSettings.i0, appSettings.currentUnitIndex, 1, appSettings.d0, appSettings.dN);
+        var s1max = dataSource.getMaxAt(appSettings.i1, appSettings.currentUnitIndex, 0, appSettings.d0, appSettings.dN);
+        var p1max = dataSource.getMaxAt(appSettings.i1, appSettings.currentUnitIndex, 1, appSettings.d0, appSettings.dN);
+        var s2max = dataSource.getMaxAt(appSettings.i2, appSettings.currentUnitIndex, 0, appSettings.d0, appSettings.dN);
+        var p2max = dataSource.getMaxAt(appSettings.i2, appSettings.currentUnitIndex, 1, appSettings.d0, appSettings.dN);
 
         appSettings.maxSignalLevel = s0max.y>s1max.y?s0max.y:s1max.y;
         appSettings.maxSignalLevel = s2max.y>appSettings.maxSignalLevel?s2max.y:appSettings.maxSignalLevel;
@@ -2103,16 +2134,20 @@ Item {
         if (appSettings.useCentimeters) {
             p10 = 1.0*Settings.get("receiverProperties["+appSettings.currentUnitIndex+"].reflection10Position", 10.0);
             p20 = 1.0*Settings.get("receiverProperties["+appSettings.currentUnitIndex+"].reflection20Position", 20.0);
+            daln.text = appSettings.daln1 + (p0max.x - p10)* (appSettings.daln2 - appSettings.daln1) / (p20 - p10);
         }
         else {
             p10 = 10;
             p20 = 20;
+            daln.text = "---";
         }
         dataSource.update(appSettings.show_i0, appSettings.i0, 0, 3, 6, p10, p20);
         dataSource.update(appSettings.show_i1, appSettings.i1, 1, 4, 7, p10, p20);
         dataSource.update(appSettings.show_i2, appSettings.i2, 2, 5, 8, p10, p20);
         appSettings.dN = 10.0 + 1.0*(dataSource.getMaxDistance(appSettings.i0, appSettings.currentUnitIndex) - p10)/(p20-p10)*10.0;
         appSettings.d0 = 10.0 + 1.0*(0 - p10)/(p20-p10)*10.0;
+
+
     }
     function clearListElements(){
 

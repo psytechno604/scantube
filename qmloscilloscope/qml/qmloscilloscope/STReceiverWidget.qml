@@ -35,6 +35,7 @@ Item {
             dataSource.setCurrentUnitIndex(unitIndex);
             parent.clicked();
             console.log(360*(1 / 32 + getSector(unitIndex) / 16)/ (2));
+            updateSurface3D();
         }
                background: Rectangle {
                     id: rect0
