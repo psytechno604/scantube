@@ -649,7 +649,7 @@ Item {
                             id: row1
 
                             Text {
-                                property variant data: model
+                                //property variant data: model
                                 text: model.text
                                 font.bold: false
                                 anchors.verticalCenter: parent.verticalCenter
@@ -786,7 +786,7 @@ Item {
                                 TextField {
                                     id: prolazPosition
                                     text: Settings.get("receiverProperties["+appSettings.currentUnitIndex+"].prolazPosition", 0)
-                                    width:60
+                                    width:40
                                     selectByMouse: true
                                     ToolTip.visible: hovered
                                     ToolTip.text: qsTr("Direct signal position")
@@ -804,7 +804,7 @@ Item {
                                 TextField {
                                     id: reflection10Position
                                     text: Settings.get("receiverProperties["+appSettings.currentUnitIndex+"].reflection10Position", 0)
-                                    width:60
+                                    width:40
                                     selectByMouse: true
                                     ToolTip.visible: hovered
                                     ToolTip.text: qsTr("10cm distance position")
@@ -823,7 +823,7 @@ Item {
                                 TextField {
                                     id: reflection20Position
                                     text: Settings.get("receiverProperties["+appSettings.currentUnitIndex+"].reflection20Position", 0)
-                                    width:60
+                                    width:40
                                     selectByMouse: true
                                     ToolTip.visible: hovered
                                     ToolTip.text: qsTr("20cm distance position")
@@ -902,7 +902,7 @@ Item {
                                 enabled: simpleLPCutoff0On.checked
                                 TextField {
                                     id: simpleLPCutoff0
-                                    text: Settings.get("receiverProperties["+appSettings.currentUnitIndex+"].simpleLPCutoff0", "")
+                                    //text: Settings.get("receiverProperties["+appSettings.currentUnitIndex+"].simpleLPCutoff0", "")
                                     width:60
                                     selectByMouse: true
                                     ToolTip.visible: hovered
@@ -939,6 +939,14 @@ Item {
                                     Settings.set("receiverProperties["+appSettings.currentUnitIndex+"].simpleLPCutoff0", simpleLPCutoff0.text);
                                     Settings.set("receiverProperties["+appSettings.currentUnitIndex+"].simpleLPCutoffOn", simpleLPCutoffOn.checked);
                                     Settings.set("receiverProperties["+appSettings.currentUnitIndex+"].simpleLPCutoff", simpleLPCutoff.text);
+
+                                    Settings.set("receiverProperties["+appSettings.currentUnitIndex+"].dStart", dStart.text);
+                                    Settings.set("receiverProperties["+appSettings.currentUnitIndex+"].dEnd", dEnd.text);
+                                    Settings.set("receiverProperties["+appSettings.currentUnitIndex+"].calcDistanceMethod", calcDistanceMethod.text);
+                                    Settings.set("receiverProperties["+appSettings.currentUnitIndex+"].signalThreshold", signalThreshold.text);
+                                    Settings.set("receiverProperties["+appSettings.currentUnitIndex+"].dWallCentered", dWallCentered.text);
+                                    Settings.set("receiverProperties["+appSettings.currentUnitIndex+"].kForDistance", kForDistance.text);
+                                    Settings.set("receiverProperties["+appSettings.currentUnitIndex+"].setIndex", setIndex.text);
                                 }
                                 width:60
                             }
@@ -1073,6 +1081,7 @@ Item {
                                         }
                                     }
                                     PolarChartView {
+                                        id: polarChartForDistances
                                         height: parent.height
                                         width: parent.width / 2
                                         antialiasing: true
@@ -1086,13 +1095,13 @@ Item {
 
                                         ValueAxis {
                                             id: axisRadial_1_0
-                                            min: -500
-                                            max: 2500
+                                            min: 0
+                                            max: 20
                                             labelsVisible: true;
                                             tickCount: 7
                                         }
                                         ScatterSeries {
-                                            name: "1st"
+                                            name: "Distance"
                                             id: series_1_0
                                             axisAngular: axisAngular_1_0
                                             axisRadial: axisRadial_1_0
@@ -1103,70 +1112,9 @@ Item {
                                             color: "red"
                                             opacity: 0.5
                                         }
-                                        ScatterSeries {
-                                            name: "2nd"
-                                            id: series_1_1
-                                            axisAngular: axisAngular_1_0
-                                            axisRadial: axisRadial_1_0
-                                            pointsVisible: true
-                                            pointLabelsVisible: false
 
-                                            color: "red"
-                                            opacity: 0.25
-                                        }
-                                        ScatterSeries {
-                                            name: "3rd"
-                                            id: series_1_2
-                                            axisAngular: axisAngular_1_0
-                                            axisRadial: axisRadial_1_0
-                                            pointsVisible: true
-                                            pointLabelsVisible: false
-
-                                            color: "red"
-                                            opacity: 0.15
-                                        }
-
-                                        ScatterSeries {
-                                            name: "1st"
-                                            id: series_1_3
-                                            axisAngular: axisAngular_1_0
-                                            axisRadial: axisRadial_1_0
-                                            pointsVisible: true
-                                            pointLabelsVisible: false
-
-                                            color: "blue"
-                                            opacity: 0.5
-                                        }
-                                        ScatterSeries {
-                                            name: "2nd"
-                                            id: series_1_4
-                                            axisAngular: axisAngular_1_0
-                                            axisRadial: axisRadial_1_0
-                                            pointsVisible: true
-                                            pointLabelsVisible: false
-
-                                            color: "blue"
-                                            opacity: 0.25
-                                        }
-                                        ScatterSeries {
-                                            name: "3rd"
-                                            id: series_1_5
-                                            axisAngular: axisAngular_1_0
-                                            axisRadial: axisRadial_1_0
-                                            pointsVisible: true
-                                            pointLabelsVisible: false
-
-                                            color: "blue"
-                                            opacity: 0.15
-                                        }
                                         Component.onCompleted: {
                                             dataSource.setDistanceSeries(series_1_0, 0);
-                                            dataSource.setDistanceSeries(series_1_1, 1);
-                                            dataSource.setDistanceSeries(series_1_2, 2);
-
-                                            dataSource.setDistanceSeries(series_1_3, 3);
-                                            dataSource.setDistanceSeries(series_1_4, 4);
-                                            dataSource.setDistanceSeries(series_1_5, 5);
                                         }
                                     }
                                 }
@@ -1448,7 +1396,7 @@ Item {
                                         }
                                     }
                                     Text {
-                                        text: "filter order:"
+                                        text: "order:"
                                     }
                                     ComboBox {
                                         id: hP_order
@@ -1513,7 +1461,7 @@ Item {
                                         onCheckedChanged: setFilterParameters();
                                     }
                                     Text {
-                                        text: "filter order:"
+                                        text: "order:"
                                     }
                                     ComboBox {
                                         id: lP_order
@@ -1578,7 +1526,7 @@ Item {
                                         onCheckedChanged: setFilterParameters();
                                     }
                                     Text {
-                                        text: "filter order:"
+                                        text: "order:"
                                     }
                                     ComboBox {
                                         id: bP_order
@@ -1632,46 +1580,78 @@ Item {
                                         id: bP_deltaf
                                         text: appSettings.bP_deltaf
                                         enabled: bP_on.checked
-                                        width: bP_mainrow.width - bP_fc_txt.width
+                                        width: bP_mainrow.width - bP_deltaf_txt.width
                                         onTextChanged: setFilterParameters();
                                     }
                                 }
                             }
                             Column {
                                 width: parent.width / 5
+                                id: receiverParametersColumn
                                 TextField {
-                                    id: minD
-                                    text: appSettings.minD
+                                    height:27
+                                    width: 40
+                                    id: dStart
+                                    text: Settings.get("receiverProperties["+appSettings.currentUnitIndex+"].dStart", "")
                                     ToolTip.visible: hovered
-                                    ToolTip.text: qsTr("min distance to search for peak")
+                                    ToolTip.text: qsTr("dStart - min distance in units to search for peak")
                                 }
                                 TextField {
-                                    id: maxD
-                                    text: appSettings.maxD
+                                    height:27
+                                    width: 40
+                                    id: dEnd
+                                    text: Settings.get("receiverProperties["+appSettings.currentUnitIndex+"].dEnd", "")
                                     ToolTip.visible: hovered
-                                    ToolTip.text: qsTr("max distance to search for peak")
+                                    ToolTip.text: qsTr("dEnd - max distance in units to search for peak")
                                 }
                                 TextField {
-                                    id: daln1
-                                    text: appSettings.daln1
+                                    height:27
+                                    width: 40
+                                    id: calcDistanceMethod
+                                    text: Settings.get("receiverProperties["+appSettings.currentUnitIndex+"].calcDistanceMethod", "")
                                     ToolTip.visible: hovered
-                                    ToolTip.text: qsTr("real distance for peak 1 (cm)")
+                                    ToolTip.text: qsTr("calcDistanceMethod - '1' for threshold processing, '2' - for envelope processing")
                                 }
                                 TextField {
-                                    id: daln2
-                                    text: appSettings.daln2
+                                    height:27
+                                    width: 40
+                                    id: signalThreshold
+                                    text: Settings.get("receiverProperties["+appSettings.currentUnitIndex+"].signalThreshold", "")
                                     ToolTip.visible: hovered
-                                    ToolTip.text: qsTr("real distance for peak 2 (cm)")
+                                    ToolTip.text: qsTr("signalThreshold - signal level to find")
                                 }
-                                Text {
-                                    id: daln
-                                    text: "---"
+                                TextField {
+                                    height:27
+                                    width: 40
+                                    id: dWallCentered
+                                    text: Settings.get("receiverProperties["+appSettings.currentUnitIndex+"].dWallCentered", "")
+                                    ToolTip.visible: hovered
+                                    ToolTip.text: qsTr("dWallCentered - distance in units, when the tube is centered")
+                                }
+                                TextField {
+                                    height:27
+                                    width: 40
+                                    id: kForDistance
+                                    text: Settings.get("receiverProperties["+appSettings.currentUnitIndex+"].kForDistance", "")
+                                    ToolTip.visible: hovered
+                                    ToolTip.text: qsTr("kForDistance - coefficient to calculate centimeters from units")
+                                }
+                                TextField {
+                                    height:27
+                                    width: 40
+                                    id: setIndex
+                                    text: Settings.get("receiverProperties["+appSettings.currentUnitIndex+"].setIndex", "")
+                                    ToolTip.visible: hovered
+                                    ToolTip.text: qsTr("setIndex - 0 for original, 1 for processed")
                                 }
                             }
                         }
                     }
                     Item {
-
+                        Button {
+                            text: "Update distanced diagram"
+                            onClicked: updateDistances ()
+                        }
                     }
                     Item {
                         Row {
@@ -1875,6 +1855,14 @@ Item {
 
             simpleLPCutoff0On.checked = Settings.get("receiverProperties["+appSettings.currentUnitIndex+"].simpleLPCutoff0On", false);
             simpleLPCutoff0.text = Settings.get("receiverProperties["+appSettings.currentUnitIndex+"].simpleLPCutoff0", "");
+
+            dStart.text = Settings.get("receiverProperties["+appSettings.currentUnitIndex+"].dStart", "");
+            dEnd.text = Settings.get("receiverProperties["+appSettings.currentUnitIndex+"].dEnd", "");
+            calcDistanceMethod.text = Settings.get("receiverProperties["+appSettings.currentUnitIndex+"].calcDistanceMethod", "");
+            signalThreshold.text = Settings.get("receiverProperties["+appSettings.currentUnitIndex+"].signalThreshold", "");
+            dWallCentered.text = Settings.get("receiverProperties["+appSettings.currentUnitIndex+"].dWallCentered", "");
+            kForDistance.text = Settings.get("receiverProperties["+appSettings.currentUnitIndex+"].kForDistance", "");
+            setIndex.text = Settings.get("receiverProperties["+appSettings.currentUnitIndex+"].setIndex", "");
         }
         onFileLoaded: {
             updateSingleWaveform();
@@ -1883,11 +1871,11 @@ Item {
     Settings {
         id: appSettings
 
-        property alias daln1: daln1.text
+        /*property alias daln1: daln1.text
         property alias daln2: daln2.text
 
         property alias minD: minD.text
-        property alias maxD: maxD.text
+        property alias maxD: maxD.text*/
 
         property alias maxMainControlValue: maxMainControlValue.text
 
@@ -2081,7 +2069,35 @@ Item {
             var s050 = dataSource.getSignificance1(p0max, 0.5, measurementIndex, i, 0, 500);
             var s075 = dataSource.getSignificance1(p0max, 0.75, measurementIndex, i, 0, 500);
 
-            dataSource.setControlValues(layer, i, [cutoff0_on, cutoff0, cutoff_on, cutoff, prolaz, p10, p20, p0max.y, s025, s050, s075, s0max.y]);
+            var dStart = Settings.get("receiverProperties["+i+"].dStart", "");
+            var dEnd = Settings.get("receiverProperties["+i+"].dEnd", "");
+            var calcDistanceMethod = Settings.get("receiverProperties["+i+"].calcDistanceMethod", "");
+            var signalThreshold = Settings.get("receiverProperties["+i+"].signalThreshold", "");
+            var dWallCentered = Settings.get("receiverProperties["+i+"].dWallCentered", "");
+            var kForDistance = Settings.get("receiverProperties["+i+"].kForDistance", "");
+            var setIndex = Settings.get("receiverProperties["+i+"].setIndex", "");
+
+            dataSource.setControlValues(layer, i,
+                                        [cutoff0_on,
+                                         cutoff0,
+                                         cutoff_on,
+                                         cutoff,
+                                         prolaz,
+                                         p10,
+                                         p20,
+                                         p0max.y,
+                                         s025,
+                                         s050,
+                                         s075,
+                                         s0max.y,
+                                         0,
+                                        dStart,
+                                        dEnd,
+                                        calcDistanceMethod,
+                                        signalThreshold,
+                                        dWallCentered,
+                                        kForDistance,
+                                        setIndex]);
         }
         updateWidgets();
     }
@@ -2106,12 +2122,9 @@ Item {
 
     }
     function updateDistances (){
+       setControlValues(1, appSettings.i0);
 
-        var fix = 8;
-        textField_slider1_level.text = dataSource.getReceiverLevel(0).toFixed(0);
-        textField_slider2_level.text = dataSource.getReceiverLevel(1).toFixed(0);
-        textField_slider3_level.text = dataSource.getReceiverLevel(2).toFixed(0);
-        textField_slider4_level.text = dataSource.getReceiverLevel(3).toFixed(0);
+       dataSource.updateDistances(appSettings.i0);
     }
     function updateSingleWaveform() {
 
@@ -2134,12 +2147,12 @@ Item {
         if (appSettings.useCentimeters) {
             p10 = 1.0*Settings.get("receiverProperties["+appSettings.currentUnitIndex+"].reflection10Position", 10.0);
             p20 = 1.0*Settings.get("receiverProperties["+appSettings.currentUnitIndex+"].reflection20Position", 20.0);
-            daln.text = appSettings.daln1 + (p0max.x - p10)* (appSettings.daln2 - appSettings.daln1) / (p20 - p10);
+            //daln.text = appSettings.daln1 + (p0max.x - p10)* (appSettings.daln2 - appSettings.daln1) / (p20 - p10);
         }
         else {
             p10 = 10;
             p20 = 20;
-            daln.text = "---";
+            //daln.text = "---";
         }
         dataSource.update(appSettings.show_i0, appSettings.i0, 0, 3, 6, p10, p20);
         dataSource.update(appSettings.show_i1, appSettings.i1, 1, 4, 7, p10, p20);
@@ -2148,6 +2161,7 @@ Item {
         appSettings.d0 = 10.0 + 1.0*(0 - p10)/(p20-p10)*10.0;
 
 
+        //dataSource
     }
     function clearListElements(){
 

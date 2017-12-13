@@ -61,12 +61,12 @@ DataSource::DataSource(QQuickView *appViewer, QObject *parent) :
     m_appViewer(appViewer),
     sharedMemory("ScanTube")
 {
-    m_controlValues.resize(2);
-    m_controlValues.fill(QVector<QVector<double>>(m_controlNValues).fill(QVector<double>(_nChannels)));
+    m_controlValues.resize(2); // 2 layers - for origin and testing measurement
+    m_controlValues.fill(QVector<QVector<double>>(m_controlNValues).fill(QVector<double>(_nChannels))); //each "control value" is an array with _nChannels elements (this means that we have value for each channel)
 
     m_series.resize(4);
     m_allWaveformsSeries.resize(2);
-    m_distanceSeries.resize(6);
+    m_distanceSeries.resize(1); //series for polarChartForDistances
 
     m_significanceSeries.resize(1);
 
@@ -247,14 +247,61 @@ void DataSource::updateDistances(QAbstractSeries *series, int i, int set)
 
 }
 
-void DataSource::updateDistances()
+void DataSource::updateDistances(int measurementIndex)
 {
-    updateDistances(m_distanceSeries[0], 0, 0);
-    updateDistances(m_distanceSeries[1], 1, 0);
-    updateDistances(m_distanceSeries[2], 2, 0);
-    updateDistances(m_distanceSeries[3], 0, 1);
-    updateDistances(m_distanceSeries[4], 1, 1);
-    updateDistances(m_distanceSeries[5], 2, 1);
+    auto s = static_cast<QSplineSeries *>(m_distanceSeries[0]);
+
+    if (!s) {
+        return;
+    }
+
+    QVector<QPointF> points;
+
+    for (int r=0; r<_nChannels; r++)   {
+        auto phi = -1.0;
+
+        switch (r) { //TODO: there must be formula instead of hardcode, when all recievers will be online
+        case 49:
+            phi = 25;
+            break;
+        case 55:
+            phi = 27;
+            break;
+        case 57:
+            phi = 29;
+            break;
+        case 63:
+            phi = 31;
+            break;
+        default:
+            break;
+        }
+
+        if (phi >= 0) {
+            auto dStart = m_controlValues[1][13][r];
+            auto dEnd = m_controlValues[1][14][r];
+            auto calcDistanceMethod = m_controlValues[1][15][r];
+            auto signalThreshold = m_controlValues[1][16][r];
+            auto dWallCentered = m_controlValues[1][17][r];
+            auto kForDistance = m_controlValues[1][18][r];
+            auto setIndex = m_controlValues[1][19][r];
+            auto dst = getDistanceToWall(
+                        measurementIndex,
+                        r,
+                        dStart,
+                        dEnd,
+                        calcDistanceMethod,
+                        signalThreshold,
+                        dWallCentered,
+                        kForDistance,
+                        setIndex);
+            points.append(QPointF(phi, dst));
+        }
+
+    }
+
+    s->replace(points);
+
 }
 
 void DataSource::updateSurface3D(QtDataVisualization::QAbstract3DSeries *series)
@@ -639,6 +686,62 @@ QPointF DataSource::getMaxAt(int measurementIndex, int receiverIndex, int setInd
     return ret;
 }
 
+int DataSource::getIndexOfThreshold(double threshold, int measurementIndex, int receiverIndex, int setIndex, int dStart, int dEnd)
+{
+    auto m = m_measurementModel->get(measurementIndex);
+    if (m) {
+        QVector<QVector<float> > *b;
+        if (setIndex == 0) {//TODO: it is some kind of hardcode
+            b = m->getBuffer();
+            if(b) {
+                if (b->length()>receiverIndex) {
+                    for (int d=dStart; d<=dEnd && d<(*b)[receiverIndex].length(); d++)  {
+
+                        if(theValue((*b)[receiverIndex][d], receiverIndex, d) >= threshold) {
+                            return d;
+                        }
+                    }
+                }
+            }
+        }
+        if (setIndex == 1) {//TODO: it is some kind of hardcode
+            //if (!m->getProcessed(receiverIndex)) {
+                processSignal(m, receiverIndex);
+            //    m->setProcessed(receiverIndex, true);
+            //}
+            b = m->getPBuffer();
+            if (b) {
+                if (b->length()>receiverIndex) {
+                    for (int d=dStart; d<=dEnd && d<(*b)[receiverIndex].length(); d++)  {
+
+                        if((*b)[receiverIndex][d] >= threshold) {
+                            return d;
+                        }
+                    }
+                }
+            }
+        }
+
+    }
+    return dStart;
+}
+
+double DataSource::getDistanceToWall(int measurementIndex, int receiverIndex, int dStart, int dEnd, int calcDistanceMethod, double signalThreshold, int dWallCentered, double kForDistance, int setIndex)
+{
+    double centeredDistance = 11;
+
+    if (calcDistanceMethod == 2) {
+        auto p = getMaxAt(measurementIndex, receiverIndex, setIndex, dStart, dEnd);
+        return centeredDistance + kForDistance * (p.x() - dWallCentered);
+    }
+    if (calcDistanceMethod == 1) {
+        auto x = getIndexOfThreshold(signalThreshold, measurementIndex, receiverIndex, setIndex, dStart, dEnd);
+        return centeredDistance + kForDistance * (x - dWallCentered);
+    }
+
+    return centeredDistance;
+}
+
 void DataSource::updateSignificance(double step, int measurementIndex, int receiverIndex, int setIndex, int dStart, int dEnd)
 {
     if (step > 0 && step < 1)   {
@@ -672,7 +775,27 @@ double DataSource::getSignificance1(QPointF maximum, double x, int measurementIn
     }
     return 0;
 }
-
+/* data:
+ *                                         [cutoff0_on,
+                                         cutoff0,
+                                         cutoff_on,
+                                         cutoff,
+                                         prolaz,
+                                         p10,
+                                         p20,
+                                         p0max.y,
+                                         s025,
+                                         s050,
+                                         s075,
+                                         s0max.y,
+                                        dStart,
+                                        dEnd,
+                                        calcDistanceMethod,
+                                        signalThreshold,
+                                        dWallCentered,
+                                        kForDistance,
+                                        setIndex]);
+*/
 void DataSource::setControlValues(int layer, int receiver, QList<double> data)
 {
     if (layer >= m_controlNLayers || layer >= m_controlValues.length())  {

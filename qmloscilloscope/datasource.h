@@ -127,7 +127,7 @@ public slots:
     void updateAllWaveforms(QAbstractSeries *m_series, int set);
     void updateAllWaveforms();
     void updateDistances(QAbstractSeries *m_series, int i, int set);
-    void updateDistances();
+    void updateDistances(int measurementIndex);
     void updateSurface3D(QtDataVisualization::QAbstract3DSeries *m_series);
 
     void initCorrelationParameters(float  sigTau, float Fdskr);
@@ -225,6 +225,17 @@ public slots:
     Q_INVOKABLE void setCutoff0Parameters(bool cutoffOn, double cutoffLevel, int index);
 
     Q_INVOKABLE QPointF getMaxAt(int measurementIndex, int receiverIndex, int setIndex, int dStart, int dEnd);
+    Q_INVOKABLE int getIndexOfThreshold(double threshold, int measurementIndex, int receiverIndex, int setIndex, int dStart, int dEnd);
+    Q_INVOKABLE double getDistanceToWall(
+            int measurementIndex,
+            int receiverIndex,
+            int dStart,
+            int dEnd,
+            int calcDistanceMethod,
+            double signalThreshold,
+            int dWallCentered,
+            double kForDistance,
+            int setIndex);
    //Q_INVOKABLE int getMaxIndexAt(int measurementIndex, int receiverIndex, int setIndex, int dStart, int dEnd);
 
     Q_INVOKABLE void updateSignificance(double step, int measurementIndex, int receiverIndex, int setIndex, int dStart, int dEnd);
@@ -238,7 +249,7 @@ public slots:
 private:
     QVector<QVector<QVector<double>>> m_controlValues;
     int m_controlNLayers {2};
-    int m_controlNValues {13};
+    int m_controlNValues {20};
 
     double getSignificance(QPointF maximum, double x, QVector<QVector<float>> *b, int receiverIndex, int dStart, int dEnd);
 
