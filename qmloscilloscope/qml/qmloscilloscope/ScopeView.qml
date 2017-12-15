@@ -117,6 +117,20 @@ ChartView {
                    color: color2
        }
     LineSeries {
+        id: hLine
+        name: "horizontal line"
+        axisX: axisX
+        axisY: axisY
+        useOpenGL: chartView.openGL
+    }
+    LineSeries {
+        id: vLine
+        name: "vertical line"
+        axisX: axisX
+        axisY: axisY
+        useOpenGL: chartView.openGL
+    }
+    LineSeries {
         id: slice_i0
         name: "Slice " + appSettings.i0
         axisX: axisX

@@ -246,6 +246,9 @@ public slots:
     Q_INVOKABLE double getChannelMainControlValue(int receiver);
 
     Q_INVOKABLE double getMainControlDirection();
+
+    Q_INVOKABLE void updateChannelFinder(QAbstractSeries *m_series);
+    Q_INVOKABLE void updateLine(QAbstractSeries *m_series, QPointF p0, QPointF p1);
 private:
     QVector<QVector<QVector<double>>> m_controlValues;
     int m_controlNLayers {2};

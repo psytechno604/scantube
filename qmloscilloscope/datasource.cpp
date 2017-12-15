@@ -861,6 +861,48 @@ double DataSource::getMainControlDirection()
     }
 }
 
+void DataSource::updateChannelFinder(QAbstractSeries *m_series)
+{
+    auto m = m_measurementModel->get(m_measurementModel->rowCount() - 1);
+
+    auto s = static_cast<QSplineSeries *>(m_series);
+
+    if (!s || !m) {
+        return;
+    }
+
+    auto b = m->getBuffer();
+
+    if (!b || b->length()==0 || (*b)[0].length()==0) {
+        return;
+    }
+
+    QVector<QPointF> points;
+
+    double i=0;
+    double N = b->length() * (*b)[0].length();
+    for (auto ch = 0; ch<b->length(); ch++) {
+        for (auto d=0; d<(*b)[ch].length(); d++) {
+            double x = _nChannels * i/N;
+            points.append(QPointF(x, theValue((*b)[ch][d], ch, d)));
+            i = i +1.0;
+        }
+    }
+    s->replace(points);
+}
+
+void DataSource::updateLine(QAbstractSeries *m_series, QPointF p0, QPointF p1)
+{
+    auto s = static_cast<QSplineSeries *>(m_series);
+    if (!s) {
+        return;
+    }
+    QVector<QPointF> points;
+    points.append(p0);
+    points.append(p1);
+    s->replace(points);
+}
+
 double DataSource::getSignificance(QPointF maximum, double x, QVector<QVector<float>> *b, int receiverIndex, int dStart, int dEnd)
 {
     double ret = 0.0;

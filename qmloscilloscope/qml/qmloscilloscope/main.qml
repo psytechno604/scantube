@@ -763,6 +763,9 @@ Item {
                             TabButton {
                                 text: qsTr("Timeline 3D Surface")
                             }
+                            TabButton {
+                                text: qsTr("Channel finder")
+                            }
                         }
                         Row {
                             id: row_selectReceiver
@@ -1238,6 +1241,31 @@ Item {
                                     }
                                 }
                             }
+                            Item {
+                                anchors.fill: parent
+                                ChartView {
+                                    id: channelFinder
+                                    anchors.fill: parent
+                                    ValueAxis {
+                                        id: channelFinderX
+                                        min: 0
+                                        max: 64
+                                        tickCount: 65
+                                        labelFormat: '%d'
+                                    }
+                                    ValueAxis {
+                                        id: channelFinderY
+                                        min: 0
+                                        max: 1500
+                                    }
+                                    LineSeries {
+                                        id: channelFinderSeries
+                                        axisX: channelFinderX
+                                        axisY: channelFinderY
+                                        useOpenGL: true
+                                    }
+                                }
+                            }
                         }
                         //SL
                     }
@@ -1588,45 +1616,66 @@ Item {
                             Column {
                                 width: parent.width / 5
                                 id: receiverParametersColumn
-                                TextField {
-                                    height:27
-                                    width: 40
-                                    id: dStart
-                                    text: Settings.get("receiverProperties["+appSettings.currentUnitIndex+"].dStart", "")
-                                    ToolTip.visible: hovered
-                                    ToolTip.text: qsTr("dStart - min distance in units to search for peak")
+                                Row {
+                                    TextField {
+                                        height:27
+                                        width: 40
+                                        id: dStart
+                                        text: Settings.get("receiverProperties["+appSettings.currentUnitIndex+"].dStart", "")
+                                        ToolTip.visible: hovered
+                                        ToolTip.text: qsTr("dStart - min distance in units to search for peak")
+                                        selectByMouse: true
+                                    }
+                                    TextField {
+                                        height:27
+                                        width: 40
+                                        id: dEnd
+                                        text: Settings.get("receiverProperties["+appSettings.currentUnitIndex+"].dEnd", "")
+                                        ToolTip.visible: hovered
+                                        ToolTip.text: qsTr("dEnd - max distance in units to search for peak")
+                                        selectByMouse: true
+                                    }
                                 }
-                                TextField {
-                                    height:27
-                                    width: 40
-                                    id: dEnd
-                                    text: Settings.get("receiverProperties["+appSettings.currentUnitIndex+"].dEnd", "")
-                                    ToolTip.visible: hovered
-                                    ToolTip.text: qsTr("dEnd - max distance in units to search for peak")
+
+                                Row {
+                                    TextField {
+                                        height:27
+                                        width: 40
+                                        id: calcDistanceMethod
+                                        text: Settings.get("receiverProperties["+appSettings.currentUnitIndex+"].calcDistanceMethod", "")
+                                        ToolTip.visible: hovered
+                                        ToolTip.text: qsTr("calcDistanceMethod - '1' for threshold processing, '2' - for envelope processing")
+                                        selectByMouse: true
+                                    }
+                                    TextField {
+                                        height:27
+                                        width: 40
+                                        id: setIndex
+                                        text: Settings.get("receiverProperties["+appSettings.currentUnitIndex+"].setIndex", "")
+                                        ToolTip.visible: hovered
+                                        ToolTip.text: qsTr("setIndex - 0 for original, 1 for processed")
+                                        selectByMouse: true
+                                    }
                                 }
-                                TextField {
-                                    height:27
-                                    width: 40
-                                    id: calcDistanceMethod
-                                    text: Settings.get("receiverProperties["+appSettings.currentUnitIndex+"].calcDistanceMethod", "")
-                                    ToolTip.visible: hovered
-                                    ToolTip.text: qsTr("calcDistanceMethod - '1' for threshold processing, '2' - for envelope processing")
-                                }
-                                TextField {
-                                    height:27
-                                    width: 40
-                                    id: signalThreshold
-                                    text: Settings.get("receiverProperties["+appSettings.currentUnitIndex+"].signalThreshold", "")
-                                    ToolTip.visible: hovered
-                                    ToolTip.text: qsTr("signalThreshold - signal level to find")
-                                }
-                                TextField {
-                                    height:27
-                                    width: 40
-                                    id: dWallCentered
-                                    text: Settings.get("receiverProperties["+appSettings.currentUnitIndex+"].dWallCentered", "")
-                                    ToolTip.visible: hovered
-                                    ToolTip.text: qsTr("dWallCentered - distance in units, when the tube is centered")
+                                Row {
+                                    TextField {
+                                        height:27
+                                        width: 40
+                                        id: signalThreshold
+                                        text: Settings.get("receiverProperties["+appSettings.currentUnitIndex+"].signalThreshold", "")
+                                        ToolTip.visible: hovered
+                                        ToolTip.text: qsTr("signalThreshold - signal level to find")
+                                        selectByMouse: true
+                                    }
+                                    TextField {
+                                        height:27
+                                        width: 40
+                                        id: dWallCentered
+                                        text: Settings.get("receiverProperties["+appSettings.currentUnitIndex+"].dWallCentered", "")
+                                        ToolTip.visible: hovered
+                                        ToolTip.text: qsTr("dWallCentered - distance in units, when the tube is centered")
+                                        selectByMouse: true
+                                    }
                                 }
                                 TextField {
                                     height:27
@@ -1635,15 +1684,9 @@ Item {
                                     text: Settings.get("receiverProperties["+appSettings.currentUnitIndex+"].kForDistance", "")
                                     ToolTip.visible: hovered
                                     ToolTip.text: qsTr("kForDistance - coefficient to calculate centimeters from units")
+                                    selectByMouse: true
                                 }
-                                TextField {
-                                    height:27
-                                    width: 40
-                                    id: setIndex
-                                    text: Settings.get("receiverProperties["+appSettings.currentUnitIndex+"].setIndex", "")
-                                    ToolTip.visible: hovered
-                                    ToolTip.text: qsTr("setIndex - 0 for original, 1 for processed")
-                                }
+
                             }
                         }
                     }
@@ -1792,6 +1835,13 @@ Item {
                                     }
                                 }
                             }
+                        }
+                    }
+                    Item {
+                        Button {
+                            id: updateChannelFinderBtn
+                            text: qsTr("Update")
+                            onClicked: dataSource.updateChannelFinder(channelFinderSeries);
                         }
                     }
                 }
