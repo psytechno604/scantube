@@ -66,7 +66,7 @@ DataSource::DataSource(QQuickView *appViewer, QObject *parent) :
 
     m_series.resize(4);
     m_allWaveformsSeries.resize(2);
-    m_distanceSeries.resize(1); //series for polarChartForDistances
+    m_distanceSeries.resize(4); //series for polarChartForDistances
 
     m_significanceSeries.resize(1);
 
@@ -251,6 +251,8 @@ void DataSource::updateDistances(int measurementIndex)
 {
     auto s = static_cast<QSplineSeries *>(m_distanceSeries[0]);
 
+    auto sl1 = static_cast<QSplineSeries *>(m_distanceSeries[2]);
+
     if (!s) {
         return;
     }
@@ -258,24 +260,76 @@ void DataSource::updateDistances(int measurementIndex)
     QVector<QPointF> points;
 
     for (int r=0; r<_nChannels; r++)   {
-        auto phi = -1.0;
+        auto phi = -1.0;        
 
-        switch (r) { //TODO: there must be formula instead of hardcode, when all recievers will be online
-        case 49:
-            phi = 25;
-            break;
-        case 55:
-            phi = 27;
-            break;
-        case 57:
-            phi = 29;
-            break;
-        case 63:
-            phi = 31;
-            break;
-        default:
-            break;
-        }
+        if (r==0) phi=6.18501053675491;
+        if (r==1) phi=0.294524311274043;
+
+
+
+
+        if (r==6) phi=0.196349540849362;
+        if (r==7) phi=0.490873852123405;
+        if (r==8) phi=1.07992247467149;
+        if (r==9) phi=0.687223392972767;
+
+
+
+
+        if (r==14) phi=1.27627201552085;
+        if (r==15) phi=0.883572933822129;
+        if (r==16) phi=1.47262155637022;
+        if (r==17) phi=1.86532063806894;
+
+
+
+
+        if (r==22) phi=1.66897109721958;
+        if (r==23) phi=2.0616701789183;
+        if (r==24) phi=2.65071880146639;
+        if (r==25) phi=2.25801971976766;
+
+
+
+
+        if (r==30) phi=2.84706834231575;
+        if (r==31) phi=2.45436926061703;
+        if (r==32) phi=3.04341788316511;
+        if (r==33) phi=3.43611696486384;
+
+
+
+
+        if (r==38) phi=3.23976742401447;
+        if (r==39) phi=3.6324665057132;
+        if (r==40) phi=4.22151512826128;
+        if (r==41) phi=3.82881604656256;
+
+
+
+
+        if (r==46) phi=4.41786466911065;
+        if (r==47) phi=4.02516558741192;
+        if (r==48) phi=4.61421420996001;
+        if (r==49) phi=5.00691329165873;
+
+
+
+
+        if (r==54) phi=4.81056375080937;
+        if (r==55) phi=5.20326283250809;
+        if (r==56) phi=5.79231145505618;
+        if (r==57) phi=5.39961237335746;
+
+
+
+
+        if (r==62) phi=5.98866099590554;
+        if (r==63) phi=5.59596191420682;
+
+
+
+        //phi += 0.5;
 
         if (phi >= 0) {
             auto dStart = m_controlValues[1][13][r];
@@ -301,6 +355,13 @@ void DataSource::updateDistances(int measurementIndex)
     }
 
     s->replace(points);
+    if (sl1) {
+        sl1->replace(points);
+    }
+}
+
+void DataSource::updateLinearDistances(int measurementIndex)
+{
 
 }
 
@@ -728,7 +789,7 @@ int DataSource::getIndexOfThreshold(double threshold, int measurementIndex, int 
 
 double DataSource::getDistanceToWall(int measurementIndex, int receiverIndex, int dStart, int dEnd, int calcDistanceMethod, double signalThreshold, int dWallCentered, double kForDistance, int setIndex)
 {
-    double centeredDistance = 11;
+    double centeredDistance = 20;
 
     if (calcDistanceMethod == 2) {
         auto p = getMaxAt(measurementIndex, receiverIndex, setIndex, dStart, dEnd);

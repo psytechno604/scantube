@@ -127,7 +127,9 @@ public slots:
     void updateAllWaveforms(QAbstractSeries *m_series, int set);
     void updateAllWaveforms();
     void updateDistances(QAbstractSeries *m_series, int i, int set);
-    void updateDistances(int measurementIndex);
+    Q_INVOKABLE void updateDistances(int measurementIndex);
+    Q_INVOKABLE void updateLinearDistances(int measurementIndex);
+
     void updateSurface3D(QtDataVisualization::QAbstract3DSeries *m_series);
 
     void initCorrelationParameters(float  sigTau, float Fdskr);

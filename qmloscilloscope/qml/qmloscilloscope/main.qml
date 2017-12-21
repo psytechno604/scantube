@@ -1091,15 +1091,15 @@ Item {
                                         ValueAxis {
                                             id: axisAngular_1_0
                                             min: 0
-                                            max: 32
-                                            tickCount: 33
+                                            max: 6.283185307
+                                            tickCount: 17
                                             labelsVisible: true;
                                         }
 
                                         ValueAxis {
                                             id: axisRadial_1_0
                                             min: 0
-                                            max: 20
+                                            max: 30
                                             labelsVisible: true;
                                             tickCount: 7
                                         }
@@ -1114,11 +1114,7 @@ Item {
 
                                             color: "red"
                                             opacity: 0.5
-                                        }
-
-                                        Component.onCompleted: {
-                                            dataSource.setDistanceSeries(series_1_0, 0);
-                                        }
+                                        }                                       
                                     }
                                 }
 
@@ -1140,16 +1136,28 @@ Item {
                                             ValueAxis {
                                                 id: significance_axisX
                                                 min: 0
-                                                max: 1
+                                                max: 6.283185307
                                             }
                                             ValueAxis {
                                                 id: significance_axisY
                                                 min: 0
-                                                max: 1
+                                                max: 30
                                             }
                                             LineSeries {
                                                 id: significanceLineSeries;
                                                 name: "Significance of measurement " + appSettings.i0 + ", current unit index =" + appSettings.currentUnitIndex
+                                                axisX: significance_axisX
+                                                axisY: significance_axisY
+                                            }
+                                            LineSeries {
+                                                id: linearDistanceLineSeries1;
+                                                name: "1"
+                                                axisX: significance_axisX
+                                                axisY: significance_axisY
+                                            }
+                                            LineSeries {
+                                                id: linearDistanceLineSeries2;
+                                                name: "2"
                                                 axisX: significance_axisX
                                                 axisY: significance_axisY
                                             }
@@ -1625,6 +1633,7 @@ Item {
                                         ToolTip.visible: hovered
                                         ToolTip.text: qsTr("dStart - min distance in units to search for peak")
                                         selectByMouse: true
+                                        onTextChanged: updateLines();
                                     }
                                     TextField {
                                         height:27
@@ -1634,6 +1643,7 @@ Item {
                                         ToolTip.visible: hovered
                                         ToolTip.text: qsTr("dEnd - max distance in units to search for peak")
                                         selectByMouse: true
+                                        onTextChanged: updateLines();
                                     }
                                 }
 
@@ -1666,6 +1676,7 @@ Item {
                                         ToolTip.visible: hovered
                                         ToolTip.text: qsTr("signalThreshold - signal level to find")
                                         selectByMouse: true
+                                        onTextChanged: updateLines();
                                     }
                                     TextField {
                                         height:27
@@ -1675,18 +1686,26 @@ Item {
                                         ToolTip.visible: hovered
                                         ToolTip.text: qsTr("dWallCentered - distance in units, when the tube is centered")
                                         selectByMouse: true
+                                        onTextChanged: updateLines();
                                     }
                                 }
-                                TextField {
-                                    height:27
-                                    width: 40
-                                    id: kForDistance
-                                    text: Settings.get("receiverProperties["+appSettings.currentUnitIndex+"].kForDistance", "")
-                                    ToolTip.visible: hovered
-                                    ToolTip.text: qsTr("kForDistance - coefficient to calculate centimeters from units")
-                                    selectByMouse: true
+                                Row {
+                                    TextField {
+                                        height:27
+                                        width: 40
+                                        id: kForDistance
+                                        text: Settings.get("receiverProperties["+appSettings.currentUnitIndex+"].kForDistance", "")
+                                        ToolTip.visible: hovered
+                                        ToolTip.text: qsTr("kForDistance - coefficient to calculate centimeters from units")
+                                        selectByMouse: true
+                                    }
                                 }
-
+                                Row {
+                                    Button {
+                                        text: qsTr("HV lines")
+                                        onClicked: updateLines()
+                                    }
+                                }
                             }
                         }
                     }
@@ -1719,6 +1738,7 @@ Item {
                             }
 
                         }
+
                     }
                     Item {
                         Button {
@@ -1888,7 +1908,10 @@ Item {
 
         setCutoffParameters();
 
+        dataSource.setDistanceSeries(series_1_0, 0);
 
+        dataSource.setDistanceSeries(linearDistanceLineSeries1, 2);
+        dataSource.setDistanceSeries(linearDistanceLineSeries2, 3);
     }
     Connections {
         target: dataSource
@@ -2059,6 +2082,13 @@ Item {
             }
         }
     }
+    function updateLines() {
+        dataSource.updateLine(scopeView.hLine, Qt.point(0, signalThreshold.text), Qt.point(appSettings.dN, signalThreshold.text));
+        dataSource.updateLine(scopeView.vLine, Qt.point(dWallCentered.text, 0), Qt.point(dWallCentered.text, Math.max(appSettings.maxSignalLevel, appSettings.maxProcessedLevel)));
+        dataSource.updateLine(scopeView.vLineDStart, Qt.point(dStart.text, 0), Qt.point(dStart.text, Math.max(appSettings.maxSignalLevel, appSettings.maxProcessedLevel)));
+        dataSource.updateLine(scopeView.vLineDEnd, Qt.point(dEnd.text, 0), Qt.point(dEnd.text, Math.max(appSettings.maxSignalLevel, appSettings.maxProcessedLevel)));
+    }
+
     function getMainMarkX(x0, R, phi) {
         return x0 + R * Math.sin(phi);
     }
@@ -2175,6 +2205,7 @@ Item {
        setControlValues(1, appSettings.i0);
 
        dataSource.updateDistances(appSettings.i0);
+       dataSource.updateLinearDistances(appSettings.i0);
     }
     function updateSingleWaveform() {
 
@@ -2212,7 +2243,7 @@ Item {
 
 
         //dataSource
-    }
+    }   
     function clearListElements(){
 
     }

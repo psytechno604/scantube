@@ -50,6 +50,12 @@ ChartView {
     property string color0_1: "#ff4444"
     property string color1_1: "green"
     property string color2_1: "#88aaff"
+
+    property alias hLine: hLine
+    property alias vLine: vLine
+    property alias vLineDStart: vLineDStart
+    property alias vLineDEnd: vLineDEnd
+
     onOpenGLChanged: {
         if (openGLSupported) {
             series("signal 1").useOpenGL = openGL;
@@ -122,6 +128,7 @@ ChartView {
         axisX: axisX
         axisY: axisY
         useOpenGL: chartView.openGL
+        color: "yellow"
     }
     LineSeries {
         id: vLine
@@ -129,6 +136,23 @@ ChartView {
         axisX: axisX
         axisY: axisY
         useOpenGL: chartView.openGL
+        color: "yellow"
+    }
+    LineSeries {
+        id: vLineDStart
+        name: "DStart"
+        axisX: axisX
+        axisY: axisY
+        useOpenGL: chartView.openGL
+        color: "white"
+    }
+    LineSeries {
+        id: vLineDEnd
+        name: "DEnd"
+        axisX: axisX
+        axisY: axisY
+        useOpenGL: chartView.openGL
+        color: "white"
     }
     LineSeries {
         id: slice_i0
