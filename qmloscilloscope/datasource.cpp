@@ -247,7 +247,7 @@ void DataSource::updateDistances(QAbstractSeries *series, int i, int set)
 
 }
 
-void DataSource::updateDistances(int measurementIndex)
+void DataSource::updateDistances(int measurementIndex, bool flipInside)
 {
     auto s = static_cast<QSplineSeries *>(m_distanceSeries[0]);
 
@@ -268,7 +268,7 @@ void DataSource::updateDistances(int measurementIndex)
 
 
 
-        if (r==6) phi=0.196349540849362;
+        if (r==6) phi=0.098174770424681;
         if (r==7) phi=0.490873852123405;
         if (r==8) phi=1.07992247467149;
         if (r==9) phi=0.687223392972767;
@@ -349,10 +349,15 @@ void DataSource::updateDistances(int measurementIndex)
                         dWallCentered,
                         kForDistance,
                         setIndex);
+            if (flipInside && dst > centeredDistance) {
+                dst = centeredDistance - (dst - centeredDistance);
+            }
             points.append(QPointF(phi, dst));
         }
 
     }
+
+    qSort(points.begin(), points.end(), comparePointsByX);
 
     s->replace(points);
     if (sl1) {
@@ -789,15 +794,13 @@ int DataSource::getIndexOfThreshold(double threshold, int measurementIndex, int 
 
 double DataSource::getDistanceToWall(int measurementIndex, int receiverIndex, int dStart, int dEnd, int calcDistanceMethod, double signalThreshold, int dWallCentered, double kForDistance, int setIndex)
 {
-    double centeredDistance = 20;
-
     if (calcDistanceMethod == 2) {
         auto p = getMaxAt(measurementIndex, receiverIndex, setIndex, dStart, dEnd);
-        return centeredDistance + kForDistance * (p.x() - dWallCentered);
+        return centeredDistance + kForDistance * (p.x() - dWallCentered - distanceTickShift);
     }
     if (calcDistanceMethod == 1) {
         auto x = getIndexOfThreshold(signalThreshold, measurementIndex, receiverIndex, setIndex, dStart, dEnd);
-        return centeredDistance + kForDistance * (x - dWallCentered);
+        return centeredDistance + kForDistance * (x - dWallCentered - distanceTickShift);
     }
 
     return centeredDistance;
@@ -962,6 +965,16 @@ void DataSource::updateLine(QAbstractSeries *m_series, QPointF p0, QPointF p1)
     points.append(p0);
     points.append(p1);
     s->replace(points);
+}
+
+void DataSource::setDistanceTickShift(int value)
+{
+    distanceTickShift = value;
+}
+
+bool DataSource::comparePointsByX(const QPointF &p1, const QPointF &p2)
+{
+    return p1.x() < p2.x();
 }
 
 double DataSource::getSignificance(QPointF maximum, double x, QVector<QVector<float>> *b, int receiverIndex, int dStart, int dEnd)

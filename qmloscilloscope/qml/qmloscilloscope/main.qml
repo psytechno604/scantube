@@ -1040,7 +1040,7 @@ Item {
                                 Row {
                                     width: parent.width
                                     height: parent.height
-                                    PolarChartView {
+                                    /*PolarChartView {
                                         height: parent.height
                                         width: parent.width / 2
                                         antialiasing: true
@@ -1082,7 +1082,7 @@ Item {
                                             width: 2
                                             color: "blue"
                                         }
-                                    }
+                                    }*/
                                     PolarChartView {
                                         id: polarChartForDistances
                                         height: parent.height
@@ -1103,7 +1103,7 @@ Item {
                                             labelsVisible: true;
                                             tickCount: 7
                                         }
-                                        ScatterSeries {
+                                        LineSeries {
                                             name: "Distance"
                                             id: series_1_0
                                             axisAngular: axisAngular_1_0
@@ -1111,7 +1111,7 @@ Item {
                                             pointsVisible: true
                                             pointLabelsVisible: false
 
-
+                                            //markerSize: appSettings.distancesMarketSize
                                             color: "red"
                                             opacity: 0.5
                                         }                                       
@@ -1133,6 +1133,7 @@ Item {
                                             width: parent.width
                                             height: parent.height//-40
                                             id: significanceChart
+                                            legend.visible: false
                                             ValueAxis {
                                                 id: significance_axisX
                                                 min: 0
@@ -1710,9 +1711,39 @@ Item {
                         }
                     }
                     Item {
-                        Button {
-                            text: "Update distanced diagram"
-                            onClicked: updateDistances ()
+                        Row {
+                            Button {
+                                text: "Update distances diagram"
+                                onClicked: {
+                                    updateDistances ();
+                                }
+                            }
+                            TextField {
+                                id: distanceTickShift
+                                text: appSettings.distanceTickShift
+                                selectByMouse: true
+                            }
+                            CheckBox {
+                                id: useDistanceTickShift
+                                onCheckedChanged: {
+                                    dataSource.setDistanceTickShift(appSettings.distanceTickShift * checked);
+                                }
+                            }
+                            Button {
+                                text: "Center here"
+                                onClicked: {
+                                    setCentered();
+                                }
+                            }
+                            TextField {
+                                id: distancesMarkerSize
+                                text: appSettings.distancesMarkerSize
+                                selectByMouse: true
+                            }
+                            CheckBox {
+                                id: distanceFlipInside
+                                checked: appSettings.distanceFlipInside
+                            }
                         }
                     }
                     Item {
@@ -1944,6 +1975,12 @@ Item {
     Settings {
         id: appSettings
 
+        property alias distanceFlipInside: distanceFlipInside.checked
+
+        property alias distancesMarketSize: distancesMarkerSize.text
+
+        property alias distanceTickShift: distanceTickShift.text
+
         /*property alias daln1: daln1.text
         property alias daln2: daln2.text
 
@@ -2082,6 +2119,35 @@ Item {
             }
         }
     }
+
+    function setCentered() {
+
+
+        for (var i=0; i < 64; i++) {
+            var dStart = Settings.get("receiverProperties["+i+"].dStart", "");
+            var dEnd = Settings.get("receiverProperties["+i+"].dEnd", "");
+            var calcDistanceMethod = Settings.get("receiverProperties["+i+"].calcDistanceMethod", "");
+            var signalThreshold = Settings.get("receiverProperties["+i+"].signalThreshold", "");
+
+            var kForDistance = Settings.get("receiverProperties["+i+"].kForDistance", "");
+            var setIndex = Settings.get("receiverProperties["+i+"].setIndex", "");
+
+            var x = 0;
+            if (calcDistanceMethod === "2") {
+                var p = dataSource.getMaxAt(appSettings.i0, i, setIndex, dStart, dEnd);
+                x = p.x;
+            }
+            if (calcDistanceMethod === "1") {
+                x = dataSource.getIndexOfThreshold(signalThreshold, appSettings.i0, i, setIndex, dStart, dEnd);
+            }
+            if (x>0) {
+                Settings.set("receiverProperties["+i+"].dWallCentered", x - appSettings.distanceTickShift);
+            }
+
+            console.log('x=', x);
+        }
+    }
+
     function updateLines() {
         dataSource.updateLine(scopeView.hLine, Qt.point(0, signalThreshold.text), Qt.point(appSettings.dN, signalThreshold.text));
         dataSource.updateLine(scopeView.vLine, Qt.point(dWallCentered.text, 0), Qt.point(dWallCentered.text, Math.max(appSettings.maxSignalLevel, appSettings.maxProcessedLevel)));
@@ -2204,7 +2270,7 @@ Item {
     function updateDistances (){
        setControlValues(1, appSettings.i0);
 
-       dataSource.updateDistances(appSettings.i0);
+       dataSource.updateDistances(appSettings.i0, appSettings.distanceFlipInside);
        dataSource.updateLinearDistances(appSettings.i0);
     }
     function updateSingleWaveform() {

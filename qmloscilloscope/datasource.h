@@ -127,7 +127,7 @@ public slots:
     void updateAllWaveforms(QAbstractSeries *m_series, int set);
     void updateAllWaveforms();
     void updateDistances(QAbstractSeries *m_series, int i, int set);
-    Q_INVOKABLE void updateDistances(int measurementIndex);
+    Q_INVOKABLE void updateDistances(int measurementIndex, bool flipInside = false);
     Q_INVOKABLE void updateLinearDistances(int measurementIndex);
 
     void updateSurface3D(QtDataVisualization::QAbstract3DSeries *m_series);
@@ -251,7 +251,13 @@ public slots:
 
     Q_INVOKABLE void updateChannelFinder(QAbstractSeries *m_series);
     Q_INVOKABLE void updateLine(QAbstractSeries *m_series, QPointF p0, QPointF p1);
+
+    Q_INVOKABLE void setDistanceTickShift(int value);
 private:
+    double centeredDistance {20};
+    int distanceTickShift {0};
+    static bool comparePointsByX(const QPointF &p1, const QPointF &p2);
+
     QVector<QVector<QVector<double>>> m_controlValues;
     int m_controlNLayers {2};
     int m_controlNValues {20};
